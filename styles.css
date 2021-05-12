@@ -1,0 +1,28 @@
+.path-mod-pulse .fcontainer .emailvars span {
+	color: #000;
+	background: #ffbf46;
+	padding: 3px 7px;
+	margin-bottom: 5px;
+	margin-right: 3px;
+	display: inline-block;
+	border-radius: 3px;
+}
+
+.path-mod-pulse .emailvars {
+	position: relative;
+    font-size: smaller;
+}
+
+@media (max-width: 767px) {
+	.path-mod-pulse .fcontainer .emailvars {
+		width: 100%;
+	}
+}
+.section .pulse.modtype_pulse .contentwithoutlink,
+.section .pulse.modtype_pulse .activityinstance {
+    display: block;
+}
+
+#page-mod-pulse-approve #participants .approvebtn {
+	margin-left: 10px;
+}
