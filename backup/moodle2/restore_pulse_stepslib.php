@@ -44,7 +44,6 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         $paths[] = new restore_path_element('pulse_users', '/activity/pulse/notifiedusers/pulse_users');
         $paths[] = new restore_path_element('pulse_completion', '/activity/pulse/usercompletion/pulse_completion');
 
-
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }
@@ -82,7 +81,6 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         // No need to save this mapping as far as nothing depend on it
         // (child paths, file areas nor links decoder).
     }
-
 
     /**
      * Process pulse users records.

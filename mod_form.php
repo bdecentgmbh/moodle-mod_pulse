@@ -28,15 +28,30 @@ require_once($CFG->dirroot.'/course/moodleform_mod.php');
 
 require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 
+/**
+ * Pulse module form.
+ */
 class mod_pulse_mod_form extends moodleform_mod {
 
     public function definition() {
-        global $DB, $PAGE;
+        global $DB, $PAGE, $CFG;
 
         $mform = $this->_form;
 
         $mform->addElement('header', 'general', get_string('general') );
+
+        $mform->addElement('text', 'name', get_string('name'), array('size'=>'64'));
+        $mform->addRule('name', get_string('error'), 'required', '', 'client');
+        if (!empty($CFG->formatstringstriptags)) {
+            $mform->setType('name', PARAM_TEXT);
+        } else {
+            $mform->setType('name', PARAM_CLEANHTML);
+        }
+
         $this->standard_intro_elements(get_string('content', 'pulse'));
+        $mform->addRule('introeditor', get_string('required'), 'required', null, 'client');
+
+        $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse') );
         // Pulse enable / disable option.
         $mform->addElement('advcheckbox', 'pulse', get_string('sendnotificaton', 'pulse'),
         get_string('enable:disable', 'pulse') );
@@ -51,33 +66,53 @@ class mod_pulse_mod_form extends moodleform_mod {
         get_string('enable:disable', 'pulse'));
         $mform->setType('diff_pulse', PARAM_INT);
         $mform->hideIf('diff_pulse', 'pulse', 'notchecked');
+
+        // First reminder subject.
+       $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), array('size'=>'64'));
+        $mform->setType('pulse_subject', PARAM_RAW);
+        $mform->hideIf('pulse_subject', 'pulse', 'notchecked');
+        // $mform->disabledIf('pulse_subject', 'pulse', 'notchecked');
+        // print_object($elem); exit;
+
         // Pulse content editor.
         $editoroptions  = pulse_get_editor_options();
-        $mform->addElement('editor', 'pulse_content_editor', get_string('pulsenotification', 'pulse'),
+        $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
         ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
+        // $mform->addRule('pulse_content_editor', get_string('error'), 'required', '', 'client');
+        
         // Email tempalte placholders.
-        $PAGE->requires->jquery();
-        $PAGE->requires->js('/mod/pulse/module.js');
-        $vars = \EmailVars::vars();
-        $mform->addElement('html', "<div class='form-group row  fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars '><div class=''>");
-        $optioncount = 0;
-        foreach ($vars as $option) {
-            $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
-            $optioncount++;
-        }
-        $mform->addElement('html', "</div></div></div>");
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
 
+        $this->pulse_email_placeholders($mform);
         // Show intro on course page always.
         $mform->addElement('hidden', 'showdescription', 1);
         $mform->setType('showdescription', PARAM_INT);
+
+        mod_pulse_extend_form($mform, $this);
 
         $this->standard_coursemodule_elements();
 
         $this->add_action_buttons(true, false, null);
     }
 
+    public function pulse_email_placeholders(&$mform) {
+        $vars = \EmailVars::vars();
+        $mform->addElement('html', "<div class='form-group row  fitem'> <div class='col-md-3'></div>
+        <div class='col-md-9'><div class='emailvars '>");
+        $optioncount = 0;
+        foreach ($vars as $option) {
+            $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
+            $optioncount++;
+        }
+        $mform->addElement('html', "</div></div></div>");
+    }
+
+    /**
+     * Custom completion rules definition.
+     *
+     * @return void
+     */
     public function add_completion_rules() {
 
         $mform = $this->_form;
@@ -89,25 +124,41 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->setDefault('completionself', 0);
 
         $group = array();
-        $group[] = $mform->createElement('checkbox', 'completionapproval', '', get_string('completionrequireapproval', 'pulse'));
-      
+        $group[] = $mform->createElement('checkbox', 'completionapproval', '',
+                    get_string('completionrequireapproval', 'pulse'));
+
         $roles = $this->course_roles();
-        $select = $mform->createElement('select', 'completionapprovalroles', get_string('completionapproverules', 'pulse'), $roles);
+        $select = $mform->createElement('autocomplete', 'completionapprovalroles',
+                    get_string('completionapproverules', 'pulse'), $roles);
         $select->setMultiple(true);
+
         $group[] = $select;
 
-        $mform->addGroup($group, 'completionrequireapproval', get_string('completionrequireapprovalgroup', 'pulse'), [''], false );
+        $mform->addGroup($group, 'completionrequireapproval', '', [''], false );
 
         return ['completionwhenavailable', 'completionrequireapproval', 'completionself'];
     }
 
+    /**
+     * Get list of all course and user context roles.
+     *
+     * @return void
+     */
     public function course_roles() {
         global $DB;
+
         list($insql, $inparam) = $DB->get_in_or_equal([CONTEXT_COURSE, CONTEXT_USER]);
-        $sql = "SELECT lvl.roleid, rle.shortname FROM {role_context_levels} lvl
+        $sql = "SELECT lvl.id, lvl.roleid, rle.name, rle.shortname FROM {role_context_levels} lvl
         JOIN {role} AS rle ON rle.id = lvl.roleid
         WHERE contextlevel $insql ";
-        return $DB->get_records_sql_menu($sql, $inparam);        
+        $result = $DB->get_records_sql($sql, $inparam);
+        $result = role_fix_names($result);
+        $roles = [];
+        // Generate options list for select mform element.
+        foreach ($result as $key => $role) {
+            $roles[$role->roleid] = $role->localname; // Role fullname.
+        }
+        return $roles;
     }
 
     /**
@@ -117,9 +168,9 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return bool True if one or more rules is enabled, false if none are.
      */
     public function completion_rule_enabled($data) {
-        return (!empty($data['completionwhenavailable']) || !empty($data['completionapproval']) || !empty($data['completionself']) );
+        return (!empty($data['completionwhenavailable'])
+                || !empty($data['completionapproval']) || !empty($data['completionself']) );
     }
-
 
 
     /**
@@ -138,10 +189,10 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($data->completionapprovalroles)) {
             $data->completionapprovalroles = json_encode($data->completionapprovalroles);
         }
+        pulse_extend_postprocessing($data);
     }
 
     public function data_preprocessing(&$defaultvalues) {
-
         $editoroptions = pulse_get_editor_options();
 
         if ($this->current->instance) {
@@ -167,6 +218,11 @@ class mod_pulse_mod_form extends moodleform_mod {
         $defaultvalues['completionwhenavailable'] =
             !empty($defaultvalues['completionavailable']) ? 1 : 0;
 
-        $defaultvalues['completionapprovalroles'] = (isset($defaultvalues['completionapprovalroles'])) ? json_decode($defaultvalues['completionapprovalroles']) : '';
-    }
+        if (isset($defaultvalues['completionapprovalroles'])) {
+            $defaultvalues['completionapprovalroles'] = json_decode($defaultvalues['completionapprovalroles']);
+        }
+        // Pre pocessing extend.
+        pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
+        // print_object($defaultvalues);
+    }   
 }

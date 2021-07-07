@@ -1,0 +1,117 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Module javascript to place the placeholders.
+ * Modified version of IOMAD Email template emailvars.
+ *
+ * @package   mod_pulse
+ * @category  Classes - autoloading
+ * @copyright 2021, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+define([], function() {
+
+    return {
+
+        init: function() {
+            var module = this;
+            var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
+            console.log(templatevars);
+            for (var l = 0; l < templatevars.length; l++) {
+                templatevars[l].addEventListener('click', function() {
+                    var EditorInput = document.getElementById('id_pulse_content_editoreditable');
+                    var caret = document.getElementsByClassName("insertatcaretactive");
+                    for (j = 0; j < caret.length; j++) {
+                        caret[j].classList.remove("insertatcaretactive");
+                    }
+                    EditorInput.classList.add("insertatcaretactive");
+
+                });
+            }
+            var clickforword = document.getElementsByClassName('clickforword');
+            for (var i = 0; i < clickforword.length; i++) {
+                clickforword[i].addEventListener('click', function(e) {
+                    e.preventDefault(); // To prevent the default behaviour of a tag.
+                    module.insertAtCaret("{" + this.getAttribute('data-text') + "}");
+                });
+            }
+
+            // Make selected roles as badges in module edit form page.
+            const textNodes = this.getAllTextNodes(document.getElementById('page-mod-pulse-mod').querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']"));
+            textNodes.forEach(node => {
+                const span = document.createElement('span');
+                span.classList = 'badge badge-info pulse-completion-roles';
+                node.after(span);
+                span.appendChild(node);
+            });
+        },
+
+        // Filter text from node.
+        getAllTextNodes: function(element) {
+            return Array.from(element.childNodes)
+            .filter(node => node.nodeType === 3 && node.textContent.trim().length > 1);
+        },
+
+
+        insertAtCaret: function(myValue) {
+            var caretelements = document.getElementsByClassName("insertatcaretactive");
+            for (var n = 0; n < caretelements.length; n++) {
+                var thiselem = caretelements[n];
+                if (typeof thiselem.value === 'undefined') {
+                    var sel, range, html;
+                    if (window.getSelection) {
+                        sel = window.getSelection();
+                        if (sel.getRangeAt && sel.rangeCount) {
+                            range = sel.getRangeAt(0);
+                            range.deleteContents();
+                            range.insertNode(document.createTextNode(myValue));
+
+                            for (let position = 0; position != (myValue.length + 1); position++) {
+                                sel.modify("move", "right", "character");
+                            }
+                        }
+                    } else if (document.selection && document.selection.createRange) {
+                        range = document.selection.createRange();
+                        range.text = myValue;
+                    }
+                } else {
+                    if (document.selection) {
+                        // For browsers like Internet Explorer.
+                        thiselem.focus();
+                        sel = document.selection.createRange();
+                        sel.text = myValue;
+                        thiselem.focus();
+                    } else if (thiselem.selectionStart || thiselem.selectionStart == '0') {
+                        // For browsers like Firefox and Webkit based.
+                        var startPos = thiselem.selectionStart;
+                        var endPos = thiselem.selectionEnd;
+                        var scrollTop = thiselem.scrollTop;
+                        thiselem.value = thiselem.value.substring(0, startPos) + myValue + thiselem.value.substring(endPos, thiselem.value.length);
+                        thiselem.focus();
+                        thiselem.selectionStart = startPos + myValue.length;
+                        thiselem.selectionEnd = startPos + myValue.length;
+                        thiselem.focus();
+                    } else {
+                        thiselem.value += myValue;
+                        thiselem.focus();
+                    }
+                }
+            }
+        },
+
+    };
+});

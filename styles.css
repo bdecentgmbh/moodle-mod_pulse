@@ -18,6 +18,7 @@
 		width: 100%;
 	}
 }
+
 .section .pulse.modtype_pulse .contentwithoutlink,
 .section .pulse.modtype_pulse .activityinstance {
     display: block;
@@ -25,4 +26,26 @@
 
 #page-mod-pulse-approve #participants .approvebtn {
 	margin-left: 10px;
+}
+
+#page-mod-pulse-mod #fgroup_id_completionrequireapproval .form-check.fitem {
+	margin-right: 15px;
+}
+
+#page-mod-pulse-mod #fgroup_id_completionrequireapproval .pulse-completion-roles {
+	margin-left: 10px;
+}
+
+.pulse.modtype_pulse .pulse-completion-btn .badge {
+    display: table;
+    margin-top: 10px;
+    margin-left: 30px;
+}
+
+.section .pulse.modtype_pulse .pulse-completion-btn {
+	text-align: right;
+	margin: 15px 0;
+}
+.pulse.modtype_pulse .pulse-completion-btn .badge {
+	margin-bottom: 15px;
 }

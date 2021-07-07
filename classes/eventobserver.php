@@ -32,7 +32,6 @@ defined('MOODLE_INTERNAL') || die('No direct access !');
  */
 class eventobserver {
 
-
     /**
      * Course module created event observer. To send the activity pulse.
      *
@@ -54,6 +53,7 @@ class eventobserver {
      * @return void
      */
     public static function course_module_updated($event) {
+
         if ($event->other['modulename'] == 'pulse') {
             $pulseid = $event->other['instanceid'];
             $courseid = $event->courseid;
@@ -79,7 +79,6 @@ class eventobserver {
         }
     }
 
-
     /**
      * Reset the notified users list for pulse instance.
      *
@@ -97,6 +96,10 @@ class eventobserver {
                 $record->timemodified = time();
                 $record->notified_users = $empty;
                 $result = $DB->update_record('pulse_users', $record);
+
+                // Reschedule the notification if resend notification enabled.
+                $message= get_string('resendnotificationdesc', 'mod_pulse');
+                \core\notification::add($message, 'info');
             }
         }
     }

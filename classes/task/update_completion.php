@@ -48,5 +48,4 @@ class update_completion extends \core\task\scheduled_task {
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
         mod_pulse_completion_crontask();
     }
-
 }

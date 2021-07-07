@@ -40,7 +40,8 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         // Define each element separated - table fields.
         $pulse = new backup_nested_element('pulse', array('id'), array(
             'course', 'name', 'intro', 'introformat', 'pulse_content',
-            'pulse_contentformat', 'pulse', 'diff_pulse', 'resend_pulse', 'completionavailable', 'completionself', 'completionapproval',
+            'pulse_contentformat', 'pulse', 'diff_pulse', 'resend_pulse',
+            'completionavailable', 'completionself', 'completionapproval',
             'completionapprovalroles', 'timemodified'));
 
         $notifiedusers = new backup_nested_element('notifiedusers');
@@ -51,7 +52,8 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $usercompletion = new backup_nested_element('pulsecompletion');
 
         $pulsecompletion = new backup_nested_element('pulse_completion', array('id'), array(
-            'userid', 'pulseid', 'approvalstatus', 'approveduser', 'approvaltime', 'selfcompletion', 'selfcompletiontime', 'timemodified'));
+            'userid', 'pulseid', 'approvalstatus', 'approveduser', 'approvaltime',
+            'selfcompletion', 'selfcompletiontime', 'timemodified'));
 
         // Build the tree.
         $pulse->add_child($notifiedusers);
@@ -72,7 +74,6 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
             $pulsecompletion->set_source_table('pulse_completion', array('pulseid' => '../../id'));
             $pulsecompletion->annotate_ids('user', 'userid');
         }
-
 
         // Define file annotations.
         $pulse->annotate_files('mod_pulse', 'intro', null);

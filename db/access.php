@@ -46,7 +46,7 @@ $capabilities = array(
             'guest' => CAP_ALLOW
         )
     ),
-
+    // Capability to recieve notifications.
     'mod/pulse:notifyuser' => array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,

@@ -38,13 +38,13 @@ class EmailVars {
      *
      * Sets up and retrieves the API objects
      */
-    public function __construct($user, $course, $sender) {
+    public function __construct($user, $course, $sender, $pulse) {
         global $CFG;
 
         $this->user =& $user;
-        $this->sender =& $sender;
+        $this->sender =& $sender;        
         $wwwroot = $CFG->wwwroot;
-
+        $this->pulse = $pulse;
         $this->course =& $course;
         if (!empty($course->id)) {
             $this->course->url = new moodle_url($wwwroot .'/course/view.php', array('id' => $this->course->id));
@@ -90,7 +90,7 @@ class EmailVars {
             // Sender information fields .
             'Sender_FirstName', 'Sender_LastName', 'Sender_Email',
             // Miscellaneouss fields.
-            'linkurl', 'siteurl'
+            'linkurl', 'siteurl', 'reaction'
         );
 
         // Add all methods of this class that are ok2call to the $result array as well.
@@ -111,8 +111,8 @@ class EmailVars {
      */
     public function __get($name) {
         if (isset($name)) {
-            if (array_key_exists($name, $this)) {
-                return $this[$name];
+            if (property_exists($this, $name)) {
+                return $this->$name;
             }
             preg_match('/^(.*)_(.*)$/', $name, $matches);
             if (isset($matches[1])) {
@@ -177,5 +177,9 @@ class EmailVars {
         } else {
             return new moodle_url($this->url);
         }
+    }
+
+    public function reaction() {
+        return pulse_extend_reaction($this);
     }
 }

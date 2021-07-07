@@ -32,31 +32,85 @@ $string['privacy:metadata'] = 'The Pulse resource plugin does not store any pers
 $string['pluginadministration'] = 'Pulse administration';
 $string['search:activity'] = 'Pulse';
 $string['sendnotificaton'] = 'Send notification';
-$string['diffnotification'] = 'Different Notification';
+$string['diffnotification'] = 'Use notification content instead of general content';
 $string['enable:disable'] = 'Enable / Disable';
 $string['pulsenotification'] = 'Pulse notification';
 
 $string['pulse_subject'] = 'Course activity available pulse - {Site_FullName} ';
 $string['notifyusers'] = 'Notify course students';
 $string['pulse:notifyuser'] = 'Send pulse message';
-$string['messageprovider:mod_pulse'] = 'Notify module availability';
+$string['messageprovider:mod_pulse'] = 'Send pulse notifcation';
 $string['instancename'] = 'Pulse';
-$string['resendnotification'] = 'Resend Notification';
-$string['completionrequireapproval'] = 'Require approval by roles ';
+$string['resendnotification'] = 'Re-send Notification';
+$string['resendnotificationdesc'] = 'Invitation has been scheduled for re-sending';
+$string['completionrequireapproval'] = 'Require approval by one of the following roles ';
 $string['completewhenavaialble'] = 'Completion when available';
 
-// $string['completionrequireaproval'] = 'Completionrequireaproval';
 $string['completionapproverules'] = 'Completionapproverules';
-$string['completionrequireapprovalgroup'] = 'Completionrequireapprovalgroup';
-$string['completionself'] = 'Completion self';
+$string['completionself'] = 'Mark as complete by student to complete this activity';
 $string['approved'] = 'Approved';
 $string['declined'] = 'Declined';
 $string['decline'] = 'Decline';
 $string['approve'] = 'Approve';
 $string['approveuser'] = 'Approve users - {$a->course}';
-$string['selfmarked'] = 'Self marked complete on {$a->date}';
+$string['selfmarked'] = 'Marked on {$a->date}';
 $string['approveduser'] = 'Approved BY: {$a->user}';
-$string['approvedon'] = 'Approved On: {$a->date}';
+$string['approvedon'] = 'Approved by {$a->user} on {$a->date} ';
+$string['restrictionmet'] = 'Restriction Met';
 $string['approveuser'] = 'Approve user';
 $string['markcomplete'] = 'Mark complete';
+$string['noreaction'] = 'No Reaction';
+$string['rate'] = 'Rate';
 $string['updatecompletion'] = 'Update pulse modules completion';
+$string['approvedsuccess'] = 'User approved successfully';
+$string['approvedeclined'] = 'User completion declined';
+
+$string['completion:self'] = 'Mark complete';
+$string['completion:approval'] = 'Approval required';
+$string['completion:available'] = 'Restrictions must be met';
+
+$string['reactions'] = 'Reaction';
+$string['displaytype:notificationonly'] = 'Notification only';
+$string['displaytype:contentonly'] = 'Content only';
+$string['displaytype:notificationcontent'] = 'Notification and Content';
+
+$string['head:firstreminder'] = 'First reminder';
+$string['head:secondreminder'] = 'Second reminder';
+$string['head:recurringreminder'] = 'Recurring reminder';
+$string['remindersubject'] = 'Notification subject';
+$string['remindercontent'] = 'Notification content';
+$string['recipients'] = 'Notification recipients';
+$string['reminderschedule'] = 'Notification schedule';
+$string['schedule:fixeddate'] = 'Fixed date';
+$string['schedule:relativedate'] = 'Relative date';
+$string['courserole'] = 'courserole';
+$string['userrole'] = 'userrole';
+$string['reactiondisplaytype'] = 'Reaction Display Type';
+
+$string['reaction:markcomplete'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding: .375rem .75rem;text-decoration-line: none;" > Reaction Markcomplete </a> ';
+$string['reaction:rate'] = '<div class="btn-group"> <a href="{$a->reactionurl}&rate=2" style="color: #fff;background: #0f6fc5;padding: .375rem .75rem;text-decoration-line: none;" >Like</a>
+<a href="{$a->reactionurl}&rate=1" style="color: #0f6fc5;background: #ccc;padding: .375rem .75rem;text-decoration-line: none;" >Dislike</a></div>';
+$string['reaction:approve'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding:.375rem .75rem;text-decoration-line: none;" > Reaction </a> ';
+
+$string['completereaction'] = 'Complete reaction';
+
+$string['reminders:first'] = 'First reminder';
+$string['reminders:second'] = 'Second reminder';
+$string['reminders:recurring'] = 'Recurring reminder';
+$string['reminders:availabletime'] = 'Availability time';
+
+$string['completioncriteria'] = 'Completion criteria';
+$string['self'] = 'Self';
+$string['teacher'] = 'Teacher';
+$string['reaction'] = 'Reaction';
+$string['reports'] = 'Pulse Reports';
+$string['selectpulse'] = 'Select pulse instance';
+$string['generatereport'] = 'Generate report';
+$string['like'] = 'Like';
+$string['dislike'] = 'Dislike';
+$string['enablereminder:invitation'] = 'Enable invitation';
+$string['enablereminder:first'] = 'Enable first reminder';
+$string['enablereminder:second'] = 'Enable second reminder';
+$string['enablereminder:recurring'] = 'Enable recurring reminder';
+$string['invitation'] = 'Invitation';
+$string['invitationsubject'] = 'Invitation subject';
