@@ -22,8 +22,12 @@
 
 namespace mod_pulse\table;
 
+defined('MOODLE_INTERNAL') || die();
+
 use html_writer;
 use moodle_url;
+
+require_once($CFG->dirroot. '/mod/pulse/lib.php');
 
 class approveuser extends \core_user\table\participants {
 
@@ -155,7 +159,6 @@ class approveuser extends \core_user\table\participants {
      */
     public function query_db($pagesize, $useinitialsbar = true) {
         list($twhere, $tparams) = $this->get_sql_where();
-
         $psearch = new approveuser_search($this->course, $this->context, $this->filterset);
         // Add filter for user context assigned users.
         if (!pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {

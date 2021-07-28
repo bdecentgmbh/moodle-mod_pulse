@@ -160,7 +160,7 @@ class custom_completion extends activity_custom_completion {
                 $state = $this->get_state('completionapproval');
                 if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
                     $message = pulse_user_approved($this->cm->instance, $this->userid);
-                    $approvalstring = $message;
+                    $approvalstring = html_to_text($message);
                 }
             }
         }

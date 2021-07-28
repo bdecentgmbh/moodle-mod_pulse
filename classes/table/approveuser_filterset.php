@@ -15,12 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Participants table filterset.
+ * Filterset
  *
- * @package    core
- * @category   table
- * @copyright  2020 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_pulse
+ * @copyright 2021, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 declare(strict_types=1);
@@ -69,6 +68,12 @@ class approveuser_filterset extends filterset {
     public function get_optional_filters(): array {
         return [
             'accesssince' => integer_filter::class,
+            'enrolments' => integer_filter::class,
+            'groups' => integer_filter::class,
+            'keywords' => string_filter::class,
+            'country' => string_filter::class,
+            'roles' => integer_filter::class,
+            'status' => integer_filter::class,
         ];
     }
 }

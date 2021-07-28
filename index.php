@@ -28,15 +28,15 @@ $id = optional_param('id', 1, PARAM_INT);    // Course Module ID.
 
 $PAGE->set_url('/mod/pulse/index.php', array('id' => $id));
 if (!$cm = get_coursemodule_from_id('pulse', $id)) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 if (!$course = $DB->get_record("course", array("id" => $cm->course))) {
-    print_error('coursemisconf');
+    throw new moodle_exception('coursemisconf');
 }
 
 if (!$pulse = $DB->get_record("pulse", array("id" => $cm->instance))) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 

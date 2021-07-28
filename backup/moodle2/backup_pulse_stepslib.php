@@ -39,7 +39,7 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
 
         // Define each element separated - table fields.
         $pulse = new backup_nested_element('pulse', array('id'), array(
-            'course', 'name', 'intro', 'introformat', 'pulse_content',
+            'course', 'name', 'intro', 'introformat', 'pulse_subject', 'pulse_content',
             'pulse_contentformat', 'pulse', 'diff_pulse', 'resend_pulse',
             'completionavailable', 'completionself', 'completionapproval',
             'completionapprovalroles', 'timemodified'));
@@ -47,7 +47,7 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $notifiedusers = new backup_nested_element('notifiedusers');
 
         $pulseusers = new backup_nested_element('pulse_users', array('id'), array(
-            'pulse', 'course', 'notified_users', 'timemodified'));
+            'pulseid', 'userid', 'timecreated'));
 
         $usercompletion = new backup_nested_element('pulsecompletion');
 
@@ -69,15 +69,17 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
 
         // All the rest of elements only happen if we are including user info.
         if ($userinfo) {
-            $pulseusers->set_source_table('pulse_users', array('pulse' => '../../id'));
+            $pulseusers->set_source_table('pulse_users', array('pulseid' => backup::VAR_PARENTID));
 
-            $pulsecompletion->set_source_table('pulse_completion', array('pulseid' => '../../id'));
+            $pulsecompletion->set_source_table('pulse_completion', array('pulseid' => backup::VAR_PARENTID));
             $pulsecompletion->annotate_ids('user', 'userid');
         }
 
         // Define file annotations.
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
+
+        $pulse = pulse_extend_backup_steps($pulse, $userinfo);
 
         // Return the root element (data), wrapped into standard activity structure.
         return $this->prepare_activity_structure($pulse);

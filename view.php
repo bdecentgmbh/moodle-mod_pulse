@@ -28,18 +28,28 @@ $id = optional_param('id', 1, PARAM_INT);    // Course Module ID.
 
 $PAGE->set_url('/mod/pulse/index.php', array('id' => $id));
 if (!$cm = get_coursemodule_from_id('pulse', $id)) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 if (!$course = $DB->get_record("course", array("id" => $cm->course))) {
-    print_error('coursemisconf');
+    throw new moodle_exception('coursemisconf');
 }
 
 if (!$pulse = $DB->get_record("pulse", array("id" => $cm->instance))) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 
 require_login($course, true, $cm);
 
-redirect("$CFG->wwwroot/course/view.php?id=$course->id");
+global $USER;
+
+$context = context_course::instance($course->id);
+if (class_exists('local_pulsepro\table\reactionreport') && has_capability('local/pulsepro:viewreports', $context, $USER->id)) {
+    $redirecturl = new moodle_url('/local/pulsepro/report.php', ['courseid' => $course->id, 'cmid' => $cm->id ]);
+    redirect($redirecturl);
+} else {
+    $sectionnumber = $DB->get_record('course_sections', ['id' => $cm->section]);
+    $redirecturl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $sectionnumber->section]);
+    redirect($redirecturl);
+}

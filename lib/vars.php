@@ -42,7 +42,7 @@ class EmailVars {
         global $CFG;
 
         $this->user =& $user;
-        $this->sender =& $sender;        
+        $this->sender =& $sender;
         $wwwroot = $CFG->wwwroot;
         $this->pulse = $pulse;
         $this->course =& $course;

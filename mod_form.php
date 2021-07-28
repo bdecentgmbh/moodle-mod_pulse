@@ -40,47 +40,51 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'general', get_string('general') );
 
-        $mform->addElement('text', 'name', get_string('name'), array('size'=>'64'));
+        $mform->addElement('text', 'name', get_string('title', 'pulse'), array('size' => '64'));
         $mform->addRule('name', get_string('error'), 'required', '', 'client');
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
             $mform->setType('name', PARAM_CLEANHTML);
         }
+        $mform->addHelpButton('name', 'title', 'mod_pulse');
 
         $this->standard_intro_elements(get_string('content', 'pulse'));
         $mform->addRule('introeditor', get_string('required'), 'required', null, 'client');
+        $mform->addHelpButton('introeditor', 'content', 'mod_pulse');
+        // Extend the reaction sections.
+        mod_pulse_extend_form($mform, $this, 'reaction');
 
         $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse') );
+
         // Pulse enable / disable option.
         $mform->addElement('advcheckbox', 'pulse', get_string('sendnotificaton', 'pulse'),
-        get_string('enable:disable', 'pulse') );
-        $mform->setType('pulse', PARAM_INT);
-        // Use Differnet pulse content for pulse.
-        $mform->addElement('advcheckbox', 'resend_pulse', get_string('resendnotification', 'pulse'),
         get_string('enable:disable', 'pulse'));
-        $mform->setType('resend_pulse', PARAM_INT);
-        $mform->hideIf('resend_pulse', 'pulse', 'notchecked');
+        $mform->setType('pulse', PARAM_INT);
+        $mform->addHelpButton('pulse', 'sendnotificaton', 'mod_pulse');
 
+        // Use Differnet pulse content for pulse.
+        $mform->addElement('submit', 'resend_pulse', get_string('resendnotification', 'pulse'));
+        $mform->addHelpButton('resend_pulse', 'resendnotification', 'mod_pulse');
+
+        // Use Different notification content.
         $mform->addElement('advcheckbox', 'diff_pulse', get_string('diffnotification', 'pulse'),
         get_string('enable:disable', 'pulse'));
         $mform->setType('diff_pulse', PARAM_INT);
-        $mform->hideIf('diff_pulse', 'pulse', 'notchecked');
+        $mform->addHelpButton('diff_pulse', 'diffnotification', 'mod_pulse');
 
         // First reminder subject.
-       $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), array('size'=>'64'));
+        $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), array('size' => '64'));
         $mform->setType('pulse_subject', PARAM_RAW);
-        $mform->hideIf('pulse_subject', 'pulse', 'notchecked');
-        // $mform->disabledIf('pulse_subject', 'pulse', 'notchecked');
-        // print_object($elem); exit;
+        $mform->addHelpButton('pulse_subject', 'invitationsubject', 'mod_pulse');
 
         // Pulse content editor.
         $editoroptions  = pulse_get_editor_options();
         $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
         ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
-        // $mform->addRule('pulse_content_editor', get_string('error'), 'required', '', 'client');
-        
+        $mform->addHelpButton('pulse_content_editor', 'remindercontent', 'mod_pulse');
+
         // Email tempalte placholders.
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
 
@@ -119,22 +123,23 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         $mform->addElement('checkbox', 'completionwhenavailable', get_string('completewhenavaialble', 'pulse') );
         $mform->setDefault('completionwhenavailable', 0);
+        $mform->addHelpButton('completionwhenavailable', 'completewhenavaialble', 'mod_pulse');
 
         $mform->addElement('checkbox', 'completionself', get_string('completionself', 'pulse') );
         $mform->setDefault('completionself', 0);
+        $mform->addHelpButton('completionself', 'completionself', 'mod_pulse');
 
         $group = array();
         $group[] = $mform->createElement('checkbox', 'completionapproval', '',
                     get_string('completionrequireapproval', 'pulse'));
-
         $roles = $this->course_roles();
         $select = $mform->createElement('autocomplete', 'completionapprovalroles',
-                    get_string('completionapproverules', 'pulse'), $roles);
+        get_string('completionapproverules', 'pulse'), $roles);
         $select->setMultiple(true);
-
         $group[] = $select;
 
         $mform->addGroup($group, 'completionrequireapproval', '', [''], false );
+        $mform->addHelpButton('completionrequireapproval', 'completionrequireapproval', 'mod_pulse');
 
         return ['completionwhenavailable', 'completionrequireapproval', 'completionself'];
     }
@@ -223,6 +228,22 @@ class mod_pulse_mod_form extends moodleform_mod {
         }
         // Pre pocessing extend.
         pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
-        // print_object($defaultvalues);
-    }   
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if ($data['diff_pulse']) {
+            if (empty($data['pulse_subject'])) {
+                $errors['pulse_subject'] = get_string('required');
+            }
+
+            if (empty($data['pulse_content_editor']['text'])) {
+                $errors['pulse_content_editor'] = get_string('required');
+            }
+        }
+        $extenderrors = mod_pulse_extend_formvalidation($data, $files);
+        $errors = array_merge($errors, $extenderrors);
+        return $errors;
+    }
 }

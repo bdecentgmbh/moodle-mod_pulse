@@ -43,7 +43,6 @@ function pulse_add_instance($pulse) {
 
     $context = context_module::instance($pulse->coursemodule);
 
-    // $pulse->name = get_pulse_name($pulse->intro, $context);
     $pulse->timemodified = time();
 
     if (isset($pulse->pulse_content_editor)) {
@@ -55,10 +54,8 @@ function pulse_add_instance($pulse) {
     }
     // Insert the instance in DB.
     $pulseid = $DB->insert_record('pulse', $pulse);
-
+    // Extend the pro features.
     pulse_extend_add_instance($pulseid, $pulse);
-
-  
 
     // Retrun new instance id.
     return $pulseid;
@@ -85,11 +82,18 @@ function pulse_update_instance($pulse) {
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
     }
+
+    // If module resend triggred then set the notified status to null for instance.
+    if (isset($pulse->resend_pulse)) {
+        $DB->set_field('pulse_users', 'status', 0, ['pulseid' => $pulse->id]);
+        // Reschedule the notification if resend notification enabled.
+        $message = get_string('resendnotificationdesc', 'mod_pulse');
+        \core\notification::add($message, 'info');
+    }
     // Update instance data.
     $updates = $DB->update_record('pulse', $pulse);
-
-    pulse_extend_update_instance($pulse);
-
+    // Extend the updated module instance pro features.
+    pulse_extend_update_instance($pulse, $context);
 
     return $updates;
 }
@@ -104,10 +108,13 @@ function pulse_update_instance($pulse) {
 function pulse_delete_instance($pulseid) {
     global $DB;
     if ($DB->record_exists('pulse', ['id' => $pulseid])) {
+        $cm = get_coursemodule_from_instance('pulse', $pulseid);
+
         if ($DB->delete_records('pulse', ['id' => $pulseid])) {
+            // Remove pulse user notified records.
+            pulse_extend_delete_instance($cm->id, $pulseid);
             return true;
         }
-        pulse_extend_delete_instance($pulseid);
     }
     return false;
 }
@@ -164,53 +171,6 @@ function pulse_get_editor_options() {
 }
 
 /**
- * Process template text and send pulse to the course users.
- *
- * @param  mixed $pulseid
- * @return void
- */
-function mod_pulse_send_pulse($users, $pulse, $course, $context, $addnotify=true, $extend=true) {
-    global $DB;
-    if (!empty($pulse) && !empty($users)) {
-        // Get course module using instanceid.
-        // Check pulse enabled.
-        if ($pulse->pulse == true) {
-            $notifiedusers = [];
-            // Collect list of available enrolled students in course module.
-            mtrace('Sending pulse to enrolled users in course '.$course->fullname."\n");
-            foreach ($users as $key => $student) {
-                $userto = $student; // Send to.
-                $subject = $pulse->pulse_subject ?: get_string('pulse_subject', 'pulse'); // Message subject.
-                // Use intro content as message text, if different pulse disabled.
-                $template = $pulse->intro;
-                $filearea = 'intro';
-                if ($pulse->diff_pulse) {
-                    // Email template content.
-                    $template = $pulse->pulse_content;
-                    $filearea = 'pulse_content';
-                }
-                // Replace the email text placeholders with data.
-                list($subject, $messagehtml) = mod_pulse_update_emailvars($template, $subject, $course, $student, $pulse);
-                // Rewrite the plugin file placeholders in the email text.
-                $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
-                $context->id, 'mod_pulse', $filearea, 0);
-                $messageplain = html_to_text($messagehtml); // Plain text.
-                // Send message to user.
-                mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
-                // echo $messagehtml;
-                $messagesend = mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $extend);
-                if ($messagesend) {
-                    $notifiedusers[] = $userto->id;
-                }
-            }
-            if ($addnotify) {
-                mod_pulse_update_notified_users($notifiedusers, $course, $pulse);
-            }
-        }
-    }
-}
-
-/**
  * Update the user id in the db notified users list.
  *
  * @param  mixed $users
@@ -218,24 +178,19 @@ function mod_pulse_send_pulse($users, $pulse, $course, $context, $addnotify=true
  * @param  mixed $pulse
  * @return void
  */
-function mod_pulse_update_notified_users($users, $course, $pulse) {
+function mod_pulse_update_notified_users($users, $pulse) {
     global $DB;
-    $condition = ['course' => $course->id, 'pulse' => $pulse->id];
-    if ($id = $DB->record_exists('pulse_users', $condition)) {
-        $notifiedusers = $DB->get_field('pulse_users', 'notified_users', $condition);
-        $list = json_decode($notifiedusers);
-        if (empty($users)) {
-            $users = [];
+
+    if (!empty($users)) {
+        foreach ($users as $userid) {
+            $record = new stdclass();
+            $record->userid = $userid;
+            $record->pulseid = $pulse->id;
+            $record->status = 1;
+            $record->timecreated = time();
+            $records[] = $record;
         }
-        $notifiedusers = array_merge($list, $users);
-        $notifiedusers = json_encode($notifiedusers);
-        $DB->set_field('pulse_users', 'notified_users', $notifiedusers, $condition);
-    } else {
-        $record = new stdclass();
-        $record->course = $course->id;
-        $record->pulse = $pulse->id;
-        $record->notified_users = json_encode($users);
-        $DB->insert_record('pulse_users', $record);
+        $DB->insert_records('pulse_users', $records);
     }
 }
 
@@ -248,10 +203,10 @@ function mod_pulse_update_notified_users($users, $course, $pulse) {
  * @param  mixed $user
  * @return void
  */
-function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mod) {
+function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
-    $sender = core_user::get_support_user(); // Support user.
+    $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
     $amethods = EmailVars::vars(); // List of available placeholders.
     $vars = new EmailVars($user, $course, $sender, $mod);
     foreach ($amethods as $funcname) {
@@ -277,60 +232,53 @@ function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mo
  * @param  mixed $context module context.
  * @return array $students listof students.
  */
-function mod_pulse_get_course_students($students, $cm=[], $notifiedusers=[], $course) {
+function mod_pulse_get_course_students($students, $instance) {
     global $DB, $CFG;
-
-    require_once($CFG->dirroot.'/mod/pulse/locallib.php');
-
-    $modinfo = new pulse_course_modinfo($course, 0);
     // Filter available users.
-    if (!empty($cm)) {
-        mtrace('Filter users based on their availablity..');
-        $section = ($cm->get_section_info());
-        $sectioninfo = new \core_availability\info_section($section);
-        foreach ($students as $student) {
-            $pulse = '';
-            // Update the modinfo user id to fix the group availality condition issue.
-            $modinfo->changeuserid($student->id);
-
-            $info = new \core_availability\info_module($cm);
-            if (!$sectioninfo->is_available($pulse, false, $student->id, $modinfo)
-                || !$info->is_available($pulse, false, $student->id, $modinfo) ) {
-                unset($students[$student->id]);
-            }
-
-        }
-    }
-
-    if (!empty($notifiedusers)) {
-        mtrace('Filter already notified users...');
-        foreach ($notifiedusers as $userid) {
-            if (in_array($userid, array_keys($students))) {
-                unset($students[$userid]);
-            }
+    mtrace('Filter users based on their availablity..');
+    foreach ($students as $student) {
+        $modinfo = \course_modinfo::instance((object) $instance->course, $student->id);
+        $cm = $modinfo->get_cm($instance->cm->id);
+        if (!$cm->uservisible || pulseis_notified($student->id, $instance->pulse->id)) {
+            unset($students[$student->id]);
         }
     }
     return $students;
 }
 
+/**
+ * Confirm the pulse instance send the invitation to the shared user.
+ *
+ * @param  int $studentid User id
+ * @param  int $pulseid pulse instance id
+ * @return void
+ */
+function pulseis_notified($studentid, $pulseid) {
+    global $DB;
+    if ($DB->record_exists('pulse_users', ['pulseid' => $pulseid, 'userid' => $studentid, 'status' => 1])) {
+        return true;
+    }
+    return false;
+}
 
 /**
- * Send message to user using message api.
+ * Send pulse notifications to the users.
  *
  * @param  mixed $userto
  * @param  mixed $subject
  * @param  mixed $messageplain
  * @param  mixed $messagehtml
  * @param  mixed $pulse
- * @return bool message status
+ * @param  mixed $sender
+ * @return void
  */
-function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $extend=true) {
+function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender=true) {
     $eventdata = new \core\message\message();
     $eventdata->name = 'mod_pulse';
     $eventdata->component = 'mod_pulse';
     $eventdata->courseid = $pulse->course;
     $eventdata->modulename = 'pulse';
-    $eventdata->userfrom = core_user::get_support_user();
+    $eventdata->userfrom = $sender ? $sender : core_user::get_support_user();
     $eventdata->userto = $userto;
     $eventdata->subject = $subject;
     $eventdata->fullmessage = $messageplain;
@@ -338,10 +286,6 @@ function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml,
     $eventdata->fullmessagehtml = $messagehtml;
     $eventdata->smallmessage = $subject;
     if (message_send($eventdata)) {
-        // Extend the pro plugin to send the approval mail.
-        if ($extend) {
-            pulse_extend_student_messagesend($userto, $pulse, $eventdata);
-        }
         mtrace( "Pulse send to the user.");
         return true;
     } else {
@@ -349,6 +293,8 @@ function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml,
         return false;
     }
 }
+
+
 
 /**
  * Serve the files from the Pulse file areas
@@ -367,9 +313,11 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
+    // Get extended plugins fileareas.
+    $availablefiles = pulse_extend_filearea();
 
     // Make sure the filearea is one of those used by the plugin.
-    if ($filearea !== 'pulse_content' && $filearea !== 'intro') {
+    if ($filearea !== 'pulse_content' && $filearea !== 'intro' && !in_array($filearea, $availablefiles)) {
         return false;
     }
 
@@ -398,12 +346,18 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
 /**
  * Pulse cron task to send notification for course users.
  *
+ * Here users are filtered by their activity avaialbility status.
+ * if the pulse instance are available to user then it will send the notificaion to the user.
  * @return void
  */
 function mod_pulse_cron_task() {
     global $DB;
 
     mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
+
+    if (pulse_extend_invitation()) {
+        return true;
+    }
 
     $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
             JOIN {capabilities} cap ON rc.capability = cap.name
@@ -414,15 +368,15 @@ function mod_pulse_cron_task() {
 
     list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
 
-    $sql = "SELECT nt.id as nid, nt.*, '' as pulseend, 
-    cm.id as cmid, cm.*, md.id as mid, nou.id as nouid,
-    nou.notified_users, ctx.id as contextid, ctx.*, cu.id as courseid, cu.* FROM {pulse} nt
-    JOIN {course_modules} cm ON cm.instance = nt.id
-    JOIN {modules} md ON md.id = cm.module
-    LEFT JOIN {pulse_users} nou ON  nou.pulse = nt.id and nt.course = nou.course
-    JOIN {course} cu on cu.id = nt.course
-    RIGHT JOIN {context} ctx on ctx.instanceid = cm.id and contextlevel = 70
-    WHERE md.name = 'pulse'";
+    $sql = "SELECT nt.id AS nid, nt.*, '' AS pulseend,
+        cm.id as cmid, cm.*, md.id AS mid, nou.id as nouid,
+        ctx.id as contextid, ctx.*, cu.id as courseid, cu.* FROM {pulse} nt
+        JOIN {course_modules} cm ON cm.instance = nt.id
+        JOIN {modules} md ON md.id = cm.module
+        LEFT JOIN {pulse_users} nou ON  nou.pulseid = nt.id
+        JOIN {course} cu ON cu.id = nt.course
+        RIGHT JOIN {context} ctx ON ctx.instanceid = cm.id and contextlevel = 70
+        WHERE md.name = 'pulse' AND cm.visible = 1";
 
     $records = $DB->get_records_sql($sql, []);
     if (empty($records)) {
@@ -430,7 +384,7 @@ function mod_pulse_cron_task() {
         return true;
     }
     $modinfo = [];
-    foreach ($records as $key => $record) {        
+    foreach ($records as $key => $record) {
         $params = [];
         $record = (array) $record;
         $keys = array_keys($record);
@@ -464,12 +418,15 @@ function mod_pulse_cron_task() {
                 JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
                 JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
                 JOIN (SELECT DISTINCT userid
-                                FROM {role_assignments}
-                                WHERE contextid $insql
-                                AND roleid $roleinsql
-                            ) ra ON ra.userid = eu1_u.id
-            WHERE 1 = 1 AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0) je ON je.id = u.id
-            WHERE u.deleted = 0 ORDER BY u.lastname, u.firstname, u.id";
+                        FROM {role_assignments}
+                        WHERE contextid $insql
+                        AND roleid $roleinsql GROUP BY userid
+                    ) ra ON ra.userid = eu1_u.id
+            WHERE 1 = 1 AND ej1_ue.status = 0
+            AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= UNIX_TIMESTAMP(NOW()))
+            AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > UNIX_TIMESTAMP(NOW()))
+            AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0) je ON je.id = u.id
+            WHERE u.deleted = 0 AND u.suspended = 0 ORDER BY u.lastname, u.firstname, u.id";
 
         $params[] = $course['id'];
         $params = array_merge($params, array_filter($inparams));
@@ -477,23 +434,26 @@ function mod_pulse_cron_task() {
         $params[] = 1;
         $students = $DB->get_records_sql($usersql, $params);
 
-        $notifiedusers = json_decode($record['notified_users']);
         $courseid = $pulse['course'];
-        if (!in_array($courseid, $modinfo)) {
-            $modinfo[$courseid] = get_fast_modinfo($courseid, 0);
-        }
-        $cm = $modinfo[$course['id']]->get_cm($cm['id']);
 
-        // Filter users from course pariticipants by completion.
-        $listofusers = mod_pulse_get_course_students($students, $cm, $notifiedusers, (object) $course );
-        if (!empty($listofusers)) {
-            mod_pulse_send_pulse($listofusers, (object) $pulse, (object) $course, (object) $context);
-        } else {
-            mtrace('There is not users to send pulse');
-        }
+        $instance = new stdclass();
+        $instance->pulse = (object) $pulse;
+        $instance->course = (object) $course;
+        $instance->context = (object) $context;
+        $instance->cm = (object) $cm;
+        $instance->students = $students;
     }
-
+    pulse_set_notification_adhoc($instance);
     mtrace('Pulse message sending completed....');
+}
+
+function pulse_set_notification_adhoc($instance) {
+
+    $task = new \mod_pulse\task\sendinvitation();
+    $task->set_custom_data($instance);
+    $task->set_component('pulse');
+    \core\task\manager::queue_adhoc_task($task, true);
+
 }
 
 
@@ -616,7 +576,7 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
             return COMPLETION_INCOMPLETE;
         }
     }
-    
+
     // Completion by any selected role user.
     if ($pulse->completionapproval) {
         if (!empty($completion) && $completion->approvalstatus == 1) {
@@ -718,9 +678,12 @@ function mod_pulse_completion_crontask() {
                                         WHERE contextid $insql
                                         AND roleid $roleinsql
                                     ) ra ON ra.userid = eu1_u.id
-                    WHERE 1 = 1 AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0
+                    WHERE 1 = 1 AND ej1_ue.status = 0
+                    AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= UNIX_TIMESTAMP(NOW()))
+                    AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > UNIX_TIMESTAMP(NOW()))
+                    AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0 AND eu1_u.suspended = 0
                 ) je ON je.id = u.id
-            WHERE u.deleted = 0 ORDER BY u.lastname, u.firstname, u.id";
+            WHERE u.deleted = 0 AND u.suspended = 0 ORDER BY u.lastname, u.firstname, u.id";
 
         $params[] = $course['id'];
         $params[] = $cm['instance'];
@@ -815,10 +778,15 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                 if (pulse_has_approvalrole($roles, $moduleid)) {
                     $approvelink = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid]);
                     $html[$moduleid] .= html_writer::tag('div',
-                        html_writer::link($approvelink, get_string('approveuser', 'pulse'),
+                        html_writer::link($approvelink, get_string('approveuserbtn', 'pulse'),
                         ['class' => 'btn btn-primary pulse-approve-users']),
                         ['class' => 'approve-user-wrapper']
                     );
+                } else if (pulse_user_isstudent($moduleid)) {
+                    if (!class_exists('core_completion\activity_custom_completion')
+                        && $message = pulse_user_approved($records[$moduleid]->instance, $USER->id) ) {
+                        $html[$moduleid] .= $message.'<br>';
+                    }
                 }
             }
             // Generate self mark completion buttons for students.
@@ -826,14 +794,19 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                 if ($data->completionself == 1 && pulse_user_isstudent($moduleid)
                     && !pulse_isusercontext($data->completionapprovalroles, $moduleid)) {
                     // Add self mark completed informations.
-                    if (!pulse_already_selfcomplete($records[$moduleid]->instance, $USER->id)) {
+                    if (!class_exists('core_completion\activity_custom_completion')
+                        && $date = pulse_already_selfcomplete($records[$moduleid]->instance, $USER->id)) {
+                        $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
+                        $html[$moduleid] .= html_writer::tag('div', $selfmarked,
+                        ['class' => 'pulse-self-marked badge badge-success']);
+                    } else {
                         $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
                         $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
                             ['class' => 'btn btn-primary pulse-approve-users']
                         );
                         $html[$moduleid] .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-approve-users']);
-                    } 
-                } 
+                    }
+                }
             } else {
                 $extend = false;
             }
@@ -877,11 +850,10 @@ function mod_pulse_is_uservisible($cmid, $userid, $courseid) {
  * @return void
  */
 function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=true, $userid=null) {
-    global $USER, $DB; 
+    global $USER, $DB;
     if ($userid == null) {
         $userid = $USER->id;
     }
-
     $modulecontext = context_module::instance($cmid);
     $approvalroles = json_decode($completionapprovalroles);
     $roles = get_user_roles($modulecontext, $userid);
@@ -895,7 +867,6 @@ function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=tr
     if (!$usercontext) {
         return $hasrole;
     }
-
     // Test user has user context.
     $sql = "SELECT ra.id, ra.userid, ra.contextid, ra.roleid, ra.component, ra.itemid, c.path
             FROM {role_assignments} ra
@@ -915,6 +886,13 @@ function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=tr
 }
 
 
+/**
+ * Check the pulse instance contains user context roles in completion approval roles
+ *
+ * @param  mixed $completionapprovalroles
+ * @param  mixed $cmid
+ * @return void
+ */
 function pulse_isusercontext($completionapprovalroles, $cmid) {
     global $DB, $USER;
 
@@ -935,7 +913,7 @@ function pulse_isusercontext($completionapprovalroles, $cmid) {
 /**
  * Get mentees assigned students list.
  *
- * @return void
+ * @return bool|mixed List of users assigned as child users.
  */
 function pulse_user_getmentessuser() {
     global $DB, $USER;
@@ -955,12 +933,13 @@ function pulse_user_getmentessuser() {
     }
     return false;
 }
+
 /**
  * Check and generate user approved information for module.
  *
  * @param  mixed $pulseid
  * @param  mixed $userid
- * @return void
+ * @return bool|string Returns approved user data as html.
  */
 function pulse_user_approved($pulseid, $userid) {
     global $DB;
@@ -973,7 +952,7 @@ function pulse_user_approved($pulseid, $userid) {
         $params['user'] = ($approvedby) ? fullname($approvedby) : '-';
 
         $approvalstr = get_string('approvedon', 'pulse', $params);
-        return $approvalstr;
+        return html_writer::tag('div', $approvalstr, ['class' => 'badge badge-info']);
     }
     return false;
 }
@@ -982,7 +961,7 @@ function pulse_user_approved($pulseid, $userid) {
  * Check the logged in users is student for pulse.
  *
  * @param  mixed $cmid
- * @return void
+ * @return bool
  */
 function pulse_user_isstudent($cmid) {
     global $USER;
@@ -1003,7 +982,7 @@ function pulse_user_isstudent($cmid) {
  *
  * @param  mixed $pulseid
  * @param  mixed $userid
- * @return void
+ * @return bool true|false
  */
 function pulse_already_selfcomplete($pulseid, $userid) {
     global $DB;
@@ -1017,6 +996,13 @@ function pulse_already_selfcomplete($pulseid, $userid) {
 }
 
 
+/**
+ * Trigger the add pulse instance.
+ *
+ * @param  mixed $pulseid
+ * @param  mixed $pulse
+ * @return void
+ */
 function pulse_extend_add_instance($pulseid, $pulse) {
     $callbacks = get_plugins_with_function('extend_pulse_add_instance');
     foreach ($callbacks as $type => $plugins) {
@@ -1026,24 +1012,58 @@ function pulse_extend_add_instance($pulseid, $pulse) {
     }
 }
 
-function pulse_extend_update_instance($pulse) {
+/**
+ * Trigger pulse extended plugins to do their own update steps.
+ *
+ * @param  mixed $pulse Pulse instance data.
+ * @param  mixed $context Context module.
+ * @return void
+ */
+function pulse_extend_update_instance($pulse, $context) {
     $callbacks = get_plugins_with_function('extend_pulse_update_instance');
     foreach ($callbacks as $type => $plugins) {
         foreach ($plugins as $plugin => $pluginfunction) {
-            $pluginfunction($pulse);
+            $pluginfunction($pulse, $context);
         }
     }
 }
 
+/**
+ * Trigger pulse extended plugins delete function to do their own delete steps.
+ *
+ * @param  mixed $cmid Module context id
+ * @param  mixed $pulseid Pulse instance id.
+ * @return void
+ */
+function pulse_extend_delete_instance($cmid, $pulseid) {
+    $callbacks = get_plugins_with_function('extend_pulse_delete_instance');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $pluginfunction($cmid, $pulseid);
+        }
+    }
+}
 
 /** Inject form elements into mod instance form.
  * @param mform $mform the form to inject elements into.
  */
-function mod_pulse_extend_form($mform, $instance) {
+function mod_pulse_extend_form($mform, $instance, $method='') {
     $callbacks = get_plugins_with_function('extend_pulse_form');
     foreach ($callbacks as $type => $plugins) {
         foreach ($plugins as $plugin => $pluginfunction) {
-            $pluginfunction($mform, $instance);
+            $pluginfunction($mform, $instance, $method);
+        }
+    }
+}
+
+/** Inject form elements into mod instance form.
+ * @param mform $mform the form to inject elements into.
+ */
+function mod_pulse_extend_formvalidation($data, $files) {
+    $callbacks = get_plugins_with_function('extend_pulse_validation');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            return $pluginfunction($data, $files);
         }
     }
 }
@@ -1085,6 +1105,13 @@ function pulse_extend_preprocessing(&$defaultvalues, $currentinstance, $context)
     }
 }
 
+/**
+ * Call the extended email placeholder filters to replace the content.
+ *
+ * @param  mixed $instance Pulse instance data object.
+ * @param  mixed $displaytype Location to display the reaction.
+ * @return string $html
+ */
 function pulse_extend_reaction($instance, $displaytype='notification') {
     $html = '';
     $callbacks = get_plugins_with_function('extend_pulse_reaction');
@@ -1096,16 +1123,81 @@ function pulse_extend_reaction($instance, $displaytype='notification') {
     return $html;
 }
 
-function pulse_extend_student_messagesend($userid, $instance, $messagedata) {
-    $callbacks = get_plugins_with_function('extend_pulse_notification');
+
+/**
+ * Check the pulsepro extended the invitation method.
+ * if extended the invitation then the invitations are send using pulse pro plugin.
+ * @return void
+ */
+function pulse_extend_invitation() {
+    $callbacks = get_plugins_with_function('extend_pulse_invitation');
     foreach ($callbacks as $type => $plugins) {
         foreach ($plugins as $plugin => $pluginfunction) {
-            $pluginfunction($userid, $instance, $messagedata);
+            return $pluginfunction();
         }
     }
 }
 
+/**
+ * List of extended the function used in the backup steps.
+ *
+ * @param  mixed $pulse
+ * @param  mixed $userinfo
+ * @return void
+ */
+function pulse_extend_backup_steps($pulse, $userinfo) {
+    $callbacks = get_plugins_with_function('extend_pulse_backup_steps');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            return $pluginfunction($pulse, $userinfo);
+        }
+    }
+}
 
+/**
+ * List of extended plugins restore contents.
+ *
+ * @param  mixed $contents
+ * @return void
+ */
+function pulse_extend_restore_content(&$contents) {
+    $callbacks = get_plugins_with_function('extend_pulse_restore_content');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $contents = $pluginfunction($contents);
+        }
+    }
+}
+
+/**
+ * Extended plugins restore structures used in the acitivty restore.
+ *
+ * @param  mixed $paths
+ * @return void
+ */
+function pulse_extend_restore_structure(&$paths) {
+    $callbacks = get_plugins_with_function('extend_pulse_restore_structure');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $paths = $pluginfunction($paths);
+        }
+    }
+}
+
+/**
+ * List of extended plugins fileareas list to add into pluginfile function.
+ *
+ * @return void
+ */
+function pulse_extend_filearea() {
+    $callbacks = get_plugins_with_function('extend_pulse_filearea');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $fileareas = $pluginfunction();
+            return $fileareas;
+        }
+    }
+}
 
 /**
  * This function receives a calendar event and returns the action associated with it, or null if there is none.
@@ -1155,18 +1247,3 @@ function mod_pulse_core_calendar_provide_event_action(calendar_event $event,
         true
     );
 }
-
-/* function pulse_extend_calendar_event($event, $factory, $userid) {
-    $callbacks = get_plugins_with_function('extend_pulse_calendar_event');
-    foreach ($callbacks as $type => $plugins) {
-        foreach ($plugins as $plugin => $pluginfunction) {
-           return $pluginfunction($event, $factory, $userid);
-        }
-    }
-} */
-
-/* function pulse_extend_reaction($instance) {
-    $params[] = $instance;
-    $params[] = true;
-    return component_callback('local_pulsepro', 'extend_pulse_reaction', $params);
-} */
