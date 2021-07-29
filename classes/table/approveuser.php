@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Approve user table main class file.
+ *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -29,6 +31,9 @@ use moodle_url;
 
 require_once($CFG->dirroot. '/mod/pulse/lib.php');
 
+/**
+ * Approve users table main class. Extends the core users partinicipant table class.
+ */
 class approveuser extends \core_user\table\participants {
 
     /**

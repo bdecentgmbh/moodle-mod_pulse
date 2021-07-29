@@ -37,11 +37,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot . '/user/lib.php');
 
 /**
- * Class used to fetch participants based on a filterset.
- *
- * @package    core_user
- * @copyright  2020 Michael Hawkins <michaelh@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Approve users table - sort and filters definitions.
  */
 class approveuser_search extends \core_user\table\participants_search {
 
@@ -415,5 +411,4 @@ class approveuser_search extends \core_user\table\participants_search {
             'params' => $params,
         ];
     }
-
 }

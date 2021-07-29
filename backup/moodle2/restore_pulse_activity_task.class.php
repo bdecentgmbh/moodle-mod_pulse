@@ -18,7 +18,6 @@
  * Definition restore activity task.
  *
  * @package   mod_pulse
- * @category  Backup
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,8 +27,7 @@ defined('MOODLE_INTERNAL') || die('No direct access!');
 require_once($CFG->dirroot . '/mod/pulse/backup/moodle2/restore_pulse_stepslib.php');
 
 /**
- * Pulse restore task that provides all the settings and steps to perform one
- * complete restore of the activity
+ * Pulse restore task that provides all the settings and steps to perform one. complete restore of the activity
  */
 class restore_pulse_activity_task extends restore_activity_task {
 

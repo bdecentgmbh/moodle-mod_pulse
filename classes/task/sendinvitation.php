@@ -17,16 +17,23 @@
 /**
  * Scheduled adhoc task to send pulse.
  *
- * @package   mod_pulse/sendinvitation
- * @category  cron
+ * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_pulse\task;
 
+/**
+ * Defined the invitation send method and filter methods.
+ */
 class sendinvitation extends \core\task\adhoc_task {
 
+    /**
+     * Adhoc task execution.
+     * For each pulse instance, Enrolled users data fetched and filtered by their acitivty availability status.
+     * @return void
+     */
     public function execute() {
         global $CFG;
 
@@ -44,11 +51,13 @@ class sendinvitation extends \core\task\adhoc_task {
         }
     }
 
-
     /**
-     * Process template text and send pulse to the course users.
+     * Send pulse data.
      *
-     * @param  mixed $pulseid
+     * @param  mixed $users Users data record.
+     * @param  mixed $pulse Pulse instance record.
+     * @param  mixed $course Course data record.
+     * @param  mixed $context Module Context data record.
      * @return void
      */
     public function send_pulse($users, $pulse, $course, $context) {
@@ -95,6 +104,13 @@ class sendinvitation extends \core\task\adhoc_task {
         }
     }
 
+    /**
+     * Find the correct sender user from the course and group contacts.
+     *
+     * @param  mixed $senderdata Listof course and group contact users
+     * @param  mixed $userid // Studnet user id
+     * @return object Sender user obejct
+     */
     public static function find_user_sender($senderdata, $userid) {
 
         if (!empty($senderdata->groupcontact)) {
@@ -113,6 +129,12 @@ class sendinvitation extends \core\task\adhoc_task {
     }
 
 
+    /**
+     * Get list of available senders users from group and course seperately.
+     *
+     * @param  mixed $courseid
+     * @return void
+     */
     public static function get_sender($courseid) {
         global $DB;
         $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
@@ -143,11 +165,12 @@ class sendinvitation extends \core\task\adhoc_task {
         array_unshift($roleinparams, $courseid);
         $records = $DB->get_records_sql($usersql, $roleinparams);
         $teacherids = array_keys($records);
+        // If no teachers enroled in course then use the support user.
         if (empty($teacherids)) {
             return [];
         }
 
-        $coursecontact = reset($records);
+        $coursecontact = reset($records); // Get first course contact user.
 
         // Get group based contacts.
         $groups = array_keys(groups_get_all_groups($courseid));

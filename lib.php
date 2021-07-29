@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Pulse instance libarary file. contains pro feature extended methods
+ *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -120,6 +122,8 @@ function pulse_delete_instance($pulseid) {
 }
 
 /**
+ * Features that supports by pulse module.
+ *
  * @uses FEATURE_IDNUMBER
  * @uses FEATURE_GROUPS
  * @uses FEATURE_GROUPINGS
@@ -173,9 +177,8 @@ function pulse_get_editor_options() {
 /**
  * Update the user id in the db notified users list.
  *
- * @param  mixed $users
- * @param  mixed $course
- * @param  mixed $pulse
+ * @param  mixed $users List of users currently notified.
+ * @param  mixed $pulse Pulse instance object.
  * @return void
  */
 function mod_pulse_update_notified_users($users, $pulse) {
@@ -197,11 +200,13 @@ function mod_pulse_update_notified_users($users, $pulse) {
 /**
  * Replace email template placeholders with dynamic datas.
  *
- * @param  mixed $templatetext
- * @param  mixed $subject
- * @param  mixed $course
- * @param  mixed $user
- * @return void
+ * @param  mixed $templatetext Email Body content with placeholders
+ * @param  mixed $subject Mail subject with placeholders.
+ * @param  mixed $course Course object data.
+ * @param  mixed $user User data object.
+ * @param  mixed $mod Pulse module data object.
+ * @param  mixed $sender Sender user data object. - sender is the first enrolled teacher in the course of module.
+ * @return array Updated subject and message body content.
  */
 function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
     global $DB, $CFG;
@@ -227,10 +232,11 @@ function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mo
 }
 
 /**
- * List of available enrolled users in the course
+ * Filter the users who has access to view the instance and not notified before.
  *
- * @param  mixed $context module context.
- * @return array $students listof students.
+ * @param  mixed $students List of student users enrolled in course.
+ * @param  mixed $instance Pulse instance
+ * @return array List of students who has access.
  */
 function mod_pulse_get_course_students($students, $instance) {
     global $DB, $CFG;
@@ -251,7 +257,7 @@ function mod_pulse_get_course_students($students, $instance) {
  *
  * @param  int $studentid User id
  * @param  int $pulseid pulse instance id
- * @return void
+ * @return bool true if user not notified before.
  */
 function pulseis_notified($studentid, $pulseid) {
     global $DB;
@@ -447,13 +453,17 @@ function mod_pulse_cron_task() {
     mtrace('Pulse message sending completed....');
 }
 
+/**
+ * Set adhoc task to send reminder notification for each instance
+ *
+ * @param  mixed $instance
+ * @return void
+ */
 function pulse_set_notification_adhoc($instance) {
-
     $task = new \mod_pulse\task\sendinvitation();
     $task->set_custom_data($instance);
     $task->set_component('pulse');
     \core\task\manager::queue_adhoc_task($task, true);
-
 }
 
 
@@ -537,13 +547,16 @@ function mod_pulse_get_completion_active_rule_descriptions($cm) {
 
 
 /**
- * Obtains the automatic completion state for this forum based on any conditions
+ * Obtains the automatic completion state for this pulse based on any conditions
  * in forum settings.
  *
- * @param object $course Course
- * @param object $cm Course-module
- * @param int $userid User ID
- * @param bool $type Type of comparison (or/and; can be used as return value if no conditions)
+ * @param  object $course Course data record
+ * @param  object $cm Course-module data object
+ * @param  int $userid User ID
+ * @param  bool $type Type of comparison (or/and; can be used as return value if no conditions)
+ * @param  mixed $pulse Pulse instance data record
+ * @param  mixed $completion Completion data.
+ * @param  mixed $modinfo Module info class object.
  * @return bool True if completed, false if not, $type if conditions not set.
  */
 function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $completion=null, $modinfo=null) {
@@ -597,6 +610,36 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
     return $status;
 }
 
+/**
+ * Seperate the record data into context and course and cm.
+ * In function mod_pulse_completion_crontask, data fetched using JOIN queries,
+ * Here the joined datas are seperated.
+ *
+ * @param  mixed $keys List of fields available for sql data return.
+ * @param  mixed $record Pulse Instance data from sql data
+ * @return array Returns course, context, cm data.
+ */
+function pulse_process_recorddata($keys, $record) {
+    // Context.
+    $ctxpos = array_search('contextid', $keys);
+    $ctxendpos = array_search('locked', $keys);
+    $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
+    $context['id'] = $context['contextid'];
+    unset($context['contextid']);
+    // Course module.
+    $cmpos = array_search('cmid', $keys);
+    $cmendpos = array_search('deletioninprogress', $keys);
+    $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1 );
+    $cm['id'] = $cm['cmid'];
+    unset($cm['cmid']);
+    // Course records.
+    $coursepos = array_search('courseid', $keys);
+    $course = array_slice($record, $coursepos);
+    $course['id'] = $course['courseid'];
+
+    return [0 => $course, 1 => $context, 2 => $cm];
+}
+
 
 /**
  * Cron task for completion check for students in all pulse module.
@@ -645,20 +688,8 @@ function mod_pulse_completion_crontask() {
         $pulse['id'] = $pulse['nid'];
 
         mtrace("Check the user module completion - Pulse id: ".$pulse['id']);
-        // Context.
-        $ctxpos = array_search('contextid', $keys);
-        $ctxendpos = array_search('locked', $keys);
-        $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
-        $context['id'] = $context['contextid']; unset($context['contextid']);
-        // Course module.
-        $cmpos = array_search('cmid', $keys);
-        $cmendpos = array_search('deletioninprogress', $keys);
-        $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1 );
-        $cm['id'] = $cm['cmid']; unset($cm['cmid']);
-        // Course records.
-        $coursepos = array_search('courseid', $keys);
-        $course = array_slice($record, $coursepos);
-        $course['id'] = $course['courseid'];
+        // Precess results.
+        list($course, $context, $cm) = pulse_process_recorddata($keys, $record);
         // Get enrolled users with capability.
         $contextlevel = explode('/', $context['path']);
         list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
@@ -707,6 +738,7 @@ function mod_pulse_completion_crontask() {
                 foreach ($students as $key => $user) {
                     $modinfo[$course->id]->changeuserid($user->id);
                     $md = $modinfo[$course->id];
+                    // Get pulse module completion state for user.
                     $result = pulse_get_completion_state($course, $cm, $user->id, COMPLETION_UNKNOWN, $pulse, $user, $md);
                     $activitycompletion = new \stdclass();
                     $activitycompletion->coursemoduleid = $cm->id;
@@ -739,21 +771,18 @@ function mod_pulse_completion_crontask() {
 
                 }
             }
-
         } else {
             mtrace('There is not users to update pulse module completion');
         }
     }
-
     mtrace('Course module completions are updated for all pulse module....');
-
 }
 
 /**
  * Generate approval buttons and self mark completions buttons based on user roles and availability.
  *
- * @param  mixed $args
- * @return void
+ * @param  array $args List of modules id available in the course page
+ * @return string encoded html string.
  */
 function mod_pulse_output_fragment_completionbuttons($args) {
     global $CFG, $DB, $USER;
@@ -845,8 +874,10 @@ function mod_pulse_is_uservisible($cmid, $userid, $courseid) {
 /**
  * Check the current users has role to approve the completion for students in current pulse module.
  *
- * @param  mixed $completionapprovalroles
- * @param  mixed $cmid
+ * @param  mixed $completionapprovalroles Completion approval roles select in the pulse instance.
+ * @param  mixed $cmid Course module id.
+ * @param  mixed $usercontext check user context(false it only check and return the coursecontetxt roles)
+ * @param  mixed $userid
  * @return void
  */
 function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=true, $userid=null) {
@@ -1045,7 +1076,11 @@ function pulse_extend_delete_instance($cmid, $pulseid) {
 }
 
 /** Inject form elements into mod instance form.
- * @param mform $mform the form to inject elements into.
+ *
+ * @param  mform $mform the form to inject elements into.
+ * @param  mixed $instance Pulse instance.
+ * @param  mixed $method Method of form fields (=reaction only returns the reaction form fields)
+ * @return void
  */
 function mod_pulse_extend_form($mform, $instance, $method='') {
     $callbacks = get_plugins_with_function('extend_pulse_form');
@@ -1056,8 +1091,11 @@ function mod_pulse_extend_form($mform, $instance, $method='') {
     }
 }
 
-/** Inject form elements into mod instance form.
- * @param mform $mform the form to inject elements into.
+/** Extende the pro plugins validation error messages.
+ *
+ * @param  mixed $data module form submitted data.
+ * @param  mixed $files Module form submitted files.
+ * @return array list of validation errors.
  */
 function mod_pulse_extend_formvalidation($data, $files) {
     $callbacks = get_plugins_with_function('extend_pulse_validation');
@@ -1080,8 +1118,8 @@ function mod_pulse_extend_formdata($mform) {
     }
 }
 
-/** Inject form elements into mod instance form.
- * @param mform $mform the form to inject elements into.
+/** Extend form post process method from pro plugin.
+ * @param object $data module form submitted data object.
  */
 function pulse_extend_postprocessing($data) {
     $callbacks = get_plugins_with_function('extend_pulse_postprocessing');
@@ -1092,9 +1130,13 @@ function pulse_extend_postprocessing($data) {
     }
 }
 
-
-/** Inject form elements into mod instance form.
- * @param mform $mform the form to inject elements into.
+/**
+ * Extended the support of data processing before defalut values are set to form.
+ *
+ * @param  mixed $defaultvalues Current default values.
+ * @param  mixed $currentinstance status of instance is current (true/false)
+ * @param  mixed $context Module context data record.
+ * @return void
  */
 function pulse_extend_preprocessing(&$defaultvalues, $currentinstance, $context) {
     $callbacks = get_plugins_with_function('extend_pulse_preprocessing');

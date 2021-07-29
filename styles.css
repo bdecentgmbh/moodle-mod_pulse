@@ -1,22 +1,22 @@
 .path-mod-pulse .fcontainer .emailvars span {
-	color: #000;
-	background: #ffbf46;
-	padding: 3px 7px;
-	margin-bottom: 5px;
-	margin-right: 3px;
-	display: inline-block;
-	border-radius: 3px;
+    color: #000;
+    background: #ffbf46;
+    padding: 3px 7px;
+    margin-bottom: 5px;
+    margin-right: 3px;
+    display: inline-block;
+    border-radius: 3px;
 }
 
 .path-mod-pulse .emailvars {
-	position: relative;
+    position: relative;
     font-size: smaller;
 }
 
 @media (max-width: 767px) {
-	.path-mod-pulse .fcontainer .emailvars {
-		width: 100%;
-	}
+    .path-mod-pulse .fcontainer .emailvars {
+        width: 100%;
+    }
 }
 
 .section .pulse.modtype_pulse .contentwithoutlink,
@@ -25,15 +25,15 @@
 }
 
 #page-mod-pulse-approve #participants .approvebtn {
-	margin-left: 10px;
+    margin-left: 10px;
 }
 
 #page-mod-pulse-mod #fgroup_id_completionrequireapproval .form-check.fitem {
-	margin-right: 15px;
+    margin-right: 15px;
 }
 
 #page-mod-pulse-mod #fgroup_id_completionrequireapproval .pulse-completion-roles {
-	margin-left: 10px;
+    margin-left: 10px;
 }
 
 .pulse.modtype_pulse .pulse-completion-btn .badge {
@@ -43,9 +43,9 @@
 }
 
 .section .pulse.modtype_pulse .pulse-completion-btn {
-	text-align: right;
-	margin: 15px 0;
+    text-align: right;
+    margin: 15px 0;
 }
 .pulse.modtype_pulse .pulse-completion-btn .badge {
-	margin-bottom: 15px;
+    margin-bottom: 15px;
 }

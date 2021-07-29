@@ -18,7 +18,6 @@
  * Definition restore structure steps.
  *
  * @package   mod_pulse
- * @category  Backup
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -51,6 +50,7 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
 
     /**
      * Process activity pulse restore.
+     * @param mixed $data restore pulse table data.
      */
     protected function process_pulse($data) {
         global $DB;
@@ -102,6 +102,12 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         // (child paths, file areas nor links decoder).
     }
 
+    /**
+     * Process pulse pro features restore structures.
+     * Pro feature.
+     * @param  mixed $data
+     * @return void
+     */
     protected function process_pulsepro($data) {
         global $DB;
         $data = (object) $data;
@@ -111,6 +117,12 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         $newitemid = $DB->insert_record('pulsepro', $data);
     }
 
+    /**
+     * Process pro feattures availablity table restore methods.
+     * Pro feature.
+     * @param  mixed $data restore data.
+     * @return void
+     */
     protected function process_pulsepro_availability($data) {
         global $DB;
         $data = (object) $data;
@@ -121,6 +133,11 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         $newitemid = $DB->insert_record('pulsepro_availability', $data);
     }
 
+    /**
+     * Update the files of editors after restore execution.
+     *
+     * @return void
+     */
     protected function after_execute() {
         // Add pulse related files.
         $this->add_related_files('mod_pulse', 'intro', null);

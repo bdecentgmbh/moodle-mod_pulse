@@ -30,12 +30,11 @@ define([], function() {
         init: function() {
             var module = this;
             var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
-            console.log(templatevars);
             for (var l = 0; l < templatevars.length; l++) {
                 templatevars[l].addEventListener('click', function() {
                     var EditorInput = document.getElementById('id_pulse_content_editoreditable');
                     var caret = document.getElementsByClassName("insertatcaretactive");
-                    for (j = 0; j < caret.length; j++) {
+                    for (var j = 0; j < caret.length; j++) {
                         caret[j].classList.remove("insertatcaretactive");
                     }
                     EditorInput.classList.add("insertatcaretactive");
@@ -51,7 +50,10 @@ define([], function() {
             }
 
             // Make selected roles as badges in module edit form page.
-            const textNodes = this.getAllTextNodes(document.getElementById('page-mod-pulse-mod').querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']"));
+            const textNodes = this.getAllTextNodes(
+                document.getElementById('page-mod-pulse-mod')
+                .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']")
+            );
             textNodes.forEach(node => {
                 const span = document.createElement('span');
                 span.classList = 'badge badge-info pulse-completion-roles';
@@ -69,10 +71,10 @@ define([], function() {
 
         insertAtCaret: function(myValue) {
             var caretelements = document.getElementsByClassName("insertatcaretactive");
+            var sel, range;
             for (var n = 0; n < caretelements.length; n++) {
                 var thiselem = caretelements[n];
                 if (typeof thiselem.value === 'undefined') {
-                    var sel, range, html;
                     if (window.getSelection) {
                         sel = window.getSelection();
                         if (sel.getRangeAt && sel.rangeCount) {
@@ -99,8 +101,8 @@ define([], function() {
                         // For browsers like Firefox and Webkit based.
                         var startPos = thiselem.selectionStart;
                         var endPos = thiselem.selectionEnd;
-                        var scrollTop = thiselem.scrollTop;
-                        thiselem.value = thiselem.value.substring(0, startPos) + myValue + thiselem.value.substring(endPos, thiselem.value.length);
+                        thiselem.value = thiselem.value.substring(0, startPos)
+                            + myValue + thiselem.value.substring(endPos, thiselem.value.length);
                         thiselem.focus();
                         thiselem.selectionStart = startPos + myValue.length;
                         thiselem.selectionEnd = startPos + myValue.length;

@@ -15,28 +15,69 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Email template placeholder definition.
- * Modified version of IOMAD email templates emailvars.
+ * Email template placeholder definition. Modified version of IOMAD email templates emailvars.
  *
  * @package   mod_pulse
- * @category  Library
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Filter for notification content placeholders.
+ */
 class EmailVars {
     // Objects the vars refer to.
+
+    /**
+     * User data record.
+     *
+     * @var object
+     */
     protected $user = null;
+
+    /**
+     * Course record.
+     *
+     * @var object
+     */
     protected $course = null;
+
+    /**
+     * Site record.
+     *
+     * @var object
+     */
     protected $site = null;
+
+    /**
+     * Site url.
+     *
+     * @var string
+     */
     protected $url = null;
+
+    /**
+     * User who send the notifications to users.
+     *
+     * @var object
+     */
     protected $sender = null;
+
+    /**
+     * Placeholder doesn't have dynamic filter then it will replaced with blank value.
+     *
+     * @var string
+     */
     protected $blank = "[blank]";
 
     /**
-     * Constructor
+     * Sets up and retrieves the API objects.
      *
-     * Sets up and retrieves the API objects
+     * @param  mixed $user User data record
+     * @param  mixed $course Course data object
+     * @param  mixed $sender Sender user record data.
+     * @param  mixed $pulse Pulse instance record data.
+     * @return void
      */
     public function __construct($user, $course, $sender, $pulse) {
         global $CFG;
@@ -58,10 +99,8 @@ class EmailVars {
     /**
      * Check whether it is ok to call certain methods of this class as a substitution var
      *
-     * Parameters - $methodname = text;
-     *
-     * Returns text.
-     *
+     * @param string $methodname = text;
+     * @return string
      **/
     private static function ok2call($methodname) {
         return ($methodname != "vars" && $methodname != "__construct" && $methodname != "__get" && $methodname != "ok2call");
@@ -70,7 +109,7 @@ class EmailVars {
     /**
      * Set up all the methods that can be called and used for substitution var in email templates.
      *
-     * Returns array();
+     * @return array
      *
      **/
     public static function vars() {
@@ -108,6 +147,7 @@ class EmailVars {
 
     /**
      * Trap calls to non-existent methods of this class, that can then be routed to the appropriate objects.
+     * @param string $name Placeholder used on the template.
      */
     public function __get($name) {
         if (isset($name)) {
@@ -179,6 +219,12 @@ class EmailVars {
         }
     }
 
+    /**
+     * Reaction placeholders dynamic data.
+     * Pro featuer extended from locla_pulsepro.
+     *
+     * @return void
+     */
     public function reaction() {
         return pulse_extend_reaction($this);
     }

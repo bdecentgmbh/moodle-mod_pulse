@@ -33,10 +33,6 @@ use core_table\local\filter\string_filter;
 
 /**
  * Participants table filterset.
- *
- * @package    core
- * @copyright  2020 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class approveuser_filterset extends filterset {
     /**

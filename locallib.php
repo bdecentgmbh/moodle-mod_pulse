@@ -15,21 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Override user groups in modinfo. Group availablity condition doesn't check the passed user groups.
+ *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Override user groups in modinfo.
- * Group availablity condition doesn't check the passed user groups.
- *
  * Course modinfo wrapper.
  */
 class pulse_course_modinfo extends course_modinfo {
 
+    /**
+     * Userid to check the group availability.
+     *
+     * @var int
+     */
     public $groupuserid;
 
+    /**
+     * Standard properties to fetch.
+     *
+     * @var array
+     */
     private static $standardproperties = array(
         'courseid' => 'get_course_id',
         'userid' => 'get_user_id',

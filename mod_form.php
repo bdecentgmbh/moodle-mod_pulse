@@ -33,6 +33,12 @@ require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
  */
 class mod_pulse_mod_form extends moodleform_mod {
 
+    /**
+     * Pulse module add/update form fields are defined here.
+     * Basic form fields added and extended the module standard default fields.
+     *
+     * @return void
+     */
     public function definition() {
         global $DB, $PAGE, $CFG;
 
@@ -96,10 +102,16 @@ class mod_pulse_mod_form extends moodleform_mod {
         mod_pulse_extend_form($mform, $this);
 
         $this->standard_coursemodule_elements();
-
+        // Form submit and cancek buttons.
         $this->add_action_buttons(true, false, null);
     }
 
+    /**
+     * Add email placeholder fields in form fields.
+     *
+     * @param  mixed $mform
+     * @return void
+     */
     public function pulse_email_placeholders(&$mform) {
         $vars = \EmailVars::vars();
         $mform->addElement('html', "<div class='form-group row  fitem'> <div class='col-md-3'></div>
@@ -181,7 +193,7 @@ class mod_pulse_mod_form extends moodleform_mod {
     /**
      * Prepare the data after form was submited.
      *
-     * @param  mixed $data
+     * @param  mixed $data submitted data
      * @return void
      */
     public function data_postprocessing($data) {
@@ -197,6 +209,12 @@ class mod_pulse_mod_form extends moodleform_mod {
         pulse_extend_postprocessing($data);
     }
 
+    /**
+     * Process the pulse module data before set the default.
+     *
+     * @param  mixed $defaultvalues default values
+     * @return void
+     */
     public function data_preprocessing(&$defaultvalues) {
         $editoroptions = pulse_get_editor_options();
 
@@ -230,6 +248,13 @@ class mod_pulse_mod_form extends moodleform_mod {
         pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
     }
 
+    /**
+     * Validate the submited form data.
+     *
+     * @param  mixed $data submitted form data.
+     * @param  mixed $files submitted editor files.
+     * @return array $erros List of errors.
+     */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 

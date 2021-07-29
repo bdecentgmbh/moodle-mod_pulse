@@ -18,7 +18,6 @@
  * List of scheduled tasks to send pulses in background.
  *
  * @package   mod_pulse
- * @category  DB
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

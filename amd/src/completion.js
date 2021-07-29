@@ -28,8 +28,7 @@ define(['core/fragment'], function(Fragment) {
 
         updatecompletionbuttons: function() {
             var instances = document.getElementsByClassName('modtype_pulse');
-            console.log(instances);
-            var modules = [];
+            var modules = []; var moduleid;
             for (var i = 0; i < instances.length; i++) {
                 var instance = instances[i];
                 var id = instance.getAttribute('id');
@@ -39,21 +38,20 @@ define(['core/fragment'], function(Fragment) {
             var params = {modules:  JSON.stringify(modules)};
             if (modules.length > 0) {
                 let completionbuttons = Fragment.loadFragment('mod_pulse', 'completionbuttons', 1, params);
+                var approvebtn, element, referenceNode, completioncontent;
                 completionbuttons.then((data) => {
                     data = JSON.parse(data);
                     for (var k in data) {
-                    approvebtn = data[k];
-                    console.log(k);
-                    element = document.getElementById('module-' + k);
-                    referenceNode = element.getElementsByClassName('contentwithoutlink')[0];
-                    completioncontent = document.createElement('div');
-                    completioncontent.innerHTML = approvebtn;
-                    completioncontent.classList.add('pulse-completion-btn');
-                    referenceNode.parentNode.insertBefore(completioncontent, referenceNode.nextSibling);
-                    // Actions.innerHTML = approvebtn+actions.innerHTML;
-                    console.log(completioncontent);
+                        approvebtn = data[k];
+                        element = document.getElementById('module-' + k);
+                        referenceNode = element.getElementsByClassName('contentwithoutlink')[0];
+                        completioncontent = document.createElement('div');
+                        completioncontent.innerHTML = approvebtn;
+                        completioncontent.classList.add('pulse-completion-btn');
+                        referenceNode.parentNode.insertBefore(completioncontent, referenceNode.nextSibling);
                     }
-                });
+                    return true;
+                }).fail();
             }
         },
 

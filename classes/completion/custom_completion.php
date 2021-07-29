@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Activity custom completion subclass for the pulse activity.
+ *
+ * @package   mod_pulse
+ * @copyright 2021, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 declare(strict_types=1);
 
 namespace mod_pulse\completion;
@@ -25,11 +33,7 @@ use core_completion\activity_custom_completion;
  *
  * Contains the class for defining mod_pulse's custom completion rules
  * and fetching a pulse instance's completion statuses for a user.
- *
- * @package mod_lesson
- * @copyright Michael Hawkins <michaelh@moodle.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+ **/
 class custom_completion extends activity_custom_completion {
 
     /**
