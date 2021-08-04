@@ -97,9 +97,7 @@ class sendinvitation extends \core\task\adhoc_task {
                         $notifiedusers[] = $userto->id;
                     }
                 }
-                if ($addnotify) {
-                    mod_pulse_update_notified_users($notifiedusers, $pulse);
-                }
+                mod_pulse_update_notified_users($notifiedusers, $pulse);
             }
         }
     }
@@ -116,8 +114,9 @@ class sendinvitation extends \core\task\adhoc_task {
         if (!empty($senderdata->groupcontact)) {
             $groups = $senderdata->groupcontact;
             foreach ($groups as $groupid => $group) {
+                $group = (object) $group;
                 // Check student assigned in any group.
-                if (isset($group->students) && in_array($userid, $group->students)) {
+                if (isset($group->students) && in_array($userid, array_values($group->students))) {
                     if (!empty($group->sender)) { // Group has any teacher role to send notification.
                         return $group->sender;
                     }
@@ -146,7 +145,7 @@ class sendinvitation extends \core\task\adhoc_task {
 
         list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
         $contextid = \context_course::instance($courseid)->id;
-        $usersql = "SELECT DISTINCT eu1_u.*, ra.*
+        $usersql = "SELECT eu1_u.*, ra.*
         FROM {user} eu1_u
         JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
         JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
@@ -154,15 +153,17 @@ class sendinvitation extends \core\task\adhoc_task {
             SELECT DISTINCT userid, rle.shortname as roleshortname, roleid
                 FROM {role_assignments}
                 JOIN {role} rle ON rle.id = roleid
-                WHERE contextid = ? AND roleid $roleinsql GROUP BY userid
+                WHERE contextid = ? AND roleid $roleinsql GROUP BY userid, rle.shortname, roleid
             ) ra ON ra.userid = eu1_u.id
         WHERE 1 = 1 AND ej1_ue.status = 0
-        AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= UNIX_TIMESTAMP(NOW()))
-        AND ( ej1_ue.timeend = 0 OR ej1_ue.timeend > UNIX_TIMESTAMP(NOW()) )
+        AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ? )
+        AND ( ej1_ue.timeend = 0 OR ej1_ue.timeend > ? )
         AND eu1_u.deleted = 0 AND eu1_u.suspended = 0 ORDER BY ej1_ue.timestart, ej1_ue.timecreated";
 
         array_unshift($roleinparams, $contextid);
         array_unshift($roleinparams, $courseid);
+        $roleinparams[] = time();
+        $roleinparams[] = time();
         $records = $DB->get_records_sql($usersql, $roleinparams);
         $teacherids = array_keys($records);
         // If no teachers enroled in course then use the support user.
@@ -177,7 +178,7 @@ class sendinvitation extends \core\task\adhoc_task {
 
         if (!empty($groups)) {
             $sql = "SELECT gm.*
-            FROM mdl_groups_members  gm
+            FROM {groups_members}  gm
             WHERE gm.groupid IN (".implode(',', $groups).")
             ORDER BY gm.timeadded ASC";
 

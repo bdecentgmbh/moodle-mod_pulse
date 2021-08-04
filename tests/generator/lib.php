@@ -15,16 +15,32 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse instance test instance generate defined.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Pulse module instance generator.
+ */
+class mod_pulse_generator extends testing_module_generator {
 
-$plugin->component = 'mod_pulse'; // Name of this plugin.
-$plugin->version = 2021080400; // Released on 04 August 2021.
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.0';
+    /**
+     * Create pulse module instance.
+     *
+     * @param  mixed $record Module instance data.
+     * @param  array $options Additional options.
+     * @return void
+     */
+    public function create_instance($record = null, array $options = null) {
+        $record = (object) $record;
+        $record->showdescription = 1;
+        $record->pulse = 1;
+        if (!isset($record->diff_pulse)) {
+            $record->diff_pulse = 0;
+        }
+        return parent::create_instance($record, $options);
+    }
+}

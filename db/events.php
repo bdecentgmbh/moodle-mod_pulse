@@ -15,16 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Define event observers.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Need to define list of events that plugin will go to observe.
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_pulse'; // Name of this plugin.
-$plugin->version = 2021080400; // Released on 04 August 2021.
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.0';
+$observers = [
+    array(
+        'eventname' => 'core\event\course_module_deleted',
+        'callback' => '\mod_pulse\eventobserver::course_module_deleted',
+    ),
+
+    array(
+        'eventname' => 'core\event\user_enrolment_deleted',
+        'callback' => '\mod_pulse\eventobserver::user_enrolment_deleted',
+    ),
+];

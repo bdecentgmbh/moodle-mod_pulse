@@ -268,7 +268,9 @@ class mod_pulse_mod_form extends moodleform_mod {
             }
         }
         $extenderrors = mod_pulse_extend_formvalidation($data, $files);
-        $errors = array_merge($errors, $extenderrors);
+        if (is_array($extenderrors)) {
+            $errors = array_merge($errors, $extenderrors);
+        }
         return $errors;
     }
 }

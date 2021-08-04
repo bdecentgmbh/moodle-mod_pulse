@@ -113,7 +113,6 @@ function pulse_delete_instance($pulseid) {
         $cm = get_coursemodule_from_instance('pulse', $pulseid);
 
         if ($DB->delete_records('pulse', ['id' => $pulseid])) {
-            // Remove pulse user notified records.
             pulse_extend_delete_instance($cm->id, $pulseid);
             return true;
         }
@@ -300,7 +299,19 @@ function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml,
     }
 }
 
-
+/**
+ * Get list of instance added in the course.
+ *
+ * @param  int $courseid Course id.
+ * @return array list of pulse instance added in the course.
+ */
+function pulse_course_instancelist($courseid) {
+    global $DB;
+    $sql = "SELECT cm.*, pl.name FROM {course_modules} cm
+            JOIN {pulse} pl ON pl.id = cm.instance
+            WHERE cm.course=:courseid AND cm.module IN (SELECT id FROM {modules} WHERE name=:pulse)";
+    return $DB->get_records_sql($sql, ['courseid' => $courseid, 'pulse' => 'pulse']);
+}
 
 /**
  * Serve the files from the Pulse file areas
@@ -354,14 +365,16 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
  *
  * Here users are filtered by their activity avaialbility status.
  * if the pulse instance are available to user then it will send the notificaion to the user.
+ *
+ * @param  mixed $extend Extend the pro invitation method.
  * @return void
  */
-function mod_pulse_cron_task() {
+function mod_pulse_cron_task($extend=true) {
     global $DB;
 
     mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
 
-    if (pulse_extend_invitation()) {
+    if ($extend && pulse_extend_invitation()) {
         return true;
     }
 
@@ -375,11 +388,10 @@ function mod_pulse_cron_task() {
     list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
 
     $sql = "SELECT nt.id AS nid, nt.*, '' AS pulseend,
-        cm.id as cmid, cm.*, md.id AS mid, nou.id as nouid,
+        cm.id as cmid, cm.*, md.id AS mid,
         ctx.id as contextid, ctx.*, cu.id as courseid, cu.* FROM {pulse} nt
         JOIN {course_modules} cm ON cm.instance = nt.id
         JOIN {modules} md ON md.id = cm.module
-        LEFT JOIN {pulse_users} nou ON  nou.pulseid = nt.id
         JOIN {course} cu ON cu.id = nt.course
         RIGHT JOIN {context} ctx ON ctx.instanceid = cm.id and contextlevel = 70
         WHERE md.name = 'pulse' AND cm.visible = 1";
@@ -429,14 +441,16 @@ function mod_pulse_cron_task() {
                         AND roleid $roleinsql GROUP BY userid
                     ) ra ON ra.userid = eu1_u.id
             WHERE 1 = 1 AND ej1_ue.status = 0
-            AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= UNIX_TIMESTAMP(NOW()))
-            AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > UNIX_TIMESTAMP(NOW()))
+            AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ?)
+            AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > ?)
             AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0) je ON je.id = u.id
             WHERE u.deleted = 0 AND u.suspended = 0 ORDER BY u.lastname, u.firstname, u.id";
 
         $params[] = $course['id'];
         $params = array_merge($params, array_filter($inparams));
         $params = array_merge($params, array_filter($roleinparams));
+        $params[] = time();
+        $params[] = time();
         $params[] = 1;
         $students = $DB->get_records_sql($usersql, $params);
 
@@ -710,8 +724,8 @@ function mod_pulse_completion_crontask() {
                                         AND roleid $roleinsql
                                     ) ra ON ra.userid = eu1_u.id
                     WHERE 1 = 1 AND ej1_ue.status = 0
-                    AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= UNIX_TIMESTAMP(NOW()))
-                    AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > UNIX_TIMESTAMP(NOW()))
+                    AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ?)
+                    AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > ?)
                     AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0 AND eu1_u.suspended = 0
                 ) je ON je.id = u.id
             WHERE u.deleted = 0 AND u.suspended = 0 ORDER BY u.lastname, u.firstname, u.id";
@@ -721,6 +735,8 @@ function mod_pulse_completion_crontask() {
         $params[] = $cm['id'];
         $params = array_merge($params, array_filter($inparams));
         $params = array_merge($params, array_filter($roleinparams));
+        $params[] = time();
+        $params[] = time();
         $params[] = 1;
         $students = $DB->get_records_sql($usersql, $params);
 
@@ -1189,11 +1205,14 @@ function pulse_extend_invitation() {
  */
 function pulse_extend_backup_steps($pulse, $userinfo) {
     $callbacks = get_plugins_with_function('extend_pulse_backup_steps');
-    foreach ($callbacks as $type => $plugins) {
-        foreach ($plugins as $plugin => $pluginfunction) {
-            return $pluginfunction($pulse, $userinfo);
+    if (!empty($callbacks)) {
+        foreach ($callbacks as $type => $plugins) {
+            foreach ($plugins as $plugin => $pluginfunction) {
+                return $pluginfunction($pulse, $userinfo);
+            }
         }
     }
+    return $pulse;
 }
 
 /**

@@ -15,16 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse module upgrade steps.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->component = 'mod_pulse'; // Name of this plugin.
-$plugin->version = 2021080400; // Released on 04 August 2021.
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.0';
+/**
+ * Pulse module upgrade steps.
+ *
+ * @param  mixed $oldversion Previous version.
+ * @return void
+ */
+function xmldb_pulse_upgrade($oldversion) {
+    global $CFG;
+
+    // Inital plugin release - v1.0.
+
+    return true;
+}

@@ -15,16 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Privacy implementation for pulse module
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace mod_pulse\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_pulse'; // Name of this plugin.
-$plugin->version = 2021080400; // Released on 04 August 2021.
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.0';
+/**
+ * The mod_pulse module does not store any data.
+ */
+class provider implements \core_privacy\local\metadata\null_provider {
+    /**
+     * Get the language string identifier with the component's language
+     * file to explain why this plugin stores no data.
+     *
+     * @return  string
+     */
+    public static function get_reason() : string {
+        return 'privacy:metadata';
+    }
+}
