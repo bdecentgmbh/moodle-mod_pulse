@@ -108,13 +108,13 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
      * @param  mixed $data
      * @return void
      */
-    protected function process_pulsepro($data) {
+    protected function process_local_pulsepro($data) {
         global $DB;
         $data = (object) $data;
         $oldid = $data->id;
         $data->pulseid = $this->get_new_parentid('pulse');
         // Insert instance into Database.
-        $newitemid = $DB->insert_record('pulsepro', $data);
+        $newitemid = $DB->insert_record('local_pulsepro', $data);
     }
 
     /**
@@ -123,14 +123,14 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
      * @param  mixed $data restore data.
      * @return void
      */
-    protected function process_pulsepro_availability($data) {
+    protected function process_local_pulsepro_availability($data) {
         global $DB;
         $data = (object) $data;
         $oldid = $data->id;
         $data->pulseid = $this->get_new_parentid('pulse');
         $data->userid = $this->get_mappingid('user', $data->userid);
         // Insert instance into Database.
-        $newitemid = $DB->insert_record('pulsepro_availability', $data);
+        $newitemid = $DB->insert_record('local_pulsepro_availability', $data);
     }
 
     /**
