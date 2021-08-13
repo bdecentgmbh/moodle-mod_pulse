@@ -94,7 +94,7 @@ class custom_completion extends activity_custom_completion {
                 break;
         }
 
-        return $status ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
+        return (isset($status) && $status) ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
     }
 
 

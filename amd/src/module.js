@@ -50,16 +50,19 @@ define([], function() {
             }
 
             // Make selected roles as badges in module edit form page.
-            const textNodes = this.getAllTextNodes(
-                document.getElementById('page-mod-pulse-mod')
-                .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']")
-            );
-            textNodes.forEach(node => {
-                const span = document.createElement('span');
-                span.classList = 'badge badge-info pulse-completion-roles';
-                node.after(span);
-                span.appendChild(node);
-            });
+            if (document.getElementById('page-mod-pulse-mod')
+                .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']") !== null) {
+                const textNodes = this.getAllTextNodes(
+                    document.getElementById('page-mod-pulse-mod')
+                    .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']")
+                );
+                textNodes.forEach(node => {
+                    const span = document.createElement('span');
+                    span.classList = 'badge badge-info pulse-completion-roles';
+                    node.after(span);
+                    span.appendChild(node);
+                });
+            }
         },
 
         // Filter text from node.
