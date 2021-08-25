@@ -465,6 +465,7 @@ function mod_pulse_cron_task($extend=true) {
     }
     pulse_set_notification_adhoc($instance);
     mtrace('Pulse message sending completed....');
+    return true;
 }
 
 /**
@@ -792,6 +793,7 @@ function mod_pulse_completion_crontask() {
         }
     }
     mtrace('Course module completions are updated for all pulse module....');
+    return true;
 }
 
 /**

@@ -64,13 +64,13 @@ class sendinvitation extends \core\task\adhoc_task {
         global $DB;
         if (!empty($pulse) && !empty($users)) {
             // Get course module using instanceid.
-            $sender = self::get_sender($course->id, $context->id);
+            $senderdata = self::get_sender($course->id, $context->id);
             if ($pulse->pulse == true) {
                 $notifiedusers = [];
                 // Collect list of available enrolled students in course module.
                 mtrace('Sending pulse to enrolled users in course '.$course->fullname."\n");
                 foreach ($users as $key => $student) {
-                    $sender = self::find_user_sender($sender, $student->id);
+                    $sender = self::find_user_sender($senderdata, $student->id);
                     $userto = $student; // Send to.
                     $subject = $pulse->pulse_subject ?: get_string('pulse_subject', 'pulse'); // Message subject.
                     // Use intro content as message text, if different pulse disabled.
@@ -79,7 +79,6 @@ class sendinvitation extends \core\task\adhoc_task {
                     if ($pulse->diff_pulse) {
                         // Email template content.
                         $template = $pulse->pulse_content;
-                        $subject = $pulse->name;
                         $filearea = 'pulse_content';
                     }
                     // Replace the email text placeholders with data.
