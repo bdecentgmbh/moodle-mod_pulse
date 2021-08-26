@@ -27,6 +27,9 @@ define([], function() {
 
     return {
 
+        /**
+         * Setup the classes to editors works with placeholders.
+         */
         init: function() {
             var module = this;
             var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
@@ -65,35 +68,43 @@ define([], function() {
             }
         },
 
-        // Filter text from node.
+        /**
+         * Filter text from node.
+         * @param  {string} element
+         * @returns {array} list of childNodes.
+         */
         getAllTextNodes: function(element) {
             return Array.from(element.childNodes)
             .filter(node => node.nodeType === 3 && node.textContent.trim().length > 1);
         },
 
-
+        /**
+         * Insert the placeholder in selected caret place.
+         * @param  {string} myValue
+         */
         insertAtCaret: function(myValue) {
             var caretelements = document.getElementsByClassName("insertatcaretactive");
             var sel, range;
             for (var n = 0; n < caretelements.length; n++) {
                 var thiselem = caretelements[n];
-                if (typeof thiselem.value === 'undefined') {
-                    if (window.getSelection) {
-                        sel = window.getSelection();
-                        if (sel.getRangeAt && sel.rangeCount) {
-                            range = sel.getRangeAt(0);
-                            range.deleteContents();
-                            range.insertNode(document.createTextNode(myValue));
 
-                            for (let position = 0; position != (myValue.length + 1); position++) {
-                                sel.modify("move", "right", "character");
-                            }
+                if (typeof thiselem.value === 'undefined' && window.getSelection) {
+                    sel = window.getSelection();
+                    if (sel.getRangeAt && sel.rangeCount) {
+                        range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        range.insertNode(document.createTextNode(myValue));
+
+                        for (let position = 0; position != (myValue.length + 1); position++) {
+                            sel.modify("move", "right", "character");
                         }
-                    } else if (document.selection && document.selection.createRange) {
-                        range = document.selection.createRange();
-                        range.text = myValue;
                     }
-                } else {
+                } else if (typeof thiselem.value === 'undefined' && document.selection && document.selection.createRange) {
+                    range = document.selection.createRange();
+                    range.text = myValue;
+                }
+
+                if (typeof thiselem.value !== 'undefined') {
                     if (document.selection) {
                         // For browsers like Internet Explorer.
                         thiselem.focus();
@@ -117,6 +128,5 @@ define([], function() {
                 }
             }
         },
-
     };
 });

@@ -22,10 +22,15 @@
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 define(['core/fragment'], function(Fragment) {
 
     return {
 
+        /**
+         * Update completion buttons for each activity based on user role.
+         * This will load the template using fragment.
+         */
         updatecompletionbuttons: function() {
             var instances = document.getElementsByClassName('modtype_pulse');
             var modules = []; var moduleid;
@@ -55,6 +60,9 @@ define(['core/fragment'], function(Fragment) {
             }
         },
 
+        /**
+         * If the page is course view page then call the completion buttons to insert.
+         */
         init: function() {
             if (document.body.classList.contains('path-course-view')) {
                 this.updatecompletionbuttons();
