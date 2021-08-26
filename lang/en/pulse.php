@@ -28,12 +28,10 @@ $string['modulenameplural'] = 'Pulses';
 $string['pulse:addinstance'] = 'Add a new pulse';
 $string['pulse:view'] = 'View pulse';
 $string['content'] = 'Content';
-$string['modulename_help'] = 'TPulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. 
-
-1) Notifications
-Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager.
-
-2) Completion workflows
+$string['modulename_help'] = 'TPulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. <br><br>
+(1) Notifications:<br>
+Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager. <br><br>
+(2) Completion workflows: <br>
 Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.';
 $string['modulename_link'] = 'mod/pulse/view';
 $string['privacy:metadata'] = 'The pulse plugin does not store any personal data.';
@@ -52,7 +50,7 @@ $string['instancename'] = 'Pulse';
 $string['resendnotification'] = 'Re-send Notification';
 $string['resendnotificationdesc'] = 'Invitation has been scheduled for re-sending';
 $string['completionrequireapproval'] = 'Require approval by one of the following roles ';
-$string['completewhenavaialble'] = 'Complete when available';
+$string['completewhenavaialble'] = 'Completion when available';
 
 $string['completionapproverules'] = 'Completionapproverules';
 $string['completionself'] = 'Mark as complete by student to complete this activity';
