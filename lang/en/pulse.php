@@ -28,9 +28,15 @@ $string['modulenameplural'] = 'Pulses';
 $string['pulse:addinstance'] = 'Add a new pulse';
 $string['pulse:view'] = 'View pulse';
 $string['content'] = 'Content';
-$string['modulename_help'] = 'This plugin was built to enable teachers to notifiy students about upcoming activities or overdue activities. ';
+$string['modulename_help'] = 'TPulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. 
+
+1) Notifications
+Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager.
+
+2) Completion workflows
+Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.';
 $string['modulename_link'] = 'mod/pulse/view';
-$string['privacy:metadata'] = 'The pulse resource plugin does not store any personal data.';
+$string['privacy:metadata'] = 'The pulse plugin does not store any personal data.';
 $string['pluginadministration'] = 'Pulse administration';
 $string['search:activity'] = 'Pulse';
 $string['sendnotificaton'] = 'Send notification';
@@ -38,15 +44,15 @@ $string['diffnotification'] = 'Use notification content instead of general conte
 $string['enable:disable'] = 'Enable / Disable';
 $string['pulsenotification'] = 'Pulse notification';
 
-$string['pulse_subject'] = 'Course activity available pulse - {Site_FullName} ';
+$string['pulse_subject'] = 'Pulse from {Course_FullName} ({Site_FullName}) ';
 $string['notifyusers'] = 'Notify course students';
-$string['pulse:notifyuser'] = 'Send pulse message';
-$string['messageprovider:mod_pulse'] = 'Send pulse notifcation';
+$string['pulse:notifyuser'] = 'Send notification';
+$string['messageprovider:mod_pulse'] = 'Send notifcation';
 $string['instancename'] = 'Pulse';
 $string['resendnotification'] = 'Re-send Notification';
 $string['resendnotificationdesc'] = 'Invitation has been scheduled for re-sending';
 $string['completionrequireapproval'] = 'Require approval by one of the following roles ';
-$string['completewhenavaialble'] = 'Completion when available';
+$string['completewhenavaialble'] = 'Complete when available';
 
 $string['completionapproverules'] = 'Completionapproverules';
 $string['completionself'] = 'Mark as complete by student to complete this activity';
@@ -66,7 +72,7 @@ $string['updatecompletion'] = 'Update pulse modules completion';
 $string['approvedsuccess'] = 'User approved successfully';
 $string['approvedeclined'] = 'User completion declined';
 $string['selfmarked'] = 'Self marked complete on {$a->date}';
-$string['approveduser'] = 'Approved BY: {$a->user}';
+$string['approveduser'] = 'Approved by: {$a->user}';
 $string['approvedon'] = 'Approved on {$a->date} by {$a->user}';
 
 $string['completion:self'] = 'Mark complete';
@@ -91,14 +97,14 @@ $string['courserole'] = 'courserole';
 $string['userrole'] = 'userrole';
 $string['reactiondisplaytype'] = 'Location';
 $string['title'] = 'Title';
-$string['reaction:markcomplete'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding: .375rem .75rem;text-decoration-line: none;" > Reaction Markcomplete </a> ';
+$string['reaction:markcomplete'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding: .375rem .75rem;text-decoration-line: none;" >Mark Complete</a> ';
 $string['reaction:rate'] = '';
-$string['reaction:approve'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding:.375rem .75rem;text-decoration-line: none;" > Reaction </a> ';
-$string['title_help'] = 'This text is display as activity name and also this content used as subject to send invitation';
-$string['content_help'] = 'Content will be displayed on course page and used as message body content for invitation notifications.';
-$string['completewhenavaialble_help']  = 'If enabled, activity will consider as complete when the user has access to the instance.';
-$string['completionself_help']  = 'If enabled, Activity will consider as complete when the students mark the instance as complete on course page by self.';
-$string['completionrequireapproval_help']  = 'If enabled, Activity will consider as complete when any of the selected role users approve the users to complete the instance.';
+$string['reaction:approve'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding:.375rem .75rem;text-decoration-line: none;" > Approve </a> ';
+$string['title_help'] = 'The title is used as activity name. It is used as subject to send the invitation.';
+$string['content_help'] = 'Content will be displayed on the course page and used as message body content for the invitation.';
+$string['completewhenavaialble_help']  = 'If enabled, the activity will be considered completed when the user has access to it (i.e. when it is available based on availability restricitions).';
+$string['completionself_help']  = 'If enabled, the activity will be considered completed when the student marks it as complete on the course page.';
+$string['completionrequireapproval_help']  = 'If enabled, the activity will be considered completed when any of the selected roles approves the user.';
 
 $string['completereaction'] = 'Complete reaction';
 $string['reminders:first'] = 'First reminder';
@@ -122,20 +128,18 @@ $string['enablereminder:recurring'] = 'Enable recurring reminder';
 $string['invitation'] = 'Invitation';
 $string['invitationsubject'] = 'Notification subject';
 
-$string['invitation_help'] = 'Send the invitation reminders to the selected receipients.';
-$string['sendnotificaton_help'] = 'If Enabled, Invitation reminder will send to selected receipents.';
-$string['resendnotification_help'] = 'If Enabled, Invitation reminder will rescheduled and sends the invitation to already notified users too.';
-$string['diffnotification_help'] = 'If Enabled, Invitation notification will use the different notification content instead of the Notificaiton content.';
-$string['invitationsubject_help'] = 'Content will used as subject for the Invitation notifications.';
+$string['invitation_help'] = 'Send the invitation to all users with the selected roles.';
+$string['sendnotificaton_help'] = 'If enabled, the invitation will be sent.';
+$string['resendnotification_help'] = 'If enabled, Invitation reminder will rescheduled and sends the invitation to already notified users too.';
+$string['diffnotification_help'] = 'If enabled, the invitation will use notification content and subject (instead of general content and title).';
+$string['invitationsubject_help'] = 'Add the subject for the invitation here.';
 $string['remindercontent_help'] = 'If notification content enabled, then this content will used as main content for invitations.';
-$string['recipients_help'] = 'Select the roles of recipients, who needs to recevie the notifications <br>
-Note: Users who enrolled in course and assinged into selected role only recevied the inviation notifications
-expect the user context role users don\'t need to enroled in the course. ';
+$string['recipients_help'] = 'Please choose the roles which you want to send the notification to. Only users enrolled in this course and with the selected role will receeive notifications. Please note that users with a user context role users don\'t need to be enrolled in the course. ';
 
 $string['reactiontype'] = 'Type';
-$string['reactiontype_help'] = 'List of reaction types, selected type will replaced the reaction placeholder in notification content.';
-$string['reactiondisplaytype_help'] = 'Select the method Where the reaction contents should display.';
-$string['enablereminder:first_help'] = 'If enabled, Pulse will send the First reminder to selected recipients.';
+$string['reactiontype_help'] = 'List of reaction types.';
+$string['reactiondisplaytype_help'] = 'Please choose where the reaction should be displayed.';
+$string['enablereminder:first_help'] = 'If enabled, Pulse will send the first reminder.';
 $string['remindersubject_help'] = 'Content will used as subject for the Reminder notifications.';
 $string['remindercontent_help'] = 'Entered content will send to recipients, Use the placeholders to use the receipients data dynamically.';
 
@@ -151,5 +155,5 @@ $string['reportsfilename'] = 'Pulse reports - {$a->name}';
 $string['viewreport'] = 'View report';
 $string['pulsenotavailable'] = 'Pulse instance not added in course';
 $string['notassignedgroup'] = 'User must be part of a group to filter by participants.';
-$string['pulsepro:viewreports'] = 'View pulse pro reports';
-$string['reactionthankmsg'] = 'Thank you! We have saved your reaction <br> <span>You can now close this window</span>';
+$string['pulsepro:viewreports'] = 'View Pulse Pro reports';
+$string['reactionthankmsg'] = 'Thank you! Your response is saved.<br><br> <span>You can now close this window</span>';
