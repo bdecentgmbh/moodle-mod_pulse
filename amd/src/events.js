@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,18 +14,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Contain the events the data privacy tool can fire.
  *
- * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module     tool_dataprivacy/events
+ * @copyright  2018 Jun Pataleta
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_pulse'; // Name of this plugin.
-$plugin->version = 2021091700; // Released on 26 August 2021.
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.0';
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->supported = [39, 311];
+ define([], function() {
+    return {
+        save: 'mod_pulse-preset:save',
+        customize: 'tool_dataprivacy-preset:customize',
+    };
+});

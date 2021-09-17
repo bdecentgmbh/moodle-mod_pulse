@@ -53,7 +53,7 @@ define([], function() {
             }
 
             // Make selected roles as badges in module edit form page.
-            if (document.getElementById('page-mod-pulse-mod')
+            if (document.getElementById('page-mod-pulse-mod') !== null && document.getElementById('page-mod-pulse-mod')
                 .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']") !== null) {
                 const textNodes = this.getAllTextNodes(
                     document.getElementById('page-mod-pulse-mod')

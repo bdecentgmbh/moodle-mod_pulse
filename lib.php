@@ -30,9 +30,10 @@ global $PAGE;
 
 $PAGE->requires->js_call_amd('mod_pulse/completion', 'init');
 
+
 require_once($CFG->libdir."/completionlib.php");
 
-require_once($CFG->dirroot.'/mod/pulse/locallib.php');
+
 
 /**
  * Add pulse instance.
@@ -327,7 +328,7 @@ function pulse_course_instancelist($courseid) {
  */
 function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
-    if ($context->contextlevel != CONTEXT_MODULE) {
+    if ($context->contextlevel != CONTEXT_MODULE && $context->contextlevel != CONTEXT_SYSTEM) {
         return false;
     }
     // Get extended plugins fileareas.
@@ -662,7 +663,9 @@ function pulse_process_recorddata($keys, $record) {
  * @return void
  */
 function mod_pulse_completion_crontask() {
-    global $DB, $USER;
+    global $DB, $USER, $CFG;
+
+    require_once($CFG->dirroot.'/mod/pulse/locallib.php');
 
     mtrace('Pulse activity completion - Pulse Starting');
 
@@ -1309,4 +1312,147 @@ function mod_pulse_core_calendar_provide_event_action(calendar_event $event,
         1,
         true
     );
+}
+
+/**
+ * Extend the pro features of preset. Triggered during the import preset data clean.
+ *
+ * @param string $method Preset method to extend
+ * @param array $backupdata Preset template data.
+ * @return void
+ */
+function pulse_extend_preset($method, &$backupdata) {
+    $callbacks = get_plugins_with_function('extend_preset_formatdata');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $backupdata = $pluginfunction($method, $backupdata);
+        }
+    }
+}
+
+/**
+ * Extend the pro features of preset. Convert the record data format into moodle form editor format.
+ *
+ * @param string $pulseid Preset method to extend
+ * @param array $configdata Custom config data.
+ * @return void
+ */
+function pulse_preset_update($pulseid, $configdata) {
+    $callbacks = get_plugins_with_function('extend_preset_update');
+    foreach ($callbacks as $type => $plugins) {
+        foreach ($plugins as $plugin => $pluginfunction) {
+            $backupdata = $pluginfunction($pulseid, $configdata);
+        }
+    }
+}
+
+/**
+ * Fragement output to preview the selected preset. Loads all the available informations and configurable params as form elements.
+ *
+ * @param array $args Preset ID and Course ID with context.
+ */
+function mod_pulse_output_fragment_get_preset_preview(array $args) : ?string {
+    global $CFG;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $presetid = $args['presetid'];
+    $courseid = $args['courseid'];
+
+    $preset = new mod_pulse\preset($presetid, $courseid, $context);
+    return $preset->output_fragment();
+}
+
+/**
+ * Fragement output to result of apply methods on selected preset.
+ * Trigger the apply preset method in preset to create the pulse module using the selected preset and apply method.
+ *
+ * @param array $args Custom config data and Current module form data with context.
+ */
+function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
+    global $CFG;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $formdata = $args['formdata'];
+    $pageparams = $args['pageparams'];
+    $external = new \mod_pulse\external();
+    $result = $external->apply_presets($context->id, $formdata, $pageparams);
+
+    return $result;
+}
+
+/**
+ * Create presets during the plugin installation and upgradation.
+ *
+ * @param boolean $pro Create template for pro version.
+ * @return array List of created presets id.
+ */
+function pulse_create_presets($pro=false) {
+    global $DB, $CFG;
+    if (!isloggedin() || isguestuser()) {
+        return;
+    }
+    $fs = get_file_storage();
+    $presets = pulse_free_presets();
+    foreach ($presets as $key => $preset) {
+        $sql = "SELECT id FROM {pulse_presets} WHERE ".$DB->sql_like('title', ':title');
+        if ($DB->record_exists_sql($sql, ['title' => $preset['title']])) {
+            continue;
+        }
+        $file = $preset['preset_template'];
+        $preset['preset_template'] = file_get_unused_draft_itemid();
+        $presetid = $DB->insert_record('pulse_presets', $preset);
+
+        $filerecord = new stdClass();
+        $filerecord->component = 'mod_pulse';
+        $filerecord->contextid = \context_system::instance()->id;
+        $filerecord->filearea = "preset_template";
+        $filerecord->filepath = '/';
+        $filerecord->itemid = $presetid;
+        $filerecord->filename = $file;
+
+        if (!$fs->file_exists($filerecord->contextid, $filerecord->component, $filerecord->filearea,
+        $filerecord->itemid, $filerecord->filepath, $filerecord->filename)) {
+            if ($pro) {
+                $backuppath = $CFG->dirroot . "/local/pulsepro/assets/$file";
+            } else {
+                $backuppath = $CFG->dirroot . "/mod/pulse/assets/$file";
+            }
+            $fs->create_file_from_pathname($filerecord, $backuppath);
+        }
+        $created[] = $presetid;
+    }
+    return (isset($created)) ? $created : [];
+}
+
+/**
+ * Demo presets data shipped with plugin by default for demo purpose.
+ *
+ * @return array List of demo presets.
+ */
+function pulse_free_presets(): array {
+    $preset1 = array(
+        'title' => 'Demo preset 1',
+        'description' => 'This is demo preset 1 to test',
+        'configparams' => json_encode(['name' => 'General \ Title', 'introeditor' => 'General \ Content']),
+        'preset_template' => 'preset-demo-1.mbz',
+        'status' => 1,
+        'icon' => 'core:a/download_all',
+        'order_no' => 1,
+    );
+    $preset2 = array(
+        'title' => 'Demo preset 2',
+        'description' => 'This is demo preset 2 to test',
+        'configparams' => json_encode(['name' => 'General \ Title', 'introeditor' => 'General \ Content']),
+        'preset_template' => 'preset-demo-2.mbz',
+        'status' => 1,
+        'icon' => 'core:a/add_file',
+        'order_no' => 2,
+    );
+    return array( $preset1, $preset2);
 }

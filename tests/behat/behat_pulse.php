@@ -108,4 +108,16 @@ class behat_pulse extends behat_base {
             $this->execute("behat_general::assert_page_contains_text", [$conditionname]);
         }
     }
+
+    /**
+     * Checks if the activity with specified name is maked as complete.
+     *
+     * @Given /^I create demo presets$/
+     * @return void
+     */
+    public function i_create_demo_presets(): void {
+        global $CFG;
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        pulse_create_presets();
+    }
 }

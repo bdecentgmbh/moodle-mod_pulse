@@ -34,16 +34,29 @@ require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 class mod_pulse_mod_form extends moodleform_mod {
 
     /**
+     * Make the protect variable to public. Helps to copy the form elements.
+     *
+     * @var stdclass
+     */
+    public $_form;
+
+    /**
      * Pulse module add/update form fields are defined here.
      * Basic form fields added and extended the module standard default fields.
      *
      * @return void
      */
     public function definition() {
-        global $DB, $PAGE, $CFG;
+        global $DB, $PAGE, $CFG, $OUTPUT;
 
         $mform = $this->_form;
-
+        if (!isset($this->current->instance) || $this->current->instance == '') {
+            // Presets header.
+            $mform->addElement('header', 'presets_header', get_string('presets', 'pulse') );
+            $presets = $this->generate_presets_list();
+            $mform->addElement('html', $OUTPUT->render_from_template('mod_pulse/presets_list', $presets));
+        }
+        // General section.
         $mform->addElement('header', 'general', get_string('general') );
 
         $mform->addElement('text', 'name', get_string('title', 'pulse'), array('size' => '64'));
@@ -87,12 +100,15 @@ class mod_pulse_mod_form extends moodleform_mod {
         // Pulse content editor.
         $editoroptions  = pulse_get_editor_options();
         $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
-        ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
+            ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
         $mform->addHelpButton('pulse_content_editor', 'remindercontent', 'mod_pulse');
 
         // Email tempalte placholders.
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+
+        // Presets - JS.
+        $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id]);
 
         $this->pulse_email_placeholders($mform);
         // Show intro on course page always.
@@ -219,7 +235,6 @@ class mod_pulse_mod_form extends moodleform_mod {
      */
     public function data_preprocessing(&$defaultvalues) {
         $editoroptions = pulse_get_editor_options();
-
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
@@ -234,7 +249,6 @@ class mod_pulse_mod_form extends moodleform_mod {
         } else {
             $draftitemid = file_get_submitted_draft_itemid('pulse_content_editor');
             file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'pulse_content', false);
-            $defaultvalues['pulse_content_editor']['text'] = '';
             $defaultvalues['pulse_content_editor']['format'] = editors_get_preferred_format();
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
         }
@@ -275,4 +289,41 @@ class mod_pulse_mod_form extends moodleform_mod {
         }
         return $errors;
     }
+
+    /**
+     * Generate the list of available presets based on the order.
+     *
+     * @return array List of presets and manage presets page URL
+     */
+    public function generate_presets_list() {
+        global $DB, $OUTPUT;
+        if ($records = $DB->get_records('pulse_presets', ['status' => 1], 'order_no ASC')) {
+            $presets = [];
+            $pluginmanager = core_plugin_manager::instance()->get_installed_plugins('local');
+            $link = '';
+            if (array_key_exists('pulsepro', $pluginmanager)) {
+                $link = new \moodle_url('/local/pulsepro/presets.php');
+            }
+            foreach ($records as $presetid => $record) {
+                $description = file_rewrite_pluginfile_urls(
+                    $record->description, 'pluginfile.php', context_system::instance()->id, 'mod_pulse', 'description', $record->id
+                );
+                $item = [
+                    'id' => $record->id,
+                    'title' => format_text($record->title),
+                    'description' => format_text($description, FORMAT_HTML),
+                    'configurableparams' => array_values(json_decode($record->configparams, true)),
+                ];
+                if (!empty($record->icon)) {
+                    $icon = explode(':', $record->icon);
+                    $icon1 = isset($icon[1]) ? $icon[1] : 'core';
+                    $icon0 = isset($icon[0]) ? $icon[0] : '';
+                    $item['icon'] = $OUTPUT->pix_icon( $icon1, $icon0 );
+                }
+                $presets[] = $item;
+            }
+            return ['presetslist' => (!empty($presets) ? 1 : 0), 'presets' => $presets, 'managepresets' => $link];
+        }
+    }
+
 }
