@@ -1392,13 +1392,15 @@ function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
  * @param boolean $pro Create template for pro version.
  * @return array List of created presets id.
  */
-function pulse_create_presets($pro=false) {
+function pulse_create_presets($presets=[], $pro=false) {
     global $DB, $CFG;
     if (!isloggedin() || isguestuser()) {
         return;
     }
     $fs = get_file_storage();
-    $presets = pulse_free_presets();
+    if (empty($presets)) {
+        $presets = pulse_free_presets();
+    }
     foreach ($presets as $key => $preset) {
         $sql = "SELECT id FROM {pulse_presets} WHERE ".$DB->sql_like('title', ':title');
         if ($DB->record_exists_sql($sql, ['title' => $preset['title']])) {
