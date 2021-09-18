@@ -1389,6 +1389,7 @@ function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
 /**
  * Create presets during the plugin installation and upgradation.
  *
+ * @param array $presets List of presets with details.
  * @param boolean $pro Create template for pro version.
  * @return array List of created presets id.
  */
