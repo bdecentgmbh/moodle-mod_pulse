@@ -205,3 +205,4 @@ $string['apply_customize'] = 'Apply and Customize';
 $string['apply_save'] = 'Apply and Save';
 $string['promotionaltext'] = 'With Pulse Pro you get powerful reminders, In-email reactions and you can create your own presets. ';
 $string['learnmore'] = 'Learn More';
+$string['presetmodaltitle'] = 'Use preset {$a->title}';

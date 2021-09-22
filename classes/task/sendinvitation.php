@@ -149,13 +149,13 @@ class sendinvitation extends \core\task\adhoc_task {
         JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
         JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
         JOIN (
-            SELECT DISTINCT userid, rle.shortname as roleshortname, roleid
+            SELECT DISTINCT (userid), rle.shortname as roleshortname, roleid
                 FROM {role_assignments}
                 JOIN {role} rle ON rle.id = roleid
-                WHERE contextid = ? AND roleid $roleinsql GROUP BY userid, rle.shortname, roleid
+                WHERE contextid = ? AND roleid $roleinsql
             ) ra ON ra.userid = eu1_u.id
         WHERE 1 = 1 AND ej1_ue.status = 0
-        AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ? )
+        AND ( ej1_ue.timestart = 0 OR ej1_ue.timestart <= ? )
         AND ( ej1_ue.timeend = 0 OR ej1_ue.timeend > ? )
         AND eu1_u.deleted = 0 AND eu1_u.suspended = 0 ORDER BY ej1_ue.timestart, ej1_ue.timecreated";
 

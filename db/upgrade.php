@@ -67,5 +67,18 @@ function xmldb_pulse_upgrade($oldversion) {
         // Pulse savepoint reached.
         upgrade_mod_savepoint(true, 2021091700, 'pulse');
     }
+
+    if ($oldversion < 2021091701) {
+        if ($records = $DB->get_records('pulse_presets', [])) {
+            foreach ($records as $key => $record) {
+                if ($record->configparams != '') {
+                    $record->configparams = json_encode(array_keys(json_decode($record->configparams, true)));
+                    $DB->update_record('pulse_presets', $record);
+                }
+            }
+        }
+        upgrade_mod_savepoint(true, 2021091701, 'pulse');
+    }
+
     return true;
 }

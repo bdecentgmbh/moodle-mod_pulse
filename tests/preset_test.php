@@ -24,7 +24,6 @@
 
 defined( 'MOODLE_INTERNAL') || die(' No direct access ');
 
-
 /**
  * Pulse resource preset create and customize settings phpunit test cases defined.
  */

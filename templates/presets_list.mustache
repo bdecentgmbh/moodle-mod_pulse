@@ -46,34 +46,36 @@
         {{#presetslist}}
         <div class="row">
             {{#presets}}
-                <div class="col-md-4 pulse-preset-item">
-                    <div class="preset-item-content">
-                        {{#icon}}
-                        <div class="preset-icon">
-                            {{{icon}}}
-                        </div>
-                        {{/icon}}
+                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="pulse-preset-item">
+                        <div class="preset-item-content">
+                            {{#icon}}
+                            <div class="preset-icon">
+                                {{{icon}}}
+                            </div>
+                            {{/icon}}
 
-                        {{#title}}
-                        <div class="preset-title">
-                            <h5> {{{title}}} </h5>
-                        </div>
-                        {{/title}}
+                            {{#title}}
+                            <div class="preset-title">
+                                <h5> {{{title}}} </h5>
+                            </div>
+                            {{/title}}
 
-                        {{#description}}
-                        <div class="description">
-                            {{{description}}}
-                        </div>
-                        {{/description}}
+                            {{#description}}
+                            <div class="description">
+                                {{{description}}}
+                            </div>
+                            {{/description}}
 
-                        <div class="preset-config-params">
-                        {{#configurableparams}}
-                            <span class="badge badge-success"> {{.}} </span>
-                        {{/configurableparams}}
+                            <div class="preset-config-params">
+                            {{#configurableparams}}
+                                <span class="badge badge-secondary"> {{.}} </span>
+                            {{/configurableparams}}
+                            </div>
                         </div>
-                    </div>
-                    <div class="pulse-presets-actions">
-                        <a href="javascript:void(0);" class="btn btn-primary pulse-usepreset" data-presetid="{{id}}"> {{#str}} usepreset, pulse {{/str}} </a>
+                        <div class="pulse-presets-actions">
+                            <a href="javascript:void(0);" class="btn btn-primary pulse-usepreset"  data-presettitle="{{{title}}}"  data-presetid="{{id}}"> {{#str}} usepreset, pulse {{/str}} </a>
+                        </div>
                     </div>
                 </div>
             {{/presets}}
@@ -85,7 +87,7 @@
         <div class="promotional-content">
             <div>  {{#str}} promotionaltext, pulse {{/str}} </div>
             <div class="learn-more">
-                <a href="{{learnmore}}" class="btn btn-default  "> {{#str}} learnmore, pulse {{/str}}</a>
+                <a href="https://bdecent.de/pulse/" class="btn btn-default" target="_blank"> {{#str}} learnmore, pulse {{/str}}</a>
             </div>
         </div>
     </div>

@@ -32,6 +32,8 @@ use stdclass;
 defined( 'MOODLE_INTERNAL') || die(' No direct access ');
 
 require_once($CFG->libdir.'/formslib.php');
+require_once($CFG->dirroot . '/course/modlib.php');
+require_once($CFG->dirroot.'/mod/pulse/mod_form.php');
 
 /**
  * Create pulse using the backup file of mod pulse. Defined preset form to extract the template file data.
@@ -81,6 +83,13 @@ class preset extends \moodleform  {
     public $modformdata = [];
 
     /**
+     * Pulse mod form instance.
+     *
+     * @var mod_pulse_mod_form
+     */
+    public $pulseform;
+
+    /**
      * Basic data stored as moodle form element, used to pass the preset and course data to modal.
      *
      * @return void
@@ -105,11 +114,28 @@ class preset extends \moodleform  {
      * @param stdclass $coursecontext Course context.
      */
     public function __construct(int $presetid, int $courseid, $coursecontext=null) {
+        global $COURSE;
         $this->courseid = $courseid;
         $this->presetid = $presetid;
         $this->course = get_course($courseid);
         $this->presetdata();
+        $COURSE = $this->course;
+        $this->pulseform = self::pulseform_instance($this->courseid);
         parent::__construct();
+    }
+
+    /**
+     * Create pulse mod form instance.
+     *
+     * @param int $courseid ID of course.
+     * @param int $section Section number.
+     * @return mod_pulse_mod_form mod_pulse form instance.
+     */
+    public static function pulseform_instance(int $courseid, int $section=1) {
+        $course = get_course($courseid);
+        list($module, $context, $cw, $cm, $data) = \prepare_new_moduleinfo_data($course, 'pulse', $section);
+        $pulseform = new \mod_pulse_mod_form($data, $section, $cm, $course);
+        return $pulseform;
     }
 
     /**
@@ -131,7 +157,7 @@ class preset extends \moodleform  {
      */
     public function presetdata(): void {
         global $DB;
-        $this->preset = $DB->get_record('pulse_presets', ['id' => $this->presetid]);
+        $this->preset = $DB->get_record('pulse_presets', ['id' => $this->presetid, 'status' => 1]);
         if (!empty($this->preset)) {
             $description = file_rewrite_pluginfile_urls(
                 $this->preset->description, 'pluginfile.php', \context_system::instance()->id,
@@ -166,31 +192,27 @@ class preset extends \moodleform  {
             // Prevent the javascript collections due to the duplicate of preset and email placeholder js inclusion.
             $PAGE->end_collecting_javascript_requirements();
 
-            require_once($CFG->dirroot . '/course/modlib.php');
-            require_once($CFG->dirroot.'/mod/pulse/mod_form.php');
+            $configlist = self::get_pulse_config_list($this->courseid);
 
-            $course = get_course($this->courseid);
-            list($module, $context, $cw, $cm, $data) = \prepare_new_moduleinfo_data($course, 'pulse', 0);
-            $section = (isset($configparams['section'])) ? $configparams['section'] : 1;
-            $pulseform = new \mod_pulse_mod_form($data, $section, $cm, $course);
             // List of available elements in module pulse form.
-            foreach ($pulseform->_form->_elements as $key => $element) {
+            foreach ($this->pulseform->_form->_elements as $key => $element) {
 
                 $hide = ['hidden', 'html', 'submit', 'static'];
                 if (in_array($element->_type, $hide) || $element instanceof \MoodleQuickForm_group) {
                     continue;
                 }
 
-                if (in_array($element->_attributes['name'], array_keys($configparams))) {
+                if (in_array($element->_attributes['name'], $configparams)) {
                     $elementname = $element->_attributes['name'];
-                    $elem = $pulseform->_form->getElement($elementname);
+                    $elem = $this->pulseform->_form->getElement($elementname);
+                    $attributename = $elem->_attributes['name'];
                     if ($elem->_type == 'editor' || $elem->_type == 'autocomplete') {
                         // Prevent the confilict with module form editors.
                         // Using same names in editor elements in same page, not load the text editors in second elements.
                         $elem->_attributes['name'] = 'preseteditor_'.$elem->_attributes['name'];
                     }
-                    $elem->_label = isset($configparams[$elem->_attributes['name']])
-                        ? $configparams[$elem->_attributes['name']] : $elem->_label;
+                    $elem->_label = isset($configlist[$attributename])
+                        ? $configlist[$attributename] : $elem->_label;
                     $this->_form->addElement($elem);
                 }
             }
@@ -200,6 +222,83 @@ class preset extends \moodleform  {
         }
         // Render all the configurable params form into html.
         $this->preset->configparams = $this->render();
+    }
+
+    /**
+     * Generate the list of available presets based on the order.
+     *
+     * @param int $courseid Id of the current course.
+     * @return array List of presets and manage presets page URL.
+     */
+    public static function generate_presets_list(int $courseid) {
+        global $DB, $OUTPUT, $PAGE;
+        if ($records = $DB->get_records('pulse_presets', ['status' => 1], 'order_no ASC')) {
+            $presets = [];
+            $pluginmanager = core_plugin_manager::instance()->get_installed_plugins('local');
+            $link = '';
+            if (array_key_exists('pulsepro', $pluginmanager)) {
+                $link = new \moodle_url('/local/pulsepro/presets.php');
+            }
+            $PAGE->end_collecting_javascript_requirements();
+            $configlist = self::get_pulse_config_list($courseid);
+            $PAGE->start_collecting_javascript_requirements();
+
+            foreach ($records as $presetid => $record) {
+                $description = file_rewrite_pluginfile_urls(
+                    $record->description, 'pluginfile.php', \context_system::instance()->id, 'mod_pulse', 'description', $record->id
+                );
+
+                $configparams = array_map(function($value) use ($configlist) {
+                    return isset($configlist[$value]) ? $configlist[$value] : '';
+                }, json_decode($record->configparams, true));
+
+                $item = [
+                    'id' => $record->id,
+                    'title' => format_string($record->title),
+                    'description' => format_text($description, FORMAT_HTML),
+                    'configurableparams' => $configparams,
+                ];
+                if (!empty($record->icon)) {
+                    $icon = explode(':', $record->icon);
+                    $icon1 = isset($icon[1]) ? $icon[1] : 'core';
+                    $icon0 = isset($icon[0]) ? $icon[0] : '';
+                    $item['icon'] = $OUTPUT->pix_icon( $icon1, $icon0 );
+                }
+                $presets[] = $item;
+            }
+            return ['presetslist' => (!empty($presets) ? 1 : 0), 'presets' => $presets, 'managepresets' => $link];
+        }
+    }
+
+    /**
+     * List of pulse module form fields list with config label.
+     *
+     * @param int $courseid Id of course.
+     * @return array List of available form fields.
+     */
+    public static function get_pulse_config_list($courseid): array {
+
+        $fields = array();
+        $header = '';
+        $pulseform = self::pulseform_instance($courseid);
+        foreach ($pulseform->_form->_elements as $element) {
+            $hide = ['hidden', 'html', 'submit', 'static'];
+            if (in_array($element->_type, $hide) || $element instanceof \MoodleQuickForm_group) {
+                continue;
+            }
+            if ($element->_type == 'header') {
+                $header = $element->_text;
+            } else {
+                $fields[$element->_attributes['name']] = $header.' > '.$element->_label;
+            }
+        }
+        // Remove session key.
+        if (!empty($fields)) {
+            unset($fields['sesskey']);
+            unset($fields['_qf__mod_pulse_mod_form']);
+        }
+
+        return $fields;
     }
 
     /**

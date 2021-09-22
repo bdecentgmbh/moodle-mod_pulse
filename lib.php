@@ -1347,6 +1347,23 @@ function pulse_preset_update($pulseid, $configdata) {
 }
 
 /**
+ * Fragement output to list all the presets in the pulse module add/edit form.
+ *
+ * @param array $args context and Course ID with context.
+ */
+function mod_pulse_output_fragment_get_presetslist(array $args) {
+    global $OUTPUT;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $courseid = $args['courseid'];
+    $presets = \mod_pulse\preset::generate_presets_list($courseid);
+    return $OUTPUT->render_from_template('mod_pulse/presets_list', $presets);
+}
+
+/**
  * Fragement output to preview the selected preset. Loads all the available informations and configurable params as form elements.
  *
  * @param array $args Preset ID and Course ID with context.
@@ -1442,7 +1459,7 @@ function pulse_free_presets(): array {
     $preset1 = array(
         'title' => 'Demo preset 1',
         'description' => 'This is demo preset 1 to test',
-        'configparams' => json_encode(['name' => 'General \ Title', 'introeditor' => 'General \ Content']),
+        'configparams' => json_encode(['name', 'introeditor']),
         'preset_template' => 'preset-demo-1.mbz',
         'status' => 1,
         'icon' => 'core:a/download_all',
@@ -1451,7 +1468,7 @@ function pulse_free_presets(): array {
     $preset2 = array(
         'title' => 'Demo preset 2',
         'description' => 'This is demo preset 2 to test',
-        'configparams' => json_encode(['name' => 'General \ Title', 'introeditor' => 'General \ Content']),
+        'configparams' => json_encode(['name', 'introeditor']),
         'preset_template' => 'preset-demo-2.mbz',
         'status' => 1,
         'icon' => 'core:a/add_file',

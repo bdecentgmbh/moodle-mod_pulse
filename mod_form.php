@@ -52,9 +52,9 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform = $this->_form;
         if (!isset($this->current->instance) || $this->current->instance == '') {
             // Presets header.
-            $mform->addElement('header', 'presets_header', get_string('presets', 'pulse') );
-            $presets = $this->generate_presets_list();
-            $mform->addElement('html', $OUTPUT->render_from_template('mod_pulse/presets_list', $presets));
+            $mform->addElement('header', 'presets_header', get_string('presets', 'pulse'));
+            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', array('class' => 'spinner'));
+            $mform->addElement('html', '<div id="pulse-presets-data" data-listloaded="false">'.$loader.'</div>');
         }
         // General section.
         $mform->addElement('header', 'general', get_string('general') );
@@ -83,7 +83,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse', 'sendnotificaton', 'mod_pulse');
 
         // Use Differnet pulse content for pulse.
-        $mform->addElement('submit', 'resend_pulse', get_string('resendnotification', 'pulse'));
+        $resend = $mform->addElement('submit', 'resend_pulse', get_string('resendnotification', 'pulse'));
         $mform->addHelpButton('resend_pulse', 'resendnotification', 'mod_pulse');
 
         // Use Different notification content.
@@ -260,6 +260,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($defaultvalues['completionapprovalroles'])) {
             $defaultvalues['completionapprovalroles'] = json_decode($defaultvalues['completionapprovalroles']);
         }
+
+        $defaultvalues['resend_pulse'] = get_string('resendnotification', 'pulse');
         // Pre pocessing extend.
         pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
     }
@@ -289,41 +291,4 @@ class mod_pulse_mod_form extends moodleform_mod {
         }
         return $errors;
     }
-
-    /**
-     * Generate the list of available presets based on the order.
-     *
-     * @return array List of presets and manage presets page URL
-     */
-    public function generate_presets_list() {
-        global $DB, $OUTPUT;
-        if ($records = $DB->get_records('pulse_presets', ['status' => 1], 'order_no ASC')) {
-            $presets = [];
-            $pluginmanager = core_plugin_manager::instance()->get_installed_plugins('local');
-            $link = '';
-            if (array_key_exists('pulsepro', $pluginmanager)) {
-                $link = new \moodle_url('/local/pulsepro/presets.php');
-            }
-            foreach ($records as $presetid => $record) {
-                $description = file_rewrite_pluginfile_urls(
-                    $record->description, 'pluginfile.php', context_system::instance()->id, 'mod_pulse', 'description', $record->id
-                );
-                $item = [
-                    'id' => $record->id,
-                    'title' => format_text($record->title),
-                    'description' => format_text($description, FORMAT_HTML),
-                    'configurableparams' => array_values(json_decode($record->configparams, true)),
-                ];
-                if (!empty($record->icon)) {
-                    $icon = explode(':', $record->icon);
-                    $icon1 = isset($icon[1]) ? $icon[1] : 'core';
-                    $icon0 = isset($icon[0]) ? $icon[0] : '';
-                    $item['icon'] = $OUTPUT->pix_icon( $icon1, $icon0 );
-                }
-                $presets[] = $item;
-            }
-            return ['presetslist' => (!empty($presets) ? 1 : 0), 'presets' => $presets, 'managepresets' => $link];
-        }
-    }
-
 }

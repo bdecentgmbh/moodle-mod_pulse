@@ -1,15 +1,16 @@
 define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/events', 'core/str',
-'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification'],
-    function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification) {
+'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events'],
+    function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification, ModalEvents) {
 
 
     var Preset = function(contextId, courseid, pageparams) {
         this.contextId = contextId;
         this.courseid = courseid;
         this.pageparams = pageparams;
-
-        this.setupmodal();
+        this.loadPresetsList();
     };
+
+    Preset.prototype.listElement = {'selector' : 'pulse-presets-data',  "loaded": "data-listloaded"};
 
     Preset.prototype.contextId = 0;
 
@@ -28,13 +29,18 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         var triggerelement = document.querySelectorAll('.pulse-usepreset');
         triggerelement.forEach((element) => element.addEventListener('click', () => {
             var presetid = element.getAttribute('data-presetid');
+            var presettitle = element.getAttribute('data-presettitle');
             var params = {'presetid': presetid, 'courseid': THIS.courseid};
             Modal.create({
                 type: ModalPreset.TYPE,
+                title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
                 body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
                 large: true
             }).then(modal => {
                 modal.show();
+                // Destroy the modal on hidden to reload the editors.
+                modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+
                 modal.getRoot().on(PresetEvents.customize, () => {
                     var modform = document.forms[0];
                     var modformdata = new FormData(modform);
@@ -101,6 +107,23 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         });
     };
 
+    /**
+     * Load list of available presets.
+     */
+    Preset.prototype.loadPresetsList = function() {
+        var listParent = document.getElementById(this.listElement.selector);
+
+        if (listParent !== null) {
+            if (listParent.getAttribute(this.listElement.loaded) == 'false') {
+                Fragment.loadFragment('mod_pulse', 'get_presetslist', this.contextId, {'courseid': this.courseid})
+                .done((html, js) => {
+                    Templates.replaceNodeContents(listParent, html, js);
+                    listParent.setAttribute(this.listElement.loaded, 'true');
+                    this.setupmodal();
+                });
+            }
+        }
+    };
 
     return {
         init: (contextId, courseid) => {
