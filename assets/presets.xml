@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<presets>
+    <preset1>
+        <title>Demo preset 1</title>
+        <description>This is demo preset 1 to test</description>
+        <configparams>["name","introeditor"]</configparams>
+        <preset_template>preset-demo-1.mbz</preset_template>
+        <status>1</status><icon>core:a/download_all</icon>
+        <order_no>1</order_no>
+    </preset1>
+    <preset2>
+        <title>Demo preset 2</title>
+        <description>This is demo preset 2 to test</description>
+        <configparams>["name","introeditor"]</configparams>
+        <preset_template>preset-demo-2.mbz</preset_template>
+        <status>1</status>
+        <icon>core:a/add_file</icon>
+        <order_no>2</order_no>
+    </preset2>
+</presets>

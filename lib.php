@@ -1413,7 +1413,7 @@ function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
 function pulse_create_presets($presets=[], $pro=false) {
     global $DB, $CFG;
     if (!isloggedin() || isguestuser()) {
-        return;
+        return [];
     }
     $fs = get_file_storage();
     if (empty($presets)) {
@@ -1456,23 +1456,11 @@ function pulse_create_presets($presets=[], $pro=false) {
  * @return array List of demo presets.
  */
 function pulse_free_presets(): array {
-    $preset1 = array(
-        'title' => 'Demo preset 1',
-        'description' => 'This is demo preset 1 to test',
-        'configparams' => json_encode(['name', 'introeditor']),
-        'preset_template' => 'preset-demo-1.mbz',
-        'status' => 1,
-        'icon' => 'core:a/download_all',
-        'order_no' => 1,
-    );
-    $preset2 = array(
-        'title' => 'Demo preset 2',
-        'description' => 'This is demo preset 2 to test',
-        'configparams' => json_encode(['name', 'introeditor']),
-        'preset_template' => 'preset-demo-2.mbz',
-        'status' => 1,
-        'icon' => 'core:a/add_file',
-        'order_no' => 2,
-    );
-    return array( $preset1, $preset2);
+    global $CFG;
+    if (file_exists($CFG->dirroot.'/mod/pulse/assets/presets.xml')) {
+        $presetsxml = simplexml_load_file($CFG->dirroot.'/mod/pulse/assets/presets.xml');
+        $result = json_decode(json_encode($presetsxml), true);
+        return $result;
+    }
+    return array();
 }
