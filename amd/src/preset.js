@@ -2,19 +2,30 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
 'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events'],
     function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification, ModalEvents) {
 
+    var SELECTOR = {
+        presetAvailability: '.preset-config-params .availability-field'
+    };
 
-    var Preset = function(contextId, courseid, pageparams) {
+    /**
+     * Preset module declaration. Setup the global values.
+     * @param  {int} contextId
+     * @param  {int} courseid
+     * @param  {int} section
+     */
+    var Preset = function(contextId, courseid, section) {
         this.contextId = contextId;
         this.courseid = courseid;
-        this.pageparams = pageparams;
+        this.section = section;
         this.loadPresetsList();
     };
 
-    Preset.prototype.listElement = {'selector' : 'pulse-presets-data',  "loaded": "data-listloaded"};
+    Preset.prototype.listElement = {'selector': 'pulse-presets-data', "loaded": "data-listloaded"};
 
     Preset.prototype.contextId = 0;
 
     Preset.prototype.courseid = 0;
+
+    Preset.prototype.section = 0;
 
     Preset.prototype.pageparams = [];
 
@@ -22,27 +33,43 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
 
     Preset.prototype.actionbuttons = '.modal-footer button';
 
+    /**
+     * Setup the presets modal event listeners.
+     */
     Preset.prototype.setupmodal = function() {
 
         var THIS = this;
 
         var triggerelement = document.querySelectorAll('.pulse-usepreset');
+        // Modal attachment point.
+        var attachmentPoint = document.createElement('div');
+        attachmentPoint.classList.add('modal-preset');
         triggerelement.forEach((element) => element.addEventListener('click', () => {
             var presetid = element.getAttribute('data-presetid');
             var presettitle = element.getAttribute('data-presettitle');
-            var params = {'presetid': presetid, 'courseid': THIS.courseid};
+            var params = {'presetid': presetid, 'courseid': THIS.courseid, 'section': THIS.section};
+
+            document.body.prepend(attachmentPoint);
             Modal.create({
                 type: ModalPreset.TYPE,
                 title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
                 body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
-                large: true
+                large: true,
             }).then(modal => {
+                // Make the modal attachment point to overcome the restriction access condition.
+                modal.attachmentPoint = attachmentPoint;
                 modal.show();
+                modal.getRoot().on(ModalEvents.shown, () => {
+                    THIS.reinitAvailability(SELECTOR.presetAvailability);
+                });
                 // Destroy the modal on hidden to reload the editors.
-                modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-
+                modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.destroy.bind(modal);
+                    THIS.reinitAvailability();
+                });
+                // Apply and customize method.
                 modal.getRoot().on(PresetEvents.customize, () => {
-                    var modform = document.forms[0];
+                    var modform = document.querySelector('#mod-pulse-form');
                     var modformdata = new FormData(modform);
                     modal.getRoot().get(0).querySelectorAll('form').forEach(form => {
                         var formdata = new FormData(form);
@@ -55,7 +82,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                         THIS.applyCustomize(params, THIS.contextId, modal);
                     });
                 });
-
+                // Apply and save method.
                 modal.getRoot().on(PresetEvents.save, (e) => {
                     e.preventDefault();
                     Loadingicon.addIconToContainer(this.loadIconElement);
@@ -69,9 +96,31 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                 return true;
             }).catch(Notification.exception);
         }));
-
     };
 
+    /**
+     * Reinitialize the availability javascript.
+     * @param {string} selector
+     */
+    Preset.prototype.reinitAvailability = function(selector = '.availability-field') {
+        Fragment.loadFragment('mod_pulse', 'reinit_availability', this.contextId, {'courseid': this.courseid})
+        .done((html, js) => {
+            if (html == '') {
+                document.querySelectorAll(selector).forEach((field) => field.parentNode.removeChild(field));
+                if (typeof M.core_availability.form !== "undefined") {
+                    M.core_availability.form.restrictByGroup = null;
+                }
+                Templates.runTemplateJS(js);
+            }
+        });
+    };
+
+    /**
+     * Apply and customize triggered using fragment. Response will replaced with current mod form.
+     * @param  {string} params
+     * @param  {int} contextID
+     * @param  {object} modal
+     */
     Preset.prototype.applyCustomize = function(params, contextID, modal) {
         Fragment.loadFragment('mod_pulse', 'apply_preset', contextID, params).done((html, js) => {
             this.handleFormSubmissionResponse(html, js);
@@ -79,6 +128,9 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         });
     };
 
+    /**
+     * Disable the modal save and customize buttons to prevent reinit.
+     */
     Preset.prototype.disableButtons = function() {
         var buttons = document.querySelectorAll(this.actionbuttons);
         for (let $i in buttons) {
@@ -86,12 +138,23 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         }
     };
 
+    /**
+     * Handle the loaded fragment output of customize method pulse mod.
+     * @param  {html} data
+     * @param  {string} js
+     */
     Preset.prototype.handleFormSubmissionResponse = (data, js) => {
         var newform = document.createElement('div');
         newform.innerHTML = data;
         Templates.replaceNode('[action="modedit.php"]', data, js);
+
     };
 
+    /**
+     * Initiate the apply and save method to create the pulse module with custom daa.
+     * @param  {FormData} formdata
+     * @param  {int} contextid
+     */
     Preset.prototype.restorePreset = (formdata, contextid) => {
         var formdatastr = new URLSearchParams(formdata).toString();
         var promises = AJAX.call([{
@@ -126,8 +189,8 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
     };
 
     return {
-        init: (contextId, courseid) => {
-            new Preset(contextId, courseid);
+        init: (contextId, courseid, section) => {
+            new Preset(contextId, courseid, section);
         }
     };
 });

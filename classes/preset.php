@@ -69,6 +69,13 @@ class preset extends \moodleform  {
     public $courseid;
 
     /**
+     * Module current section.
+     *
+     * @var int
+     */
+    public $section;
+
+    /**
      * Restore controller, helps to restore the preset template as pulse module.
      *
      * @var stdclass
@@ -104,6 +111,10 @@ class preset extends \moodleform  {
 
         $this->_form->addElement('hidden', 'presetid', $this->presetid);
         $this->_form->setType('presetid', PARAM_INT);
+
+        if ($this->section) {
+            $this->_form->addElement('hidden', 'section', $this->section);
+        }
     }
 
     /**
@@ -112,16 +123,26 @@ class preset extends \moodleform  {
      * @param int $presetid ID of selected preset.
      * @param int $courseid ID of current course.
      * @param stdclass $coursecontext Course context.
+     * @param int $section Section number.
      */
-    public function __construct(int $presetid, int $courseid, $coursecontext=null) {
+    public function __construct(int $presetid, int $courseid, $coursecontext=null, ?int $section=0) {
         global $COURSE;
         $this->courseid = $courseid;
         $this->presetid = $presetid;
         $this->course = get_course($courseid);
+        $this->section = $section;
         $this->presetdata();
         $COURSE = $this->course;
-        $this->pulseform = self::pulseform_instance($this->courseid);
         parent::__construct();
+    }
+
+    /**
+     * Create class variable for the pulse form.
+     *
+     * @return void
+     */
+    public function setpulseform(): void {
+        $this->pulseform = self::pulseform_instance($this->courseid);
     }
 
     /**
@@ -145,6 +166,7 @@ class preset extends \moodleform  {
      */
     public function output_fragment(): string {
         global $OUTPUT;
+        $this->setpulseform();
         $this->load_forms();
         $presethtml = $OUTPUT->render_from_template('mod_pulse/preset', $this->preset);
         return $presethtml;
@@ -185,15 +207,12 @@ class preset extends \moodleform  {
      * @return void
      */
     public function load_forms(): void {
-        global $PAGE, $CFG;
-        $configparams = (isset($this->preset->configparams)) ? json_decode($this->preset->configparams, true) : [];
 
+        $configparams = (isset($this->preset->configparams)) ? json_decode($this->preset->configparams, true) : [];
+        self::js_collection_requirement(); // End js collection.
         if (!empty($configparams)) {
             // Prevent the javascript collections due to the duplicate of preset and email placeholder js inclusion.
-            $PAGE->end_collecting_javascript_requirements();
-
             $configlist = self::get_pulse_config_list($this->courseid);
-
             // List of available elements in module pulse form.
             foreach ($this->pulseform->_form->_elements as $key => $element) {
 
@@ -211,18 +230,42 @@ class preset extends \moodleform  {
                         // Using same names in editor elements in same page, not load the text editors in second elements.
                         $elem->_attributes['name'] = 'preseteditor_'.$elem->_attributes['name'];
                     }
+                    if ($attributename == 'availabilityconditionsjson') {
+                        $includeavailabilityjs = true;
+                    }
                     $elem->_label = isset($configlist[$attributename])
                         ? $configlist[$attributename] : $elem->_label;
                     $this->_form->addElement($elem);
                 }
             }
             $this->add_action_buttons(false, 's');
-            // Start to collect the javascripts.
-            $PAGE->start_collecting_javascript_requirements();
         }
+        // Start to collect the javascripts.
+        self::js_collection_requirement(true);
         // Render all the configurable params form into html.
         $this->preset->configparams = $this->render();
     }
+
+    /**
+     * Start or end the javascript requirement collection.
+     *
+     * @param bool $method if true start the collection otherwise end the collection.
+     * @return void
+     */
+    public static function js_collection_requirement(bool $method=false): void {
+        global $PAGE;
+
+        if ($method == true) {
+            if (get_class($PAGE->requires) != 'fragment_requirements_manager') {
+                $PAGE->start_collecting_javascript_requirements();
+            }
+        } else {
+            if (get_class($PAGE->requires) == 'fragment_requirements_manager') {
+                $PAGE->end_collecting_javascript_requirements();
+            }
+        }
+    }
+
 
     /**
      * Generate the list of available presets based on the order.
@@ -239,9 +282,7 @@ class preset extends \moodleform  {
             if (array_key_exists('pulsepro', $pluginmanager)) {
                 $link = new \moodle_url('/local/pulsepro/presets.php');
             }
-            $PAGE->end_collecting_javascript_requirements();
             $configlist = self::get_pulse_config_list($courseid);
-            $PAGE->start_collecting_javascript_requirements();
 
             foreach ($records as $presetid => $record) {
                 $description = file_rewrite_pluginfile_urls(
@@ -277,7 +318,7 @@ class preset extends \moodleform  {
      * @return array List of available form fields.
      */
     public static function get_pulse_config_list($courseid): array {
-
+        self::js_collection_requirement();
         $fields = array();
         $header = '';
         $pulseform = self::pulseform_instance($courseid);
@@ -292,6 +333,7 @@ class preset extends \moodleform  {
                 $fields[$element->_attributes['name']] = $header.' > '.$element->_label;
             }
         }
+        self::js_collection_requirement(true);
         // Remove session key.
         if (!empty($fields)) {
             unset($fields['sesskey']);
@@ -359,6 +401,14 @@ class preset extends \moodleform  {
                 continue;
             }
             if (trim($value)) {
+                // Remove the empty restrict conditions.
+                if ($key == 'availabilityconditionsjson') {
+                    $json = json_decode($value);
+                    if (!isset($json->c) || empty($json->c)) {
+                        unset($config[$key]);
+                        continue;
+                    }
+                }
                 $config[$key] = $value;
             } else {
                 unset($config[$key]);
@@ -450,6 +500,7 @@ class preset extends \moodleform  {
         });
         // Clear the empty custom element.
         $configdata = $this->clear_empty_data($configdata);
+
         $method = \backup::TARGET_CURRENT_ADDING;
         // Restore controller.
         $this->controller = new \restore_controller($backuptempdir, $this->courseid, \backup::INTERACTIVE_NO,
@@ -491,6 +542,7 @@ class preset extends \moodleform  {
                     if (!empty($configdata)) {
                         $configdata['id'] = $task->get_moduleid();
                         $configdata['instance'] = $pulseid;
+                        $this->updatemodulesection($configdata);
                         $DB->update_record('course_modules', $configdata);
                     }
                     // Remove the Database cache.
@@ -532,12 +584,48 @@ class preset extends \moodleform  {
                 }
                 return true;
             });
-
+            // Replace the element availability to availabilityconditionjson.
+            if (isset($formdata['availability'])) {
+                $formdata['availabilityconditionsjson'] = $formdata['availability'];
+            }
             // Create form with values.
             $form = $this->prepare_modform($formdata);
             // Send to replace the form.
             return $form;
         }
+    }
+
+    /**
+     * Replace the created pulse module section with selected section.
+     *
+     * @param array $configdata Custom parameters.
+     * @return void
+     */
+    public function updatemodulesection(array &$configdata): void {
+        global $DB;
+        if (isset($configdata['section']) && !empty($configdata['section'])) {
+            $section = $configdata['section'];
+            if ($sectionid = $DB->get_field('course_modules', 'section', ['id' => $configdata['id']])) {
+                // Add the mod id to new section sequence.
+                $params = ['course' => $configdata['courseid'], 'section' => $section];
+                if ($newsection = $DB->get_record('course_sections', $params)) {
+                    $sequence = ($newsection->sequence) ? explode(',', $newsection->sequence) : [];
+                    array_push($sequence, $configdata['id']);
+                    $newsection->sequence = ($sequence) ? implode(',', $sequence) : $configdata['id'];
+                    if ($DB->update_record('course_sections', $newsection)) {
+                        $DB->set_field('course_modules', 'section', $newsection->id, ['id' => $configdata['id']]);
+                    }
+                }
+                // Remove the mod id from current section sequence.
+                if ($currentsection = $DB->get_record('course_sections', ['id' => $sectionid])) {
+                    $sequence = ($currentsection->sequence) ? explode(',', $currentsection->sequence) : [];
+                    $currentsection->sequence = ($sequence)
+                        ? implode(',', array_diff($sequence, [$configdata['id']])) : $configdata['id'];
+                    $DB->update_record('course_sections', $currentsection);
+                }
+            }
+        }
+        unset($configdata['section']);
     }
 
     /**

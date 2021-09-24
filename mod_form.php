@@ -34,9 +34,8 @@ require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 class mod_pulse_mod_form extends moodleform_mod {
 
     /**
-     * Make the protect variable to public. Helps to copy the form elements.
      *
-     * @var stdclass
+     * @var MoodleQuickForm quickform object definition
      */
     public $_form;
 
@@ -50,6 +49,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         global $DB, $PAGE, $CFG, $OUTPUT;
 
         $mform = $this->_form;
+        $mform->updateAttributes(['id' => 'mod-pulse-form']);
         if (!isset($this->current->instance) || $this->current->instance == '') {
             // Presets header.
             $mform->addElement('header', 'presets_header', get_string('presets', 'pulse'));
@@ -108,7 +108,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
 
         // Presets - JS.
-        $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id]);
+        $section = optional_param('section', 0, PARAM_INT);
+        $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id, $section]);
 
         $this->pulse_email_placeholders($mform);
         // Show intro on course page always.

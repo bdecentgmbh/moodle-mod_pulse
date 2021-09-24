@@ -1377,8 +1377,8 @@ function mod_pulse_output_fragment_get_preset_preview(array $args) : ?string {
     }
     $presetid = $args['presetid'];
     $courseid = $args['courseid'];
-
-    $preset = new mod_pulse\preset($presetid, $courseid, $context);
+    $sectionid = $args['section'];
+    $preset = new mod_pulse\preset($presetid, $courseid, $context, $sectionid);
     return $preset->output_fragment();
 }
 
@@ -1401,6 +1401,25 @@ function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
     $result = $external->apply_presets($context->id, $formdata, $pageparams);
 
     return $result;
+}
+
+/**
+ * Fragement to rerun the availability yui module after the preset modal destoryed, then we need to rerun.
+ *
+ * @param array $args Custom config data and Current courseid.
+ */
+function mod_pulse_output_fragment_reinit_availability(array $args): ?string {
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $cm = null;
+    if (isset($args['courseid']) && !empty($args['courseid'])) {
+        $course = get_course($args['courseid']);
+        \core_availability\frontend::include_all_javascript($course, $cm);
+    }
+    return '';
 }
 
 /**
