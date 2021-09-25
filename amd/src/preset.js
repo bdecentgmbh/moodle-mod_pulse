@@ -59,7 +59,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                 // Make the modal attachment point to overcome the restriction access condition.
                 modal.attachmentPoint = attachmentPoint;
                 modal.show();
-                modal.getRoot().on(ModalEvents.shown, () => {
+                modal.getRoot().on(ModalEvents.bodyRendered, function() {
                     THIS.reinitAvailability(SELECTOR.presetAvailability);
                 });
                 // Destroy the modal on hidden to reload the editors.
@@ -103,16 +103,26 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
      * @param {string} selector
      */
     Preset.prototype.reinitAvailability = function(selector = '.availability-field') {
-        Fragment.loadFragment('mod_pulse', 'reinit_availability', this.contextId, {'courseid': this.courseid})
-        .done((html, js) => {
-            if (html == '') {
-                document.querySelectorAll(selector).forEach((field) => field.parentNode.removeChild(field));
-                if (typeof M.core_availability.form !== "undefined") {
-                    M.core_availability.form.restrictByGroup = null;
+        if (typeof M.core_availability.form !== "undefined") {
+            this.resetRestrictPlugins();
+            document.querySelectorAll(selector).forEach((field) => field.parentNode.removeChild(field));
+            M.core_availability.form.init();
+        }
+    };
+
+    Preset.prototype.resetRestrictPlugins = function() {
+        if (typeof M.core_availability.form !== "undefined" && document.getElementById('id_availabilityconditionsjson') !== null) {
+            M.core_availability.form.restrictByGroup = null;
+            var availabilityPlugins = (typeof M.core_availability.form.plugins !== 'undefined')
+                ? M.core_availability.form.plugins : {};
+            var plugin = '';
+            for (var i in availabilityPlugins) {
+                plugin = "availability_" + i;
+                if (M.hasOwnProperty(plugin)) {
+                    M[plugin].form.addedEvents = false;
                 }
-                Templates.runTemplateJS(js);
             }
-        });
+        }
     };
 
     /**
@@ -123,8 +133,10 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
      */
     Preset.prototype.applyCustomize = function(params, contextID, modal) {
         Fragment.loadFragment('mod_pulse', 'apply_preset', contextID, params).done((html, js) => {
-            this.handleFormSubmissionResponse(html, js);
             modal.destroy();
+            // Reset the availability to work for upcoming response html.
+            this.resetRestrictPlugins();
+            this.handleFormSubmissionResponse(html, js);
         });
     };
 

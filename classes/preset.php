@@ -220,7 +220,6 @@ class preset extends \moodleform  {
                 if (in_array($element->_type, $hide) || $element instanceof \MoodleQuickForm_group) {
                     continue;
                 }
-
                 if (in_array($element->_attributes['name'], $configparams)) {
                     $elementname = $element->_attributes['name'];
                     $elem = $this->pulseform->_form->getElement($elementname);
@@ -558,6 +557,10 @@ class preset extends \moodleform  {
         } else if ($configdata['importmethod'] == 'customize') {
             // Fetch values from backup file.
             $backupdata = $this->fetch_pulse_data_fromxml();
+            // Replace the element availability to availabilityconditionjson.
+            if (isset($backupdata['availability'])) {
+                $backupdata['availabilityconditionsjson'] = $backupdata['availability'];
+            }
 
             $this->controller->destroy();
             if (isset($backupdata['intro'])) {
@@ -584,10 +587,6 @@ class preset extends \moodleform  {
                 }
                 return true;
             });
-            // Replace the element availability to availabilityconditionjson.
-            if (isset($formdata['availability'])) {
-                $formdata['availabilityconditionsjson'] = $formdata['availability'];
-            }
             // Create form with values.
             $form = $this->prepare_modform($formdata);
             // Send to replace the form.
@@ -603,6 +602,10 @@ class preset extends \moodleform  {
      */
     public function updatemodulesection(array &$configdata): void {
         global $DB;
+        if (isset($configdata['availabilityconditionsjson']) && !empty($configdata['availabilityconditionsjson'])) {
+            $configdata['availability'] = $configdata['availabilityconditionsjson'];
+            unset($configdata['availabilityconditionsjson']);
+        }
         if (isset($configdata['section']) && !empty($configdata['section'])) {
             $section = $configdata['section'];
             if ($sectionid = $DB->get_field('course_modules', 'section', ['id' => $configdata['id']])) {
