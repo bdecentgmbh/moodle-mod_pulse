@@ -61,12 +61,14 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                 modal.show();
                 modal.getRoot().on(ModalEvents.bodyRendered, function() {
                     THIS.reinitAvailability(SELECTOR.presetAvailability);
+                    THIS.fieldChangedEvent();
                 });
                 // Destroy the modal on hidden to reload the editors.
                 modal.getRoot().on(ModalEvents.hidden, function() {
                     modal.destroy.bind(modal);
                     THIS.reinitAvailability();
                 });
+
                 // Apply and customize method.
                 modal.getRoot().on(PresetEvents.customize, () => {
                     var modform = document.querySelector('#mod-pulse-form');
@@ -96,6 +98,43 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                 return true;
             }).catch(Notification.exception);
         }));
+    };
+
+
+    Preset.prototype.fieldChangedEvent = () => {
+        var confParam = document.getElementById("preset-configurable-params");
+        var reminders = ['first', 'second', 'recurring'];
+        var methods = ['fixed', 'relative'];
+        var fieldName, changeinput, id, changeName, split;
+        confParam.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('change', (event) => {
+                fieldName = event.target.getAttribute('name');
+                if (confParam.querySelector('input[name="' + fieldName + '_changed"]') !== null) {
+                    confParam.querySelector('input[name="' + fieldName + '_changed"]').value = true;
+                }
+            });
+        });
+
+        reminders.forEach(reminder => {
+            confParam.querySelectorAll('[name="' + reminder + '_schedule"').forEach(schedule => {
+                schedule.addEventListener('change', (e) => {
+                    changeName = e.target.getAttribute('name');
+                    changeinput = 'input[name="' + changeName + '_arr_changed"]';
+                    confParam.querySelector(changeinput).value = true;
+                });
+            });
+            methods.forEach(method => {
+                id = reminder + "_" + method + "date";
+                confParam.querySelectorAll('[name*="' + id + '"]').forEach(opt => {
+                    opt.addEventListener('change', (e) => {
+                        split = e.target.getAttribute('name').split('[');
+                        changeName = (split.hasOwnProperty(1)) ? split[0] : split;
+                        changeinput = 'input[name="' + changeName + '_changed"]';
+                        confParam.querySelector(changeinput).value = true;
+                    });
+                });
+            });
+        });
     };
 
     /**

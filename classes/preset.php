@@ -103,6 +103,8 @@ class preset extends \moodleform  {
      */
     public function definition() {
         // Empty form content.
+
+        $this->_form->updateAttributes(['id' => 'preset-configurable-params']);
         $this->_form->addElement('hidden', 'importmethod');
         $this->_form->setType('importmethod', PARAM_INT);
 
@@ -217,10 +219,17 @@ class preset extends \moodleform  {
             foreach ($this->pulseform->_form->_elements as $key => $element) {
 
                 $hide = ['hidden', 'html', 'submit', 'static'];
-                if (in_array($element->_type, $hide) || $element instanceof \MoodleQuickForm_group) {
+                if (in_array($element->_type, $hide)) {
                     continue;
                 }
-                if (in_array($element->_attributes['name'], $configparams)) {
+                if ($element instanceof \MoodleQuickForm_group && in_array($element->_name, $configparams)) {
+                    $group = [];
+                    $elem = $this->pulseform->_form->getElement($element->_name);
+                    $elem->_label = isset($configlist[$element->_name])
+                        ? $configlist[$element->_name] : $elem->_label;
+                    $this->_form->addElement($elem);
+                    $this->_form->addElement('hidden', $elem->_name.'_changed', false);
+                } else if (isset($element->_attributes['name']) && in_array($element->_attributes['name'], $configparams)) {
                     $elementname = $element->_attributes['name'];
                     $elem = $this->pulseform->_form->getElement($elementname);
                     $attributename = $elem->_attributes['name'];
@@ -229,12 +238,10 @@ class preset extends \moodleform  {
                         // Using same names in editor elements in same page, not load the text editors in second elements.
                         $elem->_attributes['name'] = 'preseteditor_'.$elem->_attributes['name'];
                     }
-                    if ($attributename == 'availabilityconditionsjson') {
-                        $includeavailabilityjs = true;
-                    }
                     $elem->_label = isset($configlist[$attributename])
                         ? $configlist[$attributename] : $elem->_label;
                     $this->_form->addElement($elem);
+                    $this->_form->addElement('hidden', $attributename.'_changed', false);
                 }
             }
             $this->add_action_buttons(false, 's');
@@ -323,13 +330,26 @@ class preset extends \moodleform  {
         $pulseform = self::pulseform_instance($courseid);
         foreach ($pulseform->_form->_elements as $element) {
             $hide = ['hidden', 'html', 'submit', 'static'];
-            if (in_array($element->_type, $hide) || $element instanceof \MoodleQuickForm_group) {
+            $hide = ['hidden', 'html', 'submit', 'static'];
+            if (in_array($element->_type, $hide)) {
                 continue;
             }
+
             if ($element->_type == 'header') {
                 $header = $element->_text;
+            } else if ($element instanceof \MoodleQuickForm_group) {
+                $label = (($element->_label) ? $element->_label : $element->_name);
+                if (strpos($element->_name, 'relativedate') !== false) {
+                    $label = get_string('schedule:relativedate', 'pulse');
+                }
+                if (strpos($element->_name, 'fixeddate') !== false) {
+                    $label = get_string('schedule:fixeddate', 'pulse');
+                }
+
+                $fields[$element->_name] = $header .' > '. $label;
             } else {
-                $fields[$element->_attributes['name']] = $header.' > '.$element->_label;
+                $label = (($element->_label) ? $element->_label : $element->_text);
+                $fields[$element->_attributes['name']] = $header.' > '.$label;
             }
         }
         self::js_collection_requirement(true);
@@ -395,11 +415,18 @@ class preset extends \moodleform  {
     public function clear_empty_data(array $config): array {
 
         foreach ($config as $key => $value) {
+
+            if ($key == 'completionapprovalroles') {
+                $value = (is_array($config['completionapprovalroles']))
+                        ? json_encode($config['completionapprovalroles']) : '';
+            }
+
             if (is_array($value)) {
                 $config[$key] = $this->clear_empty_data($value);
                 continue;
             }
-            if (trim($value)) {
+
+            if (trim($value) !== null && trim($value) !== '') {
                 // Remove the empty restrict conditions.
                 if ($key == 'availabilityconditionsjson') {
                     $json = json_decode($value);
@@ -412,7 +439,6 @@ class preset extends \moodleform  {
             } else {
                 unset($config[$key]);
             }
-
         }
         return $config;
     }
@@ -494,9 +520,24 @@ class preset extends \moodleform  {
             $configdata['pulse_contentformat'] = $configdata['pulse_contenteditor']['format'];
             $configdata['pulse_content'] = $configdata['pulse_contenteditor']['text'];
         }
-        $configdata = array_filter($configdata, function($value) {
-            return ($value !== null && $value != "") ? true : false;
-        });
+
+        // Update completion fields.
+        $configdata['completionavailable'] = isset($configdata['completionwhenavailable'])
+                ? $configdata['completionwhenavailable'] : '';
+
+        if (class_exists('\local_pulsepro\presets\preset_form')) {
+            \local_pulsepro\presets\preset_form::clean_configdata($configdata);
+        }
+
+        // No need to clear basic data and pro schedules.
+        $nochanged = array('courseid', 'presetid', 'section', 'importmethod', 'sesskey', 'second_schedule', 'first_schedule');
+        $configdata = array_filter($configdata, function($value, $key) use ($nochanged, $configdata) {
+            if (!in_array($key, $nochanged) && strpos($key, 'recipients') == false && strpos($key, 'editor') == false) {
+                $value = (isset($configdata[$key.'_changed']) && empty($configdata[$key.'_changed'])) ? '' : $value;
+            }
+            return ($value !== null && $value !== "") ? true : false;
+        }, ARRAY_FILTER_USE_BOTH);
+
         // Clear the empty custom element.
         $configdata = $this->clear_empty_data($configdata);
 
@@ -583,7 +624,7 @@ class preset extends \moodleform  {
             $formdata['course'] = $this->courseid;
             $formdata = array_filter($formdata, function($value) {
                 if (!is_array($value)) {
-                    return (trim($value) != '') ? true : false;
+                    return (trim($value) !== '') ? true : false;
                 }
                 return true;
             });
@@ -606,26 +647,36 @@ class preset extends \moodleform  {
             $configdata['availability'] = $configdata['availabilityconditionsjson'];
             unset($configdata['availabilityconditionsjson']);
         }
-        if (isset($configdata['section']) && !empty($configdata['section'])) {
-            $section = $configdata['section'];
-            if ($sectionid = $DB->get_field('course_modules', 'section', ['id' => $configdata['id']])) {
-                // Add the mod id to new section sequence.
-                $params = ['course' => $configdata['courseid'], 'section' => $section];
-                if ($newsection = $DB->get_record('course_sections', $params)) {
-                    $sequence = ($newsection->sequence) ? explode(',', $newsection->sequence) : [];
-                    array_push($sequence, $configdata['id']);
-                    $newsection->sequence = ($sequence) ? implode(',', $sequence) : $configdata['id'];
-                    if ($DB->update_record('course_sections', $newsection)) {
-                        $DB->set_field('course_modules', 'section', $newsection->id, ['id' => $configdata['id']]);
+        try {
+            $transaction = $DB->start_delegated_transaction();
+            if (isset($configdata['section']) && !empty($configdata['section'])) {
+                $section = $configdata['section'];
+                if ($sectionid = $DB->get_field('course_modules', 'section', ['id' => $configdata['id']])) {
+                    // Remove the mod id from current section sequence.
+                    if ($currentsection = $DB->get_record('course_sections', ['id' => $sectionid])) {
+                        $sequence = ($currentsection->sequence) ? explode(',', $currentsection->sequence) : [];
+                        $currentsection->sequence = ($sequence)
+                            ? implode(',', array_diff($sequence, [$configdata['id']])) : $configdata['id'];
+                        $DB->update_record('course_sections', $currentsection);
                     }
+
+                    // Add the mod id to new section sequence.
+                    $params = ['course' => $configdata['courseid'], 'section' => $section];
+                    if ($newsection = $DB->get_record('course_sections', $params)) {
+                        $sequence = ($newsection->sequence) ? explode(',', $newsection->sequence) : [];
+                        array_push($sequence, $configdata['id']);
+                        $newsection->sequence = ($sequence) ? implode(',', $sequence) : $configdata['id'];
+                        if ($DB->update_record('course_sections', $newsection)) {
+                            $DB->set_field('course_modules', 'section', $newsection->id, ['id' => $configdata['id']]);
+                        }
+                    }
+
                 }
-                // Remove the mod id from current section sequence.
-                if ($currentsection = $DB->get_record('course_sections', ['id' => $sectionid])) {
-                    $sequence = ($currentsection->sequence) ? explode(',', $currentsection->sequence) : [];
-                    $currentsection->sequence = ($sequence)
-                        ? implode(',', array_diff($sequence, [$configdata['id']])) : $configdata['id'];
-                    $DB->update_record('course_sections', $currentsection);
-                }
+            }
+            $transaction->allow_commit();
+        } catch (\Exception $e) {
+            if (!empty($transaction) && !$transaction->is_disposed()) {
+                $transaction->rollback($e);
             }
         }
         unset($configdata['section']);
