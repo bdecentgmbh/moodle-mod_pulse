@@ -111,3 +111,7 @@
 #page-mod-pulse-mod .preset-item-content .badge.badge-secondary {
     white-space: normal;
 }
+
+#page-mod-pulse-mod .popover.show {
+    z-index: 2000;
+}
