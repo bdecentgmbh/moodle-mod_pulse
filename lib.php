@@ -750,49 +750,51 @@ function mod_pulse_completion_crontask() {
         if (!in_array($courseid, $modinfo)) {
             $modinfo[$courseid] = new \pulse_course_modinfo($course, 0);
         }
-        $cm = $modinfo[$course->id]->get_cm($cm['id']);
-        if (!empty($students)) {
-            $completion = new completion_info($course);
-            $context = context_module::instance($cm->id);
-            if ($completion->is_enabled($cm) ) {
-                foreach ($students as $key => $user) {
-                    $modinfo[$course->id]->changeuserid($user->id);
-                    $md = $modinfo[$course->id];
-                    // Get pulse module completion state for user.
-                    $result = pulse_get_completion_state($course, $cm, $user->id, COMPLETION_UNKNOWN, $pulse, $user, $md);
-                    $activitycompletion = new \stdclass();
-                    $activitycompletion->coursemoduleid = $cm->id;
-                    $activitycompletion->userid = $user->id;
-                    $activitycompletion->viewed = null;
-                    $activitycompletion->overrideby = null;
-                    if ($user->coursemodulecompletionid == '') {
-                        $activitycompletion->completionstate = $result;
-                        $activitycompletion->timemodified = time();
-                        $activitycompletion->id = $DB->insert_record('course_modules_completion', $activitycompletion);
-                    } else {
-                        $activitycompletion->id = $user->coursemodulecompletionid;
-                        $activitycompletion->completionstate = $result;
-                        $activitycompletion->timemodified = time();
-                        $DB->update_record('course_modules_completion', $activitycompletion);
+        if (!empty($modinfo[$courseid]->cms[$cm['id']])) {
+            $cm = $modinfo[$course->id]->get_cm($cm['id']);
+            if (!empty($students)) {
+                $completion = new completion_info($course);
+                $context = context_module::instance($cm->id);
+                if ($completion->is_enabled($cm) ) {
+                    foreach ($students as $key => $user) {
+                        $modinfo[$course->id]->changeuserid($user->id);
+                        $md = $modinfo[$course->id];
+                        // Get pulse module completion state for user.
+                        $result = pulse_get_completion_state($course, $cm, $user->id, COMPLETION_UNKNOWN, $pulse, $user, $md);
+                        $activitycompletion = new \stdclass();
+                        $activitycompletion->coursemoduleid = $cm->id;
+                        $activitycompletion->userid = $user->id;
+                        $activitycompletion->viewed = null;
+                        $activitycompletion->overrideby = null;
+                        if ($user->coursemodulecompletionid == '') {
+                            $activitycompletion->completionstate = $result;
+                            $activitycompletion->timemodified = time();
+                            $activitycompletion->id = $DB->insert_record('course_modules_completion', $activitycompletion);
+                        } else {
+                            $activitycompletion->id = $user->coursemodulecompletionid;
+                            $activitycompletion->completionstate = $result;
+                            $activitycompletion->timemodified = time();
+                            $DB->update_record('course_modules_completion', $activitycompletion);
+                        }
+                        mtrace("Updated course module completion - user ". $user->id);
+
+                        // Trigger an event for course module completion changed.
+                        $event = \core\event\course_module_completion_updated::create(array(
+                            'objectid' => $activitycompletion->id,
+                            'context' => (object) $context,
+                            'relateduserid' => $user->id,
+                            'other' => array(
+                                'relateduserid' => $user->id
+                            )
+                        ));
+                        $event->add_record_snapshot('course_modules_completion', $activitycompletion);
+                        $event->trigger();
+
                     }
-                    mtrace("Updated course module completion - user ". $user->id);
-
-                    // Trigger an event for course module completion changed.
-                    $event = \core\event\course_module_completion_updated::create(array(
-                        'objectid' => $activitycompletion->id,
-                        'context' => (object) $context,
-                        'relateduserid' => $user->id,
-                        'other' => array(
-                            'relateduserid' => $user->id
-                        )
-                    ));
-                    $event->add_record_snapshot('course_modules_completion', $activitycompletion);
-                    $event->trigger();
-
                 }
+            } else {
+                mtrace('There is not users to update pulse module completion');
             }
-        } else {
-            mtrace('There is not users to update pulse module completion');
         }
     }
     mtrace('Course module completions are updated for all pulse module....');
