@@ -206,3 +206,31 @@ $string['apply_save'] = 'Apply and Save';
 $string['promotionaltext'] = 'With Pulse Pro you get powerful reminders, In-email reactions and you can create your own presets. ';
 $string['learnmore'] = 'Learn More';
 $string['presetmodaltitle'] = 'Use preset {$a->title}';
+// Credits lang strings.
+$string['credits'] = 'Credits';
+$string['notificationheader'] = 'Notification Header';
+$string['notificationheaderdesc'] = '{$a->placeholders}';
+$string['notificationfooter'] = 'Notification Footer';
+$string['notificationfooterdesc'] = '{$a->placeholders}';
+$string['creditsfield'] = 'Credits user profile field';
+$string['creditsfielddesc'] = 'Select any of the user custom profile field to maintain the user credits records <br>
+NOTE: Make the selected field hidden for students, otherwise student can able to change their credit scores';
+$string['setupcredit'] = 'In order to use this feature, you need to configure the user profile field first.
+Please ask your local administrator to set this up.';
+$string['creditesgroup'] = 'Credit score';
+$string['setup'] = 'Setup Field';
+$string['actions'] = 'Actions';
+$string['cssclass'] = 'CSS class';
+$string['normal'] = 'Normal';
+$string['box'] = 'Box';
+$string['displaymode'] = 'Display mode';
+$string['primary'] = 'Primary';
+$string['secondary'] = 'Secondary';
+$string['danger'] = 'Danger';
+$string['warning'] = 'Warning';
+$string['light'] = 'Light';
+$string['dark'] = 'Dark';
+$string['success'] = 'Success';
+$string['boxicon'] = 'Box Icon';
+$string['boxtype'] = 'Box Type';
+$string['updateusercredits'] = 'Update user credits';

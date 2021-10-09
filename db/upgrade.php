@@ -39,10 +39,9 @@ function xmldb_pulse_upgrade($oldversion) {
     }
     // Inital plugin release - v1.0.
 
+    $dbman = $DB->get_manager();
     // Plugin release - v1.1.
     if ($oldversion < 2021091700) {
-
-        $dbman = $DB->get_manager();
         // Define fields to be added to pulse_presets.
         $table = new xmldb_table('pulse_presets');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
@@ -78,6 +77,31 @@ function xmldb_pulse_upgrade($oldversion) {
             }
         }
         upgrade_mod_savepoint(true, 2021091701, 'pulse');
+    }
+
+    if ($oldversion < 2021100800) {
+
+        $pulsetable = new xmldb_table('pulse');
+        $displaymode = new xmldb_field('displaymode', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'credits_status');
+        $boxtype = new xmldb_field('boxtype', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'displaymode');
+        $boxicon = new xmldb_field('boxicon', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'boxtype');
+        $cssclass = new xmldb_field('cssclass', XMLDB_TYPE_CHAR, '200', null, null, null, null, 'boxicon');
+
+        // Conditionally launch add field privatereplyto.
+        if (!$dbman->field_exists($pulsetable, $displaymode)) {
+            $dbman->add_field($pulsetable, $displaymode);
+        }
+        if (!$dbman->field_exists($pulsetable, $boxtype)) {
+            $dbman->add_field($pulsetable, $boxtype);
+        }
+        if (!$dbman->field_exists($pulsetable, $boxicon)) {
+            $dbman->add_field($pulsetable, $boxicon);
+        }
+        if (!$dbman->field_exists($pulsetable, $cssclass)) {
+            $dbman->add_field($pulsetable, $cssclass);
+        }
+
+        upgrade_mod_savepoint(true, 2021100800, 'pulse');
     }
 
     return true;

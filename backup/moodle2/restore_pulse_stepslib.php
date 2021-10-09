@@ -134,6 +134,22 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
     }
 
     /**
+     * Process pro feattures user credits table restore methods.
+     * Pro feature.
+     * @param  mixed $data restore data.
+     * @return void
+     */
+    protected function process_local_pulsepro_credits($data) {
+        global $DB;
+        $data = (object) $data;
+        $oldid = $data->id;
+        $data->pulseid = $this->get_new_parentid('pulse');
+        $data->userid = $this->get_mappingid('user', $data->userid);
+        // Insert instance into Database.
+        $newitemid = $DB->insert_record('local_pulsepro_credits', $data);
+    }
+
+    /**
      * Update the files of editors after restore execution.
      *
      * @return void

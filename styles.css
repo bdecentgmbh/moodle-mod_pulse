@@ -1,4 +1,5 @@
-.path-mod-pulse .fcontainer .emailvars span {
+.path-mod-pulse .fcontainer .emailvars span,
+#page-admin-setting-local_pulsepro_settings .emailvars span {
     color: #000;
     background: #ffbf46;
     padding: 3px 7px;
@@ -8,13 +9,15 @@
     border-radius: 3px;
 }
 
-.path-mod-pulse .emailvars {
+.path-mod-pulse .emailvars,
+#page-admin-setting-local_pulsepro_settings .emailvars {
     position: relative;
     font-size: smaller;
 }
 
 @media (max-width: 767px) {
-    .path-mod-pulse .fcontainer .emailvars {
+    .path-mod-pulse .fcontainer .emailvars,
+    #page-admin-setting-local_pulsepro_settings .emailvars {
         width: 100%;
     }
 }
@@ -114,4 +117,13 @@
 
 #page-mod-pulse-mod .popover.show {
     z-index: 2000;
+}
+
+.pulse.modtype_pulse .pulse-box div.alert {
+    display: flex;
+    align-items: center;
+}
+
+.modtype_pulse .pulse-box-icon .icon {
+    font-size: 1.5rem;
 }

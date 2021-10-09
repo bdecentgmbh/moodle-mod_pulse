@@ -71,10 +71,11 @@ class mod_pulse_mod_form extends moodleform_mod {
         $this->standard_intro_elements(get_string('content', 'pulse'));
         $mform->addRule('introeditor', get_string('required'), 'required', null, 'client');
         $mform->addHelpButton('introeditor', 'content', 'mod_pulse');
+
         // Extend the reaction sections.
         mod_pulse_extend_form($mform, $this, 'reaction');
 
-        $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse') );
+        $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse'));
 
         // Pulse enable / disable option.
         $mform->addElement('advcheckbox', 'pulse', get_string('sendnotificaton', 'pulse'),
@@ -118,6 +119,37 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         mod_pulse_extend_form($mform, $this);
 
+        $mform->addElement('header', 'appearance', get_string('appearance', 'core'));
+
+        $mform->addElement('text', 'cssclass', get_string('cssclass', 'pulse'));
+        $mform->setType('cssclass', PARAM_ALPHAEXT);
+
+        $modes = [0 => get_string('normal', 'pulse'), 1 => get_string('box', 'pulse')];
+        $mform->addElement('select', 'displaymode', get_string('displaymode', 'pulse'), $modes);
+        $mform->setType('displaymode', PARAM_TEXT);
+
+        $boxtypes = [
+            'primary' => get_string('primary', 'pulse'),
+            'secondary' => get_string('secondary', 'pulse'),
+            'danger' => get_string('danger', 'pulse'),
+            'warning' => get_string('warning', 'pulse'),
+            'light ' => get_string('light', 'pulse'),
+            'dark ' => get_string('dark', 'pulse'),
+            'success ' => get_string('success', 'pulse'),
+        ];
+        $mform->addElement('select', 'boxtype', get_string('boxtype', 'pulse'), $boxtypes);
+        $mform->setType('boxtype', PARAM_TEXT);
+        $mform->hideIf('boxtype', 'displaymode', 'neq', 1);
+
+        // Preset Icon.
+        $theme = \theme_config::load($PAGE->theme->name);
+        $faiconsystem = \core\output\icon_system_fontawesome::instance($theme->get_icon_system());
+        $iconlist = $faiconsystem->get_core_icon_map();
+        array_unshift($iconlist, '');
+        $mform->addElement('autocomplete', 'boxicon', get_string('boxicon', 'pulse'), $iconlist);
+        $mform->setType('boxicon', PARAM_TEXT);
+        $mform->hideIf('boxicon', 'displaymode', 'neq', 1);
+
         $this->standard_coursemodule_elements();
         // Form submit and cancek buttons.
         $this->add_action_buttons(true, false, null);
@@ -131,8 +163,8 @@ class mod_pulse_mod_form extends moodleform_mod {
      */
     public function pulse_email_placeholders(&$mform) {
         $vars = \EmailVars::vars();
-        $mform->addElement('html', "<div class='form-group row  fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars '>");
+        $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
+        <div class='col-md-9'><div class='emailvars'>");
         $optioncount = 0;
         foreach ($vars as $option) {
             $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
@@ -286,6 +318,7 @@ class mod_pulse_mod_form extends moodleform_mod {
                 $errors['pulse_content_editor'] = get_string('required');
             }
         }
+
         $extenderrors = mod_pulse_extend_formvalidation($data, $files);
         if (is_array($extenderrors)) {
             $errors = array_merge($errors, $extenderrors);

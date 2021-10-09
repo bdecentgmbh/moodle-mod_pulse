@@ -28,12 +28,7 @@ define( 'MAX_PULSE_NAME_LENGTH', 50);
 
 global $PAGE;
 
-$PAGE->requires->js_call_amd('mod_pulse/completion', 'init');
-
-
 require_once($CFG->libdir."/completionlib.php");
-
-
 
 /**
  * Add pulse instance.
@@ -84,6 +79,10 @@ function pulse_update_instance($pulse) {
                                                     array('subdirs' => true), $pulse->pulse_content_editor['text']);
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
+    }
+
+    if (!isset($pulse->boxicon) && isset($pulse->displaymode)) {
+        $pulse->boxicon = '';
     }
 
     // If module resend triggred then set the notified status to null for instance.
@@ -157,10 +156,22 @@ function pulse_supports($feature) {
         case FEATURE_BACKUP_MOODLE2:
             return true;
         case FEATURE_NO_VIEW_LINK:
-            return true;
-
+            return false;
         default:
             return null;
+    }
+}
+
+/**
+ * To make the stealth enable to pulse, it must have view link. So pulse supports the view option on features.
+ * On dynamic check, removed the view link. if module hidden from students then pulse should has view support.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_pulse_cm_info_dynamic(cm_info &$cm) {
+    if ($cm->visible) {
+        $cm->set_no_view_link();
     }
 }
 
@@ -170,8 +181,10 @@ function pulse_supports($feature) {
  * @return array
  */
 function pulse_get_editor_options() {
-    return array('maxfiles' => EDITOR_UNLIMITED_FILES,
-                'trusttext' => true);
+    return array(
+        'maxfiles' => EDITOR_UNLIMITED_FILES,
+        'trusttext' => true
+    );
 }
 
 /**
@@ -214,6 +227,7 @@ function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mo
     $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
     $amethods = EmailVars::vars(); // List of available placeholders.
     $vars = new EmailVars($user, $course, $sender, $mod);
+
     foreach ($amethods as $funcname) {
         $replacement = "{" . $funcname . "}";
         // Message text placeholder update.
@@ -333,9 +347,9 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
     }
     // Get extended plugins fileareas.
     $availablefiles = pulse_extend_filearea();
-
+    $availablefiles += ['pulse_content', 'intro', 'notificationheader', 'notificationfooter'];
     // Make sure the filearea is one of those used by the plugin.
-    if ($filearea !== 'pulse_content' && $filearea !== 'intro' && !in_array($filearea, $availablefiles)) {
+    if (!in_array($filearea, $availablefiles)) {
         return false;
     }
 
@@ -482,7 +496,6 @@ function pulse_set_notification_adhoc($instance) {
     \core\task\manager::queue_adhoc_task($task, true);
 }
 
-
 /**
  * Add a get_coursemodule_info function in case any pulse type wants to add 'extra' information
  * for the course (see resource).
@@ -527,8 +540,6 @@ function pulse_get_coursemodule_info($coursemodule) {
     return $result;
 }
 
-
-
 /**
  * Callback which returns human-readable strings describing the active completion custom rules for the module instance.
  *
@@ -560,7 +571,6 @@ function mod_pulse_get_completion_active_rule_descriptions($cm) {
     }
     return $descriptions;
 }
-
 
 /**
  * Obtains the automatic completion state for this pulse based on any conditions
@@ -877,6 +887,69 @@ function mod_pulse_output_fragment_completionbuttons($args) {
 }
 
 /**
+ * Add the completion and reaction buttons with pulse content on view page.
+ *
+ * @param cm_info $cm Current Course module.
+ * @param stdclass $pulse Pulse record object.
+ * @return string $html Completion and reaction buttons html content.
+ */
+function mod_pulse_cm_completionbuttons(cm_info $cm, stdclass $pulse): string {
+    global $USER, $DB;
+    $html = '';
+    $moduleid = $cm->id;
+    $extend = true;
+    // Approval button generation for selected roles.
+    if ($pulse->completionapproval == 1) {
+        $roles = $pulse->completionapprovalroles;
+        if (pulse_has_approvalrole($roles, $cm->id)) {
+            $approvelink = new moodle_url('/mod/pulse/approve.php', ['cmid' => $cm->id]);
+            $html .= html_writer::tag('div',
+                html_writer::link($approvelink, get_string('approveuserbtn', 'pulse'),
+                ['class' => 'btn btn-primary pulse-approve-users']),
+                ['class' => 'approve-user-wrapper']
+            );
+        } else if (pulse_user_isstudent($cm->id)) {
+            if (!class_exists('core_completion\activity_custom_completion')
+                && $message = pulse_user_approved($cm->instance, $USER->id)) {
+                $html .= $message.'<br>';
+            }
+        }
+    }
+
+    // Generate self mark completion buttons for students.
+    if (mod_pulse_is_uservisible($moduleid, $USER->id, $cm->course)) {
+        if ($pulse->completionself == 1 && pulse_user_isstudent($moduleid)
+            && !pulse_isusercontext($pulse->completionapprovalroles, $moduleid)) {
+            // Add self mark completed informations.
+            if (!class_exists('core_completion\activity_custom_completion')
+                && $date = pulse_already_selfcomplete($cm->instance, $USER->id)) {
+                $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
+                $html .= html_writer::tag('div', $selfmarked,
+                ['class' => 'pulse-self-marked badge badge-success']);
+            } else {
+                $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
+                $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
+                    ['class' => 'btn btn-primary pulse-approve-users']
+                );
+                $html .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-approve-users']);
+            }
+        }
+    } else {
+        $extend = false;
+    }
+    // Extend the pro features if the logged in users has able to view the module.
+    if ($extend) {
+        $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
+        $instance = new stdclass();
+        $instance->pulse = $pulse;
+        $instance->pulse->id = $cm->instance;
+        $instance->user = $USER;
+        $html .= pulse_extend_reaction($instance, 'content');
+    }
+    return $html;
+}
+
+/**
  * Find the course module is visible to current user.
  *
  * @param  mixed $cmid
@@ -892,7 +965,6 @@ function mod_pulse_is_uservisible($cmid, $userid, $courseid) {
         return $cm->uservisible;
     }
 }
-
 
 /**
  * Check the current users has role to approve the completion for students in current pulse module.
@@ -938,7 +1010,6 @@ function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=tr
     }
     return $hasrole;
 }
-
 
 /**
  * Check the pulse instance contains user context roles in completion approval roles
@@ -1048,7 +1119,6 @@ function pulse_already_selfcomplete($pulseid, $userid) {
     }
     return isset($result) ? $result : false;
 }
-
 
 /**
  * Trigger the add pulse instance.
@@ -1257,7 +1327,7 @@ function pulse_extend_restore_structure(&$paths) {
  *
  * @return void
  */
-function pulse_extend_filearea() {
+function pulse_extend_filearea(): array {
     $callbacks = get_plugins_with_function('extend_pulse_filearea');
     foreach ($callbacks as $type => $plugins) {
         foreach ($plugins as $plugin => $pluginfunction) {
@@ -1265,6 +1335,7 @@ function pulse_extend_filearea() {
             return $fileareas;
         }
     }
+    return [];
 }
 
 /**
@@ -1465,4 +1536,58 @@ function pulse_free_presets(): array {
         return $result;
     }
     return array();
+}
+
+/**
+ * Update the pulse content with bootstrap box before rendered in course page.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_pulse_cm_info_view(cm_info $cm) {
+    global $DB;
+
+    $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
+    if (isset($pulse->cssclass) && $pulse->cssclass) {
+        $cm->set_extra_classes($pulse->cssclass);
+    }
+    if (isset($pulse->displaymode) && $pulse->displaymode == 1) {
+        $boxtype = ($pulse->boxtype) ? $pulse->boxtype : 'primary';
+        $boxicon = ($pulse->boxicon) ? $pulse->boxicon : '';
+        $content = $cm->content;
+        $content = mod_pulse_render_content($content, $boxicon, $boxtype);
+        $cm->set_content($content);
+    }
+
+    $completionbtn = mod_pulse_cm_completionbuttons($cm, $pulse);
+    if (!empty($completionbtn)) {
+        $content = $cm->content;
+        $content .= html_writer::tag('div', $completionbtn, ['class' => 'pulse-completion-btn']);
+        $cm->set_content($content);
+    }
+}
+
+/**
+ * Render the pulse content with selected box container with box icon.
+ *
+ * @param string $content Pulse content.
+ * @param string $boxicon Icon.
+ * @param string $boxtype Box type name (primary, secondory, danger, warning and others).
+ * @return string Pulse content with box container.
+ */
+function mod_pulse_render_content(string $content, string $boxicon, string $boxtype = 'primary'): string {
+    global $OUTPUT;
+    $html = html_writer::start_tag('div', ['class' => 'pulse-box']);
+    $html .= html_writer::start_tag('div', ['class' => 'alert alert-'.$boxtype]);
+    if (!empty($boxicon)) {
+        $icon = explode(':', $boxicon);
+        $icon1 = isset($icon[1]) ? $icon[1] : 'core';
+        $icon0 = isset($icon[0]) ? $icon[0] : '';
+        $boxicon = $OUTPUT->pix_icon($icon1, $icon0);
+        $html .= html_writer::tag('div', $boxicon, ['class' => 'alert alert-icon pulse-box-icon']);
+    }
+    $html .= html_writer::tag('div', $content, ['class' => 'pulse-box-content']);
+    $html .= html_writer::end_tag('div');
+    $html .= html_writer::end_tag('div');
+    return $html;
 }

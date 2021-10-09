@@ -163,6 +163,7 @@ class provider implements
         JOIN {pulse_users} d ON d.pulseid = f.id
         WHERE cm.id = :instanceid";
         $userlist->add_from_sql('userid', $sql, $params);
+
     }
 
     /**
@@ -288,8 +289,8 @@ class provider implements
             ),
             $user
         );
-    }
 
+    }
 
     /**
      * Helper function to export completions.
@@ -327,6 +328,7 @@ class provider implements
                             'approved' => (($completion->approved == 1) ? get_string('yes') : get_string('no')),
                             'approvaltime' => $completion->approvedtime ? transform::datetime($completion->approvedtime) : '-',
                             'invitaion' => self::generate_invitationdata($completion->pid, $user->id)
+
                         ];
                     }
                 }, $completions);
