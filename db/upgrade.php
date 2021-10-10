@@ -82,7 +82,7 @@ function xmldb_pulse_upgrade($oldversion) {
     if ($oldversion < 2021100800) {
 
         $pulsetable = new xmldb_table('pulse');
-        $displaymode = new xmldb_field('displaymode', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'credits_status');
+        $displaymode = new xmldb_field('displaymode', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'diff_pulse');
         $boxtype = new xmldb_field('boxtype', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'displaymode');
         $boxicon = new xmldb_field('boxicon', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'boxtype');
         $cssclass = new xmldb_field('cssclass', XMLDB_TYPE_CHAR, '200', null, null, null, null, 'boxicon');
