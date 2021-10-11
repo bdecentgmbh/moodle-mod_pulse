@@ -222,7 +222,7 @@ class preset extends \moodleform  {
                 if (in_array($element->_type, $hide)) {
                     continue;
                 }
-                if ($element instanceof \MoodleQuickForm_group && in_array($element->_name, $configparams)) {
+                if ($element instanceof \MoodleQuickForm_group && in_array($element->_name, $configparams, true)) {
                     $group = [];
                     $elem = $this->pulseform->_form->getElement($element->_name);
                     $elem->_label = isset($configlist[$element->_name])
@@ -235,7 +235,7 @@ class preset extends \moodleform  {
                             $this->_form->addElement('hidden', $subname.'_changed', false);
                         }
                     }
-                } else if (isset($element->_attributes['name']) && in_array($element->_attributes['name'], $configparams)) {
+                } else if (isset($element->_attributes['name']) && in_array($element->_attributes['name'], $configparams, true)) {
                     $elementname = $element->_attributes['name'];
                     $elem = $this->pulseform->_form->getElement($elementname);
                     $attributename = $elem->_attributes['name'];
@@ -304,6 +304,8 @@ class preset extends \moodleform  {
                 $configparams = array_map(function($value) use ($configlist) {
                     return isset($configlist[$value]) ? $configlist[$value] : '';
                 }, json_decode($record->configparams, true));
+
+                $configparams = array_filter($configparams);
 
                 $item = [
                     'id' => $record->id,
