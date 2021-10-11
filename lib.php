@@ -926,7 +926,7 @@ function mod_pulse_cm_completionbuttons(cm_info $cm, stdclass $pulse): string {
                 $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
                 $html .= html_writer::tag('div', $selfmarked,
                 ['class' => 'pulse-self-marked badge badge-success']);
-            } else {
+            } else if (!pulse_already_selfcomplete($cm->instance, $USER->id)) {
                 $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
                 $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
                     ['class' => 'btn btn-primary pulse-approve-users']

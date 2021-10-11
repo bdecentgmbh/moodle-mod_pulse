@@ -25,6 +25,7 @@
 .section .pulse.modtype_pulse .contentwithoutlink,
 .section .pulse.modtype_pulse .activityinstance {
     display: block;
+    padding-right: 15px;
 }
 
 #page-mod-pulse-approve #participants .approvebtn {

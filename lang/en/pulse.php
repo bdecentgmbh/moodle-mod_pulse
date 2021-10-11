@@ -234,3 +234,5 @@ $string['success'] = 'Success';
 $string['boxicon'] = 'Box Icon';
 $string['boxtype'] = 'Box Type';
 $string['updateusercredits'] = 'Update user credits';
+$string['logintoreact'] = 'Login before apply reaction';
+$string['tokenexpired'] = "Token expired! Can't able to save your response.";
