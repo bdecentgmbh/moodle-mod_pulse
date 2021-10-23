@@ -16,13 +16,15 @@
 /**
  * Contain the events the data privacy tool can fire.
  *
- * @module     tool_dataprivacy/events
- * @copyright  2018 Jun Pataleta
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module  mod_pulse/events
+ * @category  Classes - autoloading
+ * @copyright 2021, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
  define([], function() {
     return {
         save: 'mod_pulse-preset:save',
-        customize: 'tool_dataprivacy-preset:customize',
+        customize: 'mod_pulse-preset:customize',
     };
 });

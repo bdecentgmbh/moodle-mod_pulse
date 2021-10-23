@@ -478,8 +478,8 @@ function mod_pulse_cron_task($extend=true) {
         $instance->context = (object) $context;
         $instance->cm = (object) $cm;
         $instance->students = $students;
+        pulse_set_notification_adhoc($instance);
     }
-    pulse_set_notification_adhoc($instance);
     mtrace('Pulse message sending completed....');
     return true;
 }
