@@ -20,4 +20,14 @@
         <icon>core:i/lock</icon>
         <order_no>2</order_no>
     </preset2>
+    <preset3>
+        <title>Disclaimer/Consent</title>
+        <description>Use this preset to get consent from your students.</description>
+        <instruction>Add the dislaimer text in the content.</instruction>
+        <configparams>["introeditor"]</configparams>
+        <preset_template>preset-inbox_micro_learning.mbz</preset_template>
+        <status>1</status>
+        <icon>core:req</icon>
+        <order_no>3</order_no>
+    </preset3>
 </presets>
