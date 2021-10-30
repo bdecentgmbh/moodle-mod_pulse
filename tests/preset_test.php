@@ -53,7 +53,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         pulse_create_presets();
 
         $records = $DB->get_records('pulse_presets');
-        $this->assertCount(2, $records);
+        $this->assertCount(3, $records);
         $this->assertEquals('Welcome Message', reset($records)->title);
     }
 
