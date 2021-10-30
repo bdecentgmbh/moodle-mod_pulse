@@ -409,9 +409,10 @@ function mod_pulse_cron_task($extend=true) {
         JOIN {modules} md ON md.id = cm.module
         JOIN {course} cu ON cu.id = nt.course
         RIGHT JOIN {context} ctx ON ctx.instanceid = cm.id and contextlevel = 70
-        WHERE md.name = 'pulse' AND cm.visible = 1";
+        WHERE md.name = 'pulse' AND cm.visible = 1 AND cu.visible = 1
+        AND cu.startdate <= :startdate AND  (cu.enddate = 0 OR cu.enddate >= :enddate)";
 
-    $records = $DB->get_records_sql($sql, []);
+    $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
     if (empty($records)) {
         mtrace('No pulse instance are added yet'."\n");
         return true;
@@ -477,8 +478,8 @@ function mod_pulse_cron_task($extend=true) {
         $instance->context = (object) $context;
         $instance->cm = (object) $cm;
         $instance->students = $students;
+        pulse_set_notification_adhoc($instance);
     }
-    pulse_set_notification_adhoc($instance);
     mtrace('Pulse message sending completed....');
     return true;
 }
@@ -697,9 +698,9 @@ function mod_pulse_completion_crontask() {
     JOIN {modules} md ON md.id = cm.module
     JOIN {course} cu on cu.id = nt.course
     RIGHT JOIN {context} ctx on ctx.instanceid = cm.id and contextlevel = 70
-    WHERE md.name = 'pulse' ";
+    WHERE md.name = 'pulse' AND cu.visible = 1 AND cu.startdate <= :startdate AND  (cu.enddate = 0 OR cu.enddate >= :enddate)";
+    $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
 
-    $records = $DB->get_records_sql($sql, []);
     if (empty($records)) {
         mtrace('No pulse instance are added yet'."\n");
         return true;
