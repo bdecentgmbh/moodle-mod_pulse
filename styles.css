@@ -67,6 +67,7 @@
     border: 1px solid #ccc;
     box-shadow: 1px 2px 10px 1px #ccc;
     padding: 20px;
+    background-color: #fff;
 }
 .pulse-presets-list .pulse-presets-wrapper .col-lg-4.col-md-6.col-xs-12 {
     margin-bottom: 30px;

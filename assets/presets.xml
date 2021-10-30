@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <presets>
     <preset1>
-        <title>Demo preset 1</title>
-        <description>This is demo preset 1 to test</description>
-        <configparams>["name","introeditor"]</configparams>
-        <preset_template>preset-demo-1.mbz</preset_template>
-        <status>1</status><icon>core:a/download_all</icon>
+        <title>Welcome Message</title>
+        <description>A personalized welcome message sent to students upon enrolment.</description>
+        <instruction>In this preset, you can customize what's shown on the course page (General > Content), the subject of the notification (Invitation > Notification subject) and the body of the notification (Invitation > Notification content). If you add nothing, the default values will be used.</instruction>
+        <configparams>["introeditor","pulse_subject","pulse_content_editor"]</configparams>
+        <preset_template>preset-welcome_message.mbz</preset_template>
+        <status>1</status>
+        <icon>core:i/email</icon>
         <order_no>1</order_no>
     </preset1>
     <preset2>
-        <title>Demo preset 2</title>
-        <description>This is demo preset 2 to test</description>
-        <configparams>["name","introeditor"]</configparams>
-        <preset_template>preset-demo-2.mbz</preset_template>
+        <title>Teacher Approval</title>
+        <description>Require approval from the teacher of the course.</description>
+        <instruction>E.g. to prevent students from accessing contents of the course or for workflows that require the teacher to manually confirm something. You can customize the content shown on the course page to inform the students about the approval step. If you leave it empty, the default text will be used.</instruction>
+        <configparams>["introeditor"]</configparams>
+        <preset_template>preset-teacher_approval.mbz</preset_template>
         <status>1</status>
-        <icon>core:a/add_file</icon>
+        <icon>core:i/lock</icon>
         <order_no>2</order_no>
     </preset2>
 </presets>
