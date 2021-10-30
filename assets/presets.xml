@@ -4,7 +4,7 @@
         <title>Welcome Message</title>
         <description>A personalized welcome message sent to students upon enrolment.</description>
         <instruction>In this preset, you can customize what's shown on the course page (General > Content), the subject of the notification (Invitation > Notification subject) and the body of the notification (Invitation > Notification content). If you add nothing, the default values will be used.</instruction>
-        <configparams>["introeditor","pulse_subject","pulse_content_editor"]</configparams>
+        <configparams>["name","introeditor","pulse_subject","pulse_content_editor"]</configparams>
         <preset_template>preset-welcome_message.mbz</preset_template>
         <status>1</status>
         <icon>core:i/email</icon>
