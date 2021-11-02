@@ -1546,9 +1546,16 @@ function pulse_free_presets(): array {
  * @return void
  */
 function mod_pulse_cm_info_view(cm_info $cm) {
-    global $DB;
+    global $DB, $USER;
 
     $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
+    $content = $cm->content;
+    $course = $cm->get_course();
+    $senderdata = \mod_pulse\task\sendinvitation::get_sender($course->id, $cm->context->id);
+    $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
+    list($subject, $content) = mod_pulse_update_emailvars($content, '', $course,
+                            $USER, $pulse, $sender);
+    $cm->set_content($content);
     if (isset($pulse->cssclass) && $pulse->cssclass) {
         $cm->set_extra_classes($pulse->cssclass);
     }

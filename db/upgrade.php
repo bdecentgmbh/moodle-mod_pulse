@@ -84,7 +84,7 @@ function xmldb_pulse_upgrade($oldversion) {
         $pulsetable = new xmldb_table('pulse');
         $displaymode = new xmldb_field('displaymode', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'diff_pulse');
         $boxtype = new xmldb_field('boxtype', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'displaymode');
-        $boxicon = new xmldb_field('boxicon', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'boxtype');
+        $boxicon = new xmldb_field('boxicon', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'boxtype');
         $cssclass = new xmldb_field('cssclass', XMLDB_TYPE_CHAR, '200', null, null, null, null, 'boxicon');
 
         // Conditionally launch add field privatereplyto.
@@ -102,6 +102,16 @@ function xmldb_pulse_upgrade($oldversion) {
         }
 
         upgrade_mod_savepoint(true, 2021100800, 'pulse');
+    }
+
+    if ($oldversion < 2021110200) {
+        $pulsetable = new xmldb_table('pulse');
+        $boxicon = new xmldb_field('boxicon', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'boxtype');
+        if ($dbman->field_exists($pulsetable, $boxicon)) {
+            $dbman->change_field_type($pulsetable, $boxicon);
+        }
+
+        upgrade_mod_savepoint(true, 2021110200, 'pulse');
     }
 
     return true;
