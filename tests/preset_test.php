@@ -53,8 +53,8 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         pulse_create_presets();
 
         $records = $DB->get_records('pulse_presets');
-        $this->assertCount(2, $records);
-        $this->assertEquals('Demo preset 1', reset($records)->title);
+        $this->assertCount(3, $records);
+        $this->assertEquals('Welcome Message', reset($records)->title);
     }
 
     /**
@@ -69,14 +69,14 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         $record = reset($records);
 
         $preset = new mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
-        $configdata = ['importmethod' => 'save', 'presetid' => $record->id, 'name' => 'Preset custom pulse'];
+        $configdata = ['importmethod' => 'save', 'presetid' => $record->id, 'name' => 'Welcome Message'];
         $result = $preset->apply_presets($configdata);
         $result = json_decode($result);
         $courseurl = new \moodle_url('/course/view.php', ['id' => $this->course->id]);
         $this->assertEquals($courseurl, $result->url);
 
         $cm = $DB->get_record('pulse', ['id' => $result->pulseid]);
-        $this->assertEquals('Preset custom pulse', $cm->name);
+        $this->assertEquals('Welcome Message', $cm->name);
     }
 
     /**
@@ -89,7 +89,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         pulse_create_presets();
         $records = $DB->get_records('pulse_presets');
         $record = reset($records);
-        $customname = 'Preset custom pulse';
+        $customname = 'Welcome Message';
         $subject = 'Preset pulse subject - customize';
         $preset = new mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
 

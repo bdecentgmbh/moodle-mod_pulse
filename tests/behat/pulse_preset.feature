@@ -27,11 +27,11 @@ Feature: Preset create pulse with custom params.
     And I am on "Test" course homepage with editing mode on
     And I click on "Add an activity or resource" "button"
     And I click on "Pulse" "link"
-    Then I should see "Demo preset 1" in the ".preset-title" "css_element"
+    Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
-    And I should see "Demo preset 1" in the ".modal-header .modal-title" "css_element"
+    And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
     And I press "Apply and Save"
-    Then I should see "This is pulse activity created for testing purposes only."
+    Then I should see "Welcome to the course!"
 
   @javascript
   Scenario: Preset apply and save with custom config params.
@@ -39,9 +39,9 @@ Feature: Preset create pulse with custom params.
     And I am on "Test" course homepage with editing mode on
     And I click on "Add an activity or resource" "button"
     And I click on "Pulse" "link"
-    Then I should see "Demo preset 1" in the ".preset-title" "css_element"
+    Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
-    And I should see "Demo preset 1" in the ".modal-header .modal-title" "css_element"
+    And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
     And I set the field "id_preseteditor_introeditor" to "Preset using configurable params"
     And I press "Apply and Save"
     Then I should see "Preset using configurable params"
@@ -52,9 +52,9 @@ Feature: Preset create pulse with custom params.
     And I am on "Test" course homepage with editing mode on
     And I click on "Add an activity or resource" "button"
     And I click on "Pulse" "link"
-    Then I should see "Demo preset 1" in the ".preset-title" "css_element"
+    Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
-    And I should see "Demo preset 1" in the ".modal-header .modal-title" "css_element"
+    And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
     And I set the field with xpath "//div[@class='preset-config-params']//input[@id='id_name']" to "Customize preset"
     And I set the field "id_preseteditor_introeditor" to "Pulse created using apply and customize - custom value"
     And I press "Apply and Customize"
