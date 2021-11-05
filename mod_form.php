@@ -34,16 +34,29 @@ require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 class mod_pulse_mod_form extends moodleform_mod {
 
     /**
+     *
+     * @var MoodleQuickForm quickform object definition
+     */
+    public $_form;
+
+    /**
      * Pulse module add/update form fields are defined here.
      * Basic form fields added and extended the module standard default fields.
      *
      * @return void
      */
     public function definition() {
-        global $DB, $PAGE, $CFG;
+        global $DB, $PAGE, $CFG, $OUTPUT;
 
         $mform = $this->_form;
-
+        $mform->updateAttributes(['id' => 'mod-pulse-form']);
+        if (!isset($this->current->instance) || $this->current->instance == '') {
+            // Presets header.
+            $mform->addElement('header', 'presets_header', get_string('presets', 'pulse'));
+            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', array('class' => 'spinner'));
+            $mform->addElement('html', '<div id="pulse-presets-data" data-listloaded="false">'.$loader.'</div>');
+        }
+        // General section.
         $mform->addElement('header', 'general', get_string('general') );
 
         $mform->addElement('text', 'name', get_string('title', 'pulse'), array('size' => '64'));
@@ -58,10 +71,11 @@ class mod_pulse_mod_form extends moodleform_mod {
         $this->standard_intro_elements(get_string('content', 'pulse'));
         $mform->addRule('introeditor', get_string('required'), 'required', null, 'client');
         $mform->addHelpButton('introeditor', 'content', 'mod_pulse');
+
         // Extend the reaction sections.
         mod_pulse_extend_form($mform, $this, 'reaction');
 
-        $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse') );
+        $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse'));
 
         // Pulse enable / disable option.
         $mform->addElement('advcheckbox', 'pulse', get_string('sendnotificaton', 'pulse'),
@@ -70,7 +84,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse', 'sendnotificaton', 'mod_pulse');
 
         // Use Differnet pulse content for pulse.
-        $mform->addElement('submit', 'resend_pulse', get_string('resendnotification', 'pulse'));
+        $resend = $mform->addElement('submit', 'resend_pulse', get_string('resendnotification', 'pulse'));
         $mform->addHelpButton('resend_pulse', 'resendnotification', 'mod_pulse');
 
         // Use Different notification content.
@@ -87,12 +101,16 @@ class mod_pulse_mod_form extends moodleform_mod {
         // Pulse content editor.
         $editoroptions  = pulse_get_editor_options();
         $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
-        ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
+            ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
         $mform->addHelpButton('pulse_content_editor', 'remindercontent', 'mod_pulse');
 
         // Email tempalte placholders.
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+
+        // Presets - JS.
+        $section = optional_param('section', 0, PARAM_INT);
+        $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id, $section]);
 
         $this->pulse_email_placeholders($mform);
         // Show intro on course page always.
@@ -100,6 +118,37 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->setType('showdescription', PARAM_INT);
 
         mod_pulse_extend_form($mform, $this);
+
+        $mform->addElement('header', 'appearance', get_string('appearance', 'core'));
+
+        $mform->addElement('text', 'cssclass', get_string('cssclass', 'pulse'));
+        $mform->setType('cssclass', PARAM_ALPHAEXT);
+
+        $modes = [0 => get_string('normal', 'pulse'), 1 => get_string('box', 'pulse')];
+        $mform->addElement('select', 'displaymode', get_string('displaymode', 'pulse'), $modes);
+        $mform->setType('displaymode', PARAM_TEXT);
+
+        $boxtypes = [
+            'primary' => get_string('primary', 'pulse'),
+            'secondary' => get_string('secondary', 'pulse'),
+            'danger' => get_string('danger', 'pulse'),
+            'warning' => get_string('warning', 'pulse'),
+            'light ' => get_string('light', 'pulse'),
+            'dark ' => get_string('dark', 'pulse'),
+            'success ' => get_string('success', 'pulse'),
+        ];
+        $mform->addElement('select', 'boxtype', get_string('boxtype', 'pulse'), $boxtypes);
+        $mform->setType('boxtype', PARAM_TEXT);
+        $mform->hideIf('boxtype', 'displaymode', 'neq', 1);
+
+        // Preset Icon.
+        $theme = \theme_config::load($PAGE->theme->name);
+        $faiconsystem = \core\output\icon_system_fontawesome::instance($theme->get_icon_system());
+        $iconlist = $faiconsystem->get_core_icon_map();
+        array_unshift($iconlist, '');
+        $mform->addElement('autocomplete', 'boxicon', get_string('boxicon', 'pulse'), $iconlist);
+        $mform->setType('boxicon', PARAM_TEXT);
+        $mform->hideIf('boxicon', 'displaymode', 'neq', 1);
 
         $this->standard_coursemodule_elements();
         // Form submit and cancek buttons.
@@ -114,8 +163,8 @@ class mod_pulse_mod_form extends moodleform_mod {
      */
     public function pulse_email_placeholders(&$mform) {
         $vars = \EmailVars::vars();
-        $mform->addElement('html', "<div class='form-group row  fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars '>");
+        $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
+        <div class='col-md-9'><div class='emailvars'>");
         $optioncount = 0;
         foreach ($vars as $option) {
             $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
@@ -219,7 +268,6 @@ class mod_pulse_mod_form extends moodleform_mod {
      */
     public function data_preprocessing(&$defaultvalues) {
         $editoroptions = pulse_get_editor_options();
-
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
@@ -234,7 +282,6 @@ class mod_pulse_mod_form extends moodleform_mod {
         } else {
             $draftitemid = file_get_submitted_draft_itemid('pulse_content_editor');
             file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'pulse_content', false);
-            $defaultvalues['pulse_content_editor']['text'] = '';
             $defaultvalues['pulse_content_editor']['format'] = editors_get_preferred_format();
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
         }
@@ -246,6 +293,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($defaultvalues['completionapprovalroles'])) {
             $defaultvalues['completionapprovalroles'] = json_decode($defaultvalues['completionapprovalroles']);
         }
+
+        $defaultvalues['resend_pulse'] = get_string('resendnotification', 'pulse');
         // Pre pocessing extend.
         pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
     }
@@ -269,6 +318,7 @@ class mod_pulse_mod_form extends moodleform_mod {
                 $errors['pulse_content_editor'] = get_string('required');
             }
         }
+
         $extenderrors = mod_pulse_extend_formvalidation($data, $files);
         if (is_array($extenderrors)) {
             $errors = array_merge($errors, $extenderrors);

@@ -62,7 +62,7 @@ Feature: View activity completion information in the pulse activity
     # Teacher view.
     # confirm the activity completion enabled.
     And "Test pulse 1" should have the "Mark complete" completion condition type "auto"
-    And I should not see "Mark complete" in the ".pulse-completion-btn" "css_element"
+    And I should not see "Mark complete" in the ".modtype_pulse .contentwithoutlink" "css_element"
     And I log out
     # Student view.
     When I log in as "student1"

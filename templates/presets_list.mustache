@@ -1,0 +1,95 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_pulse/preset_list Preset List template.
+
+    Example context (json):
+    {
+        "managepresets": "http://example.com/local/pulsepro/presets.php",
+        "presetslist": {
+            "presets": [{
+                "title" : "Title of preset",
+                "description" : "Description for preset",
+                "instruction" : "Instruction content for preset",
+                "configparams" : "<form> <input type='hidden' name='importmethod' value='1'> </form>"
+            },{
+                "title" : "Title of preset2",
+                "description" : "Description for preset2",
+                "instruction" : "Instruction content for preset2",
+                "configparams" : "<form> <input type='hidden' name='importmethod' value='1'> </form>"
+            }]
+        }
+    }
+}}
+
+{{#managepresets}}
+<div class="manage-presets" >
+    <a href="{{{managepresets}}}" class="manage-presets-link" > {{#str}} managepresets, pulse {{/str}} </a>
+</div>
+{{/managepresets}}
+<div class="pulse-presets-list">
+    <div class="pulse-presets-wrapper">
+        {{#presetslist}}
+        <div class="row">
+            {{#presets}}
+                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="pulse-preset-item">
+                        <div class="preset-item-content">
+                            {{#icon}}
+                            <div class="preset-icon">
+                                {{{icon}}}
+                            </div>
+                            {{/icon}}
+
+                            {{#title}}
+                            <div class="preset-title">
+                                <h5> {{{title}}} </h5>
+                            </div>
+                            {{/title}}
+
+                            {{#description}}
+                            <div class="description">
+                                {{{description}}}
+                            </div>
+                            {{/description}}
+
+                            <div class="preset-config-params">
+                            {{#configurableparams}}
+                                <span class="badge badge-secondary"> {{.}} </span>
+                            {{/configurableparams}}
+                            </div>
+                        </div>
+                        <div class="pulse-presets-actions">
+                            <a href="javascript:void(0);" class="btn btn-primary pulse-usepreset"  data-presettitle="{{{title}}}"  data-presetid="{{id}}"> {{#str}} usepreset, pulse {{/str}} </a>
+                        </div>
+                    </div>
+                </div>
+            {{/presets}}
+        </div>
+        {{/presetslist}}
+    </div>
+    {{^managepresets}}
+    <div class="pulse-preset-promotional" >
+        <div class="promotional-content">
+            <div>  {{#str}} promotionaltext, pulse {{/str}} </div>
+            <div class="learn-more">
+                <a href="https://bdecent.de/pulse/" class="btn btn-default" target="_blank"> {{#str}} learnmore, pulse {{/str}}</a>
+            </div>
+        </div>
+    </div>
+    {{/managepresets}}
+</div>

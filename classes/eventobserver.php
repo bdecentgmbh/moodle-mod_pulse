@@ -42,6 +42,7 @@ class eventobserver {
         global $CFG, $DB;
         if ($event->other['modulename'] == 'pulse') {
             $pulseid = $event->other['instanceid'];
+            $courseid = $event->courseid;
             // Remove pulse user completion records.
             if ($DB->record_exists('pulse_completion', ['pulseid' => $pulseid])) {
                 $DB->delete_records('pulse_completion', ['pulseid' => $pulseid]);
@@ -51,6 +52,7 @@ class eventobserver {
             if ($DB->record_exists('pulse_users', ['pulseid' => $pulseid])) {
                 $DB->delete_records('pulse_users', ['pulseid' => $pulseid]);
             }
+
         }
     }
 

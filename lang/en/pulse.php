@@ -155,7 +155,7 @@ $string['pulsenotavailable'] = 'Pulse instance not added in course';
 $string['notassignedgroup'] = 'User must be part of a group to filter by participants.';
 $string['pulsepro:viewreports'] = 'View Pulse Pro reports';
 $string['reactionthankmsg'] = 'Thank you! Your response is saved.<br><br> <span>You can now close this window</span>';
-// Privacy api strings.
+
 $string['privacy:completion'] = 'Completion';
 $string['approvedby'] = 'approvedby';
 $string['completionfor'] = 'completionfor';
@@ -173,3 +173,66 @@ $string['privacy:metadata:users:status'] = 'Status of the invitation to find the
 $string['privacy:metadata:users:timecreated'] = 'Time of the invitation send to user.';
 $string['privacy:metadata:pulseusers'] = 'List of users invitation notified';
 $string['privacy:metadata:pulsemessageexplanation'] = 'Invitations are sent to students through the messaging system.';
+
+// Lang strings for the presets.
+$string['presets'] = "Pulse presets";
+$string['usepreset'] = 'Use preset';
+$string['managepresets'] = 'Manage Presets';
+$string['title'] = 'Title';
+$string['description'] = 'Description';
+$string['instruction'] = 'Instruction';
+$string['preseticon'] = 'Preset icon';
+$string['createpreset'] = 'Create Preset';
+$string['statuslabel'] = 'Enable / Disable';
+$string['preset_template'] = 'Backup file of pulse activity';
+$string['preset_template_help'] = 'Upload the backup file of pulse module course activity';
+$string['presetstatus'] = 'Display this preset in list';
+$string['presetorder'] = 'Preset template order';
+$string['configrableparams'] = 'Configurable Params';
+$string['disabled'] = 'Disabled';
+$string['enabled'] = 'Enabled';
+$string['preset_template'] = 'Preset Template';
+$string['title'] = 'Title';
+$string['configparams'] = 'Config Params';
+$string['presetlist'] = 'Presets List';
+$string['presetcreated'] = 'Pulse presets created successfully';
+$string['presetupdated'] = 'Pulse presets updated successfully';
+$string['update_preset'] = 'Update Preset Template';
+$string['deletepreset'] = 'Delete pulsepro preset template';
+$string['confirmdeletetemplate'] = 'Are you sure! do you want to delete the preset';
+$string['presetdeleted'] = 'Preset deleted successfully';
+$string['apply_customize'] = 'Apply and Customize';
+$string['apply_save'] = 'Apply and Save';
+$string['promotionaltext'] = 'With Pulse Pro you get powerful reminders, In-email reactions and you can create your own presets. ';
+$string['learnmore'] = 'Learn More';
+$string['presetmodaltitle'] = 'Use preset {$a->title}';
+// Credits lang strings.
+$string['credits'] = 'Credits';
+$string['notificationheader'] = 'Notification Header';
+$string['notificationheaderdesc'] = '{$a->placeholders}';
+$string['notificationfooter'] = 'Notification Footer';
+$string['notificationfooterdesc'] = '{$a->placeholders}';
+$string['creditsfield'] = 'Credits user profile field';
+$string['creditsfielddesc'] = 'Select any of the user custom profile field to maintain the user credits records <br>
+NOTE: Make the selected field hidden for students, otherwise student can able to change their credit scores';
+$string['setupcredit'] = 'In order to use this feature, you need to configure the user profile field first.
+Please ask your local administrator to set this up.';
+$string['creditesgroup'] = 'Credit score';
+$string['setup'] = 'Setup Field';
+$string['actions'] = 'Actions';
+$string['cssclass'] = 'CSS class';
+$string['normal'] = 'Normal';
+$string['box'] = 'Box';
+$string['displaymode'] = 'Display mode';
+$string['primary'] = 'Primary';
+$string['secondary'] = 'Secondary';
+$string['danger'] = 'Danger';
+$string['warning'] = 'Warning';
+$string['light'] = 'Light';
+$string['dark'] = 'Dark';
+$string['success'] = 'Success';
+$string['boxicon'] = 'Box Icon';
+$string['boxtype'] = 'Box Type';
+$string['updateusercredits'] = 'Update user credits';
+$string['logintoreact'] = 'Login before apply reaction';
+$string['tokenexpired'] = "Token expired! Can't able to save your response.";

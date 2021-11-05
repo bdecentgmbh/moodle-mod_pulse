@@ -15,18 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse external services.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2021110500;
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.1';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [39, 311];
+$functions = array(
+
+    'mod_pulse_apply_presets' => array(
+        'classname'   => 'mod_pulse\external',
+        'methodname'  => 'apply_presets',
+        'description' => 'Apply presets in mod pulse form',
+        'type'        => 'write',
+        'ajax'          => true,
+        'loginrequired' => true,
+    ),
+);

@@ -17,7 +17,7 @@
  * Module javascript to place the placeholders.
  * Modified version of IOMAD Email template emailvars.
  *
- * @package   mod_pulse
+ * @module   mod_pulse/module
  * @category  Classes - autoloading
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -36,14 +36,25 @@ define([], function() {
             for (var l = 0; l < templatevars.length; l++) {
                 templatevars[l].addEventListener('click', function() {
                     var EditorInput = document.getElementById('id_pulse_content_editoreditable');
-                    var caret = document.getElementsByClassName("insertatcaretactive");
-                    for (var j = 0; j < caret.length; j++) {
-                        caret[j].classList.remove("insertatcaretactive");
-                    }
-                    EditorInput.classList.add("insertatcaretactive");
-
+                    module.insertCaretActive(EditorInput);
                 });
             }
+            var notificationheader = document.getElementById('admin-notificationheader');
+            if (notificationheader !== null) {
+                notificationheader.addEventListener('click', function() {
+                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationheadereditable');
+                    module.insertCaretActive(EditorInput);
+                });
+            }
+
+            var notificationfooter = document.getElementById('admin-notificationfooter');
+            if (notificationfooter !== null) {
+                notificationfooter.addEventListener('click', function() {
+                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationfootereditable');
+                    module.insertCaretActive(EditorInput);
+                });
+            }
+
             var clickforword = document.getElementsByClassName('clickforword');
             for (var i = 0; i < clickforword.length; i++) {
                 clickforword[i].addEventListener('click', function(e) {
@@ -53,7 +64,7 @@ define([], function() {
             }
 
             // Make selected roles as badges in module edit form page.
-            if (document.getElementById('page-mod-pulse-mod')
+            if (document.getElementById('page-mod-pulse-mod') !== null && document.getElementById('page-mod-pulse-mod')
                 .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']") !== null) {
                 const textNodes = this.getAllTextNodes(
                     document.getElementById('page-mod-pulse-mod')
@@ -66,6 +77,14 @@ define([], function() {
                     span.appendChild(node);
                 });
             }
+        },
+
+        insertCaretActive: function(EditorInput) {
+            var caret = document.getElementsByClassName("insertatcaretactive");
+            for (var j = 0; j < caret.length; j++) {
+                caret[j].classList.remove("insertatcaretactive");
+            }
+            EditorInput.classList.add("insertatcaretactive");
         },
 
         /**
