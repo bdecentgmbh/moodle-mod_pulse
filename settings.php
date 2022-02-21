@@ -15,18 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse module settings.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2022021900;
-$plugin->requires = 2020061500; // Requires Moodle 3.9.
-$plugin->release = 'v1.11';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [39, 311];
+if ($ADMIN->fulltree) {
+
+    $settings->add(new admin_setting_heading('mod_pulse/general', '', get_string('configintro', 'pulse')));
+
+    $settings->add(new admin_setting_configcheckbox('mod_pulse/detailedlog', get_string('showhide', 'pulse'),
+            get_string('detailedlog', 'pulse'), false));
+
+}
