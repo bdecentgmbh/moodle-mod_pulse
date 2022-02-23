@@ -35,6 +35,7 @@ class pulse_course_modinfo extends course_modinfo {
      * @var int
      */
     public $groupuserid;
+    
 
     /**
      * Standard properties to fetch.
@@ -51,6 +52,8 @@ class pulse_course_modinfo extends course_modinfo {
         'groupuserid' => 'get_group_userid', // User id to get groups.
     );
 
+    
+
     /**
      * Get current group user id.
      *
@@ -66,7 +69,7 @@ class pulse_course_modinfo extends course_modinfo {
      * @param  mixed $userid
      * @return void
      */
-    public function changeuserid($userid) {
+    public function set_userid($userid) {
         $this->groupuserid = $userid;
     }
 
@@ -77,7 +80,6 @@ class pulse_course_modinfo extends course_modinfo {
      * @return int[] Array of int (group id) => int (same group id again); empty array if none
      */
     public function get_groups($groupingid = 0) {
-
         $allgroups = groups_get_user_groups($this->get_course_id(), $this->groupuserid);
         if (!isset($allgroups[$groupingid])) {
             return array();
@@ -85,68 +87,4 @@ class pulse_course_modinfo extends course_modinfo {
         return $allgroups[$groupingid];
     }
 
-}
-
-require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-
-/**
- * Custom restore step to fetch the data from preset templates extracted XML files.
- */
-class preset_customize_restore extends restore_structure_step {
-
-    /**
-     * Data fetched from XML.
-     *
-     * @var array
-     */
-    public $data;
-
-    /**
-     * Structure definition for the path elements to restore. Using normal xml parse methods moodle raise the permission issue.
-     *
-     * @return array List of element paths to restore.
-     */
-    public function define_structure() {
-        $module = new restore_path_element('module', '/module');
-        $paths[] = $module;
-        $paths[] = new restore_path_element('pulse', '/activity/pulse');
-        if ($this->get_name() == 'pulsepro') {
-            $paths[] = new restore_path_element('local_pulsepro', '/activity/pulse/pulse_pro/local_pulsepro');
-        }
-
-        return $paths;
-    }
-
-    /**
-     * Process the module element restore.
-     * When the module element processed then the data is set as class level using this we can able to fetch the data from XML.
-     *
-     * @param array $data
-     * @return void
-     */
-    public function process_module($data) {
-        $this->data = $data;
-    }
-
-    /**
-     * Process the pusle element restore.
-     * When the pluse element processed then the data is set as class level using this we can able to fetch the pulse data from XML.
-     *
-     * @param array $data
-     * @return void
-     */
-    public function process_pulse($data) {
-        $this->data = $data;
-    }
-
-    /**
-     * Process the puslepro element restore.
-     * The data is set as class level using this we can able to fetch the pulsepro data from XML.
-     *
-     * @param array $data
-     * @return void
-     */
-    public function process_local_pulsepro($data) {
-        $this->data = $data;
-    }
 }

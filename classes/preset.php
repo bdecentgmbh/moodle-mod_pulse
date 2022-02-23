@@ -523,7 +523,7 @@ class preset extends \moodleform  {
         global $CFG, $USER, $DB;
 
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-        require_once($CFG->dirroot . '/mod/pulse/locallib.php');
+        require_once($CFG->dirroot . '/mod/pulse/preset_restore.php');
 
         if (isset($configdata['pulse_content'])) {
             $configdata['pulse_contentformat'] = $configdata['pulse_contenteditor']['format'];

@@ -29,6 +29,8 @@ define( 'MAX_PULSE_NAME_LENGTH', 50);
 global $PAGE;
 
 require_once($CFG->libdir."/completionlib.php");
+require_once($CFG->dirroot.'/lib/filelib.php');
+require_once($CFG->dirroot.'/mod/pulse/locallib.php');
 
 /**
  * Add pulse instance.
@@ -257,7 +259,7 @@ function mod_pulse_get_course_students($students, $instance) {
     // Filter available users.
     pulse_mtrace('Filter users based on their availablity..');
     foreach ($students as $student) {
-        $modinfo = \course_modinfo::instance((object) $instance->course, $student->id);
+        $modinfo = new \course_modinfo((object) $instance->course, $student->id);
         $cm = $modinfo->get_cm($instance->cm->id);
         if (!$cm->uservisible || pulseis_notified($student->id, $instance->pulse->id)) {
             unset($students[$student->id]);
@@ -426,7 +428,6 @@ function mod_pulse_cron_task($extend=true) {
         $pulseendpos = array_search('pulseend', $keys);
         $pulse = array_slice($record, 0, $pulseendpos);
         $pulse['id'] = $pulse['nid'];
-        pulse_mtrace( 'Initiate pulse module - '.$pulse['name'] );
         // Context.
         $ctxpos = array_search('contextid', $keys);
         $ctxendpos = array_search('locked', $keys);
@@ -441,6 +442,7 @@ function mod_pulse_cron_task($extend=true) {
         $coursepos = array_search('courseid', $keys);
         $course = array_slice($record, $coursepos);
         $course['id'] = $course['courseid'];
+        pulse_mtrace( 'Initiate pulse module - '.$pulse['name'].' course - '. $course['id'] );
         // Get enrolled users with capability.
         $contextlevel = explode('/', $context['path']);
         list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
@@ -768,7 +770,7 @@ function mod_pulse_completion_crontask() {
                 $context = context_module::instance($cm->id);
                 if ($completion->is_enabled($cm) ) {
                     foreach ($students as $key => $user) {
-                        $modinfo[$course->id]->changeuserid($user->id);
+                        $modinfo[$course->id]->set_userid($user->id);
                         $md = $modinfo[$course->id];
                         // Get pulse module completion state for user.
                         $result = pulse_get_completion_state($course, $cm, $user->id, COMPLETION_UNKNOWN, $pulse, $user, $md);
