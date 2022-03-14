@@ -33,6 +33,34 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
 
     Preset.prototype.actionbuttons = '.modal-footer button';
 
+        /**
+     * Add the modal to the page, if it hasn't already been added. This includes running any
+     * javascript that has been cached until now.
+     *
+     * @method attachToDOM
+     */
+    Preset.prototype.attachToDOM = function(modal) {
+        if (modal.isAttached) {
+            return;
+        }
+
+        $(modal.attachmentPoint).append(modal.getRoot());
+
+        // If we'd cached any JS then we can run it how that the modal is
+        // attached to the DOM.
+        if (modal.bodyJS) {
+            Templates.runTemplateJS(modal.bodyJS);
+            modal.bodyJS = null;
+        }
+
+        if (modal.footerJS) {
+            Templates.runTemplateJS(modal.footerJS);
+            modal.footerJS = null;
+        }
+
+        modal.isAttached = true;
+    };
+
     /**
      * Setup the presets modal event listeners.
      */
@@ -53,19 +81,22 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             Modal.create({
                 type: ModalPreset.TYPE,
                 title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
-                body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
+                body: '',
                 large: true,
             }).then(modal => {
                 // Make the modal attachment point to overcome the restriction access condition.
                 modal.attachmentPoint = attachmentPoint;
+                THIS.attachToDOM(modal);
                 modal.show();
-                modal.getRoot().on(ModalEvents.bodyRendered, function() {
+                Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params).then((html, js) => {
+                    modal.setBody(html);
+                    Templates.runTemplateJS(js);
                     THIS.reinitAvailability(SELECTOR.presetAvailability);
                     THIS.fieldChangedEvent();
-                });
+                })
                 // Destroy the modal on hidden to reload the editors.
                 modal.getRoot().on(ModalEvents.hidden, function() {
-                    modal.destroy.bind(modal);
+                    modal.destroy();
                     THIS.reinitAvailability();
                 });
 

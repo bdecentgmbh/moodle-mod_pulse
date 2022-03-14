@@ -271,6 +271,10 @@ class preset extends \moodleform  {
             if (get_class($PAGE->requires) != 'fragment_requirements_manager') {
                 $PAGE->start_collecting_javascript_requirements();
             }
+        } else {
+            if (get_class($PAGE->requires) == 'fragment_requirements_manager') {
+                $PAGE->requires->get_end_code();
+            }
         }
     }
 
@@ -592,7 +596,7 @@ class preset extends \moodleform  {
                         $DB->update_record('course_modules', $configdata);
                     }
                     // Remove the Database cache.
-                    purge_other_caches();
+                    purge_all_caches();
                     $DB->reset_caches();
                     break;
                 }
