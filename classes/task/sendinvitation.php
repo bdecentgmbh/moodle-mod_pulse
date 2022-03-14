@@ -47,7 +47,7 @@ class sendinvitation extends \core\task\adhoc_task {
         if (!empty($listofusers)) {
             $this->send_pulse($listofusers, $instance->pulse, $instance->course, $instance->context);
         } else {
-            mtrace('There is not users to send pulse');
+            pulse_mtrace('There is not users to send pulse');
         }
     }
 
@@ -68,7 +68,7 @@ class sendinvitation extends \core\task\adhoc_task {
             if ($pulse->pulse == true) {
                 $notifiedusers = [];
                 // Collect list of available enrolled students in course module.
-                mtrace('Sending pulse to enrolled users in course '.$course->fullname."\n");
+                pulse_mtrace('Sending pulse to enrolled users in course '.$course->fullname."\n");
                 foreach ($users as $key => $student) {
                     $sender = self::find_user_sender($senderdata, $student->id);
                     $userto = $student; // Send to.
@@ -89,7 +89,7 @@ class sendinvitation extends \core\task\adhoc_task {
                         $context->id, 'mod_pulse', $filearea, 0);
                     $messageplain = html_to_text($messagehtml); // Plain text.
                     // Send message to user.
-                    mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
+                    pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
 
                     $messagesend = mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender);
                     if ($messagesend) {

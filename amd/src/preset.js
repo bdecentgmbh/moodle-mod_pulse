@@ -1,5 +1,5 @@
 define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/events', 'core/str',
-'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events'],
+'core/fragment', 'core/ajax', 'core/templates', 'mod_pulse/loadingicon', 'core/notification', 'core/modal_events'],
     function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification, ModalEvents) {
 
     var SELECTOR = {
@@ -172,6 +172,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
      */
     Preset.prototype.applyCustomize = function(params, contextID, modal) {
         Fragment.loadFragment('mod_pulse', 'apply_preset', contextID, params).done((html, js) => {
+            modal.hide();
             modal.destroy();
             // Reset the availability to work for upcoming response html.
             this.resetRestrictPlugins();

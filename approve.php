@@ -128,14 +128,9 @@ if ($action == 'approve' && $userid) {
 }
 
 // Participants table filterset.
-$filterset = new \core_user\table\participants_filterset;
-$filterset->add_filter(
-    new \core_table\local\filter\integer_filter('courseid', \core_table\local\filter\filter::JOINTYPE_DEFAULT, [(int) $course->id])
-);
 // Approver user table - pariticipants table wrapper.
 $participanttable = new \mod_pulse\table\approveuser("user-index-participants-{$cm->id}");
-$participanttable->define_baseurl($CFG->wwwroot.'/mod/pulse/approve.php');
-$participanttable->set_filterset($filterset);
+
 // Page header output.
 echo $OUTPUT->header();
 // List of available participants table output.

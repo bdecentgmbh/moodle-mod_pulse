@@ -271,10 +271,6 @@ class preset extends \moodleform  {
             if (get_class($PAGE->requires) != 'fragment_requirements_manager') {
                 $PAGE->start_collecting_javascript_requirements();
             }
-        } else {
-            if (get_class($PAGE->requires) == 'fragment_requirements_manager') {
-                $PAGE->end_collecting_javascript_requirements();
-            }
         }
     }
 
@@ -523,7 +519,7 @@ class preset extends \moodleform  {
         global $CFG, $USER, $DB;
 
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-        require_once($CFG->dirroot . '/mod/pulse/locallib.php');
+        require_once($CFG->dirroot . '/mod/pulse/preset_restore.php');
 
         if (isset($configdata['pulse_content'])) {
             $configdata['pulse_contentformat'] = $configdata['pulse_contenteditor']['format'];

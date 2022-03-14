@@ -54,19 +54,9 @@ class custom_completion extends activity_custom_completion {
             case 'completionwhenavailable':
                 if ($pulse->completionavailable) {
                     $modinfo = get_fast_modinfo($this->cm->course, $this->userid);
-                    $info = new \core_availability\info_module($this->cm);
-                    $str = '';
-                    // Get section info for cm.
-                    // Check section is accessable by user.
-                    $section = $this->cm->get_section_info();
-                    $sectioninfo = new \core_availability\info_section($section);
+                    $cm = $modinfo->get_cm($this->cm->id);
 
-                    if ($sectioninfo->is_available($str, false, $this->userid, $modinfo)
-                        && $info->is_available($str, false, $this->userid, $modinfo )) {
-                        $status = COMPLETION_COMPLETE;
-                    } else {
-                        $status = COMPLETION_INCOMPLETE;
-                    }
+                    $status = $cm->get_user_visible() ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
                 }
                 break;
             case 'completionapproval':
@@ -94,7 +84,7 @@ class custom_completion extends activity_custom_completion {
                 break;
         }
 
-        return (isset($status) && $status) ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
+        return (isset($status) && $status) ? $status : COMPLETION_INCOMPLETE;
     }
 
 

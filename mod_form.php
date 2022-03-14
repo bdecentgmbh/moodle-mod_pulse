@@ -143,7 +143,7 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         // Preset Icon.
         $theme = \theme_config::load($PAGE->theme->name);
-        $faiconsystem = \core\output\icon_system_fontawesome::instance($theme->get_icon_system());
+        $faiconsystem = new \mod_pulse\icon_system_fontawesome();
         $iconlist = $faiconsystem->get_core_icon_map();
         array_unshift($iconlist, '');
         $mform->addElement('autocomplete', 'boxicon', get_string('boxicon', 'pulse'), $iconlist);
@@ -245,7 +245,7 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return void
      */
     public function data_postprocessing($data) {
-        parent::data_postprocessing($data);
+
         if (isset($data->pulse_content_editor)) {
             $data->pulse_contentformat = $data->pulse_content_editor['format'];
             $data->pulse_content = $data->pulse_content_editor['text'];
@@ -257,6 +257,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($data->completionapprovalroles)) {
             $data->completionapprovalroles = json_encode($data->completionapprovalroles);
         }
+
+        parent::data_postprocessing($data);
         pulse_extend_postprocessing($data);
     }
 

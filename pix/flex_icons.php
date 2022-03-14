@@ -15,18 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse instance flex icon.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/* Developer documentation is in /pix/flex_icons.php file. */
+defined( 'MOODLE_INTERNAL') || die(' No direct access ');
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2022031400;
-$plugin->requires = 2017111309; // Requires Moodle 3.9.
-$plugin->release = 'v1.11';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [39, 311];
+$icons = array(
+    'mod_pulse|icon' =>
+        array(
+            'data' =>
+                array(
+                    'classes' => 'tfont-var-bell-fill',
+                ),
+        ),
+);

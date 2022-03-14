@@ -34,7 +34,7 @@ require_once($CFG->dirroot. '/mod/pulse/lib.php');
 /**
  * Approve users table main class. Extends the core users partinicipant table class.
  */
-class approveuser extends \core_user\table\participants {
+class approveuser extends \table_sql  {
 
     /**
      * Approved users list.
@@ -70,7 +70,11 @@ class approveuser extends \core_user\table\participants {
         }
         $this->pulse = $DB->get_record('pulse', ['id' => $this->cm->instance] );
         $this->completion = $DB->get_records('pulse_completion', ['pulseid' => $this->pulse->id]);
+        $this->course = get_course($this->pulse->course);
+        $this->context = \context_course::instance($this->course->id, MUST_EXIST);
         $this->completionusers();
+        $this->base_url();
+
     }
 
     /**
@@ -95,7 +99,6 @@ class approveuser extends \core_user\table\participants {
      * @return void
      */
     public function out($pagesize, $useinitialsbar, $downloadhelpbutton = '') {
-        global $CFG, $OUTPUT, $PAGE;
         // Define the headers and columns.
         $headers = [];
         $columns = [];
@@ -105,7 +108,7 @@ class approveuser extends \core_user\table\participants {
         $canseegroups = !isset($hiddenfields['groups']);
         // Do not show the columns if it exists in the hiddenfields array.
         if (!isset($hiddenfields['lastaccess'])) {
-            if ($this->courseid == SITEID) {
+            if ($this->course->id == SITEID) {
                 $headers[] = get_string('lastsiteaccess');
             } else {
                 $headers[] = get_string('lastcourseaccess');
@@ -118,11 +121,14 @@ class approveuser extends \core_user\table\participants {
 
         $this->define_columns($columns);
         $this->define_headers($headers);
+        $this->define_baseurl($this->baseurl->out());
         // The name column is a header.
-        $this->define_header_column('fullname');
+        // $this->define_header_column('fullname');
         // Make this table sorted by last name by default.
         $this->sortable(true, 'lastname');
         $this->set_attribute('id', 'participants');
+        $this->is_downloadable(true);
+        $this->show_download_buttons_at([TABLE_P_BOTTOM]);
         \table_sql::out($pagesize, $useinitialsbar, $downloadhelpbutton);
     }
 
@@ -152,7 +158,7 @@ class approveuser extends \core_user\table\participants {
     /**
      * Guess the base url for the participants table.
      */
-    public function guess_base_url(): void {
+    public function base_url(): void {
         $this->baseurl = new \moodle_url('/mod/pulse/approve.php', ['cmid' => $this->cm->id]);
     }
 
@@ -163,28 +169,68 @@ class approveuser extends \core_user\table\participants {
      * @param bool $useinitialsbar do you want to use the initials bar.
      */
     public function query_db($pagesize, $useinitialsbar = true) {
-        list($twhere, $tparams) = $this->get_sql_where();
-        $psearch = new approveuser_search($this->course, $this->context, $this->filterset);
-        // Add filter for user context assigned users.
-        if (!pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {
-            if ($mentesusers = pulse_user_getmentessuser() ) {
-                global $DB;
-                list($userinsql, $userinparams) = $DB->get_in_or_equal($mentesusers, SQL_PARAMS_NAMED, 'mentees', true);
-                $twhere .= ($twhere != '') ? " AND udistinct.id $userinsql" : " udistinct.id $userinsql ";
-                $tparams = array_merge($tparams, $userinparams);
-            }
+        global $DB;
+
+        $groupmode    = groups_get_course_groupmode($this->course); // Groups are being used.
+        $currentgroup = groups_get_course_group($this->course, true);
+
+        if (!$currentgroup) {
+            // To make some other functions work better later.
+            $currentgroup  = null;
         }
 
-        $total = $psearch->get_total_participants_count($twhere, $tparams);
+        list($esql, $params) = get_enrolled_sql($this->context, null, $currentgroup, true);
+        $joins = array("FROM {user} u");
+        $wheres = array();
 
-        $this->pagesize($pagesize, $total);
+        list($twhere, $tparams) = $this->get_sql_where();
+        if (!empty($twhere)) {
+            $wheres[] = $twhere;
+            $params = array_merge($params, $tparams);
+        }
+
+        $userfields = array('username', 'email', 'city', 'country', 'lang', 'timezone', 'maildisplay');
+        $mainuserfields = \user_picture::fields('u', $userfields);
+        $extrasql = get_extra_user_fields_sql($this->context, 'u', '', $userfields);
+
+        $select = "SELECT $mainuserfields, ul.timeaccess AS lastaccess$extrasql";
+        $joins[] = "JOIN ($esql) e ON e.id = u.id"; // Course enrolled users only.
+        // Not everybody accessed course yet.
+        $joins[] = "LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = :courseid)";
+        $params['courseid'] = $this->course->id;
+
+        // Performance hacks - we preload user contexts together with accounts.
+        $ccselect = ', ' . \context_helper::get_preload_record_columns_sql('ctx');
+        $ccjoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = u.id AND ctx.contextlevel = :contextlevel)";
+        $params['contextlevel'] = CONTEXT_USER;
+        $select .= $ccselect;
+        $joins[] = $ccjoin;
+
+        if ($wheres) {
+            $where = "WHERE " . implode(" AND ", $wheres);
+        } else {
+            $where = "";
+        }
+
+        // Add filter for user context assigned users.
+        if (!pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {
+            if ($mentesusers = pulse_user_getmentessuser()) {
+                global $DB;
+                list($userinsql, $userinparams) = $DB->get_in_or_equal($mentesusers, SQL_PARAMS_NAMED, 'mentees', true);
+                $where .= ($where != '') ? " AND udistinct.id $userinsql" : " udistinct.id $userinsql ";
+                $params = array_merge($params, $userinparams);
+            }
+        }
 
         $sort = $this->get_sql_sort();
         if ($sort) {
             $sort = 'ORDER BY ' . $sort;
         }
+        $from = implode("\n", $joins);
 
-        $rawdata = $psearch->get_participants($twhere, $tparams, $sort, $this->get_page_start(), $this->get_page_size());
+        $total = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
+        $this->pagesize($pagesize, $total);
+        $rawdata = $DB->get_recordset_sql("$select $from $where $sort", $params, $this->get_page_start(), $this->get_page_size());
 
         $this->rawdata = [];
         foreach ($rawdata as $user) {

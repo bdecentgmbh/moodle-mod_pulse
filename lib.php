@@ -29,6 +29,8 @@ define( 'MAX_PULSE_NAME_LENGTH', 50);
 global $PAGE;
 
 require_once($CFG->libdir."/completionlib.php");
+require_once($CFG->dirroot.'/lib/filelib.php');
+require_once($CFG->dirroot.'/mod/pulse/locallib.php');
 
 /**
  * Add pulse instance.
@@ -49,6 +51,10 @@ function pulse_add_instance($pulse) {
                                                     array('subdirs' => true), $pulse->pulse_content_editor['text']);
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
+    }
+
+    if (isset($pulse->completionapprovalroles) && is_array($pulse->completionapprovalroles)) {
+        $pulse->completionapprovalroles = json_encode($pulse->completionapprovalroles);
     }
     // Insert the instance in DB.
     $pulseid = $DB->insert_record('pulse', $pulse);
@@ -83,6 +89,10 @@ function pulse_update_instance($pulse) {
 
     if (!isset($pulse->boxicon) && isset($pulse->displaymode)) {
         $pulse->boxicon = '';
+    }
+
+    if (isset($pulse->completionapprovalroles) && is_array($pulse->completionapprovalroles)) {
+        $pulse->completionapprovalroles = json_encode($pulse->completionapprovalroles);
     }
 
     // If module resend triggred then set the notified status to null for instance.
@@ -255,9 +265,9 @@ function mod_pulse_update_emailvars($templatetext, $subject, $course, $user, $mo
 function mod_pulse_get_course_students($students, $instance) {
     global $DB, $CFG;
     // Filter available users.
-    mtrace('Filter users based on their availablity..');
+    pulse_mtrace('Filter users based on their availablity..');
     foreach ($students as $student) {
-        $modinfo = \course_modinfo::instance((object) $instance->course, $student->id);
+        $modinfo = new \course_modinfo((object) $instance->course, $student->id);
         $cm = $modinfo->get_cm($instance->cm->id);
         if (!$cm->uservisible || pulseis_notified($student->id, $instance->pulse->id)) {
             unset($students[$student->id]);
@@ -306,10 +316,10 @@ function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml,
     $eventdata->fullmessagehtml = $messagehtml;
     $eventdata->smallmessage = $subject;
     if (message_send($eventdata)) {
-        mtrace( "Pulse send to the user.");
+        pulse_mtrace( "Pulse send to the user.");
         return true;
     } else {
-        mtrace( "Failed - Pulse send to the user.");
+        pulse_mtrace( "Failed - Pulse send to the user. -".fullname($userto), true);
         return false;
     }
 }
@@ -387,7 +397,7 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
 function mod_pulse_cron_task($extend=true) {
     global $DB;
 
-    mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
+    pulse_mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
 
     if ($extend && pulse_extend_invitation()) {
         return true;
@@ -414,7 +424,7 @@ function mod_pulse_cron_task($extend=true) {
 
     $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
     if (empty($records)) {
-        mtrace('No pulse instance are added yet'."\n");
+        pulse_mtrace('No pulse instance are added yet'."\n");
         return true;
     }
     $modinfo = [];
@@ -426,10 +436,9 @@ function mod_pulse_cron_task($extend=true) {
         $pulseendpos = array_search('pulseend', $keys);
         $pulse = array_slice($record, 0, $pulseendpos);
         $pulse['id'] = $pulse['nid'];
-        mtrace( 'Initiate pulse module - '.$pulse['name'] );
         // Context.
         $ctxpos = array_search('contextid', $keys);
-        $ctxendpos = array_search('locked', $keys);
+        $ctxendpos = array_search('tenantid', $keys);
         $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
         $context['id'] = $context['contextid']; unset($context['contextid']);
         // Course module.
@@ -441,6 +450,7 @@ function mod_pulse_cron_task($extend=true) {
         $coursepos = array_search('courseid', $keys);
         $course = array_slice($record, $coursepos);
         $course['id'] = $course['courseid'];
+        pulse_mtrace( 'Initiate pulse module - '.$pulse['name'].' course - '. $course['id'] );
         // Get enrolled users with capability.
         $contextlevel = explode('/', $context['path']);
         list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
@@ -480,7 +490,7 @@ function mod_pulse_cron_task($extend=true) {
         $instance->students = $students;
         pulse_set_notification_adhoc($instance);
     }
-    mtrace('Pulse message sending completed....');
+    pulse_mtrace('Pulse message sending completed....');
     return true;
 }
 
@@ -596,21 +606,24 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
     if ($completion == null) {
         $completion = $DB->get_record('pulse_completion', ['userid' => $userid, 'pulseid' => $pulse->id]);
     }
-    $status = COMPLETION_INCOMPLETE;
+    $status = $type;
     // Module availablity completion for student.
     if ($pulse->completionavailable) {
         if ($modinfo == null) {
             $modinfo = get_fast_modinfo($course->id, $userid);
+            $cm = $modinfo->get_cm($cm->id);
+            $isvisble = $cm->uservisible;
+        } else {
+            $cm = $modinfo->get_cm($cm->id);
+            $info = new \core_availability\info_module($cm);
+            $str = '';
+            // Get section info for cm.
+            // Check section is accessable by user.
+            $section = $cm->get_section_info();
+            $sectioninfo = new \core_availability\info_section($section);
+            $isvisble = pulse_mod_uservisible($cm, $userid, $sectioninfo, $modinfo, $info);
         }
-        $cm = $modinfo->get_cm($cm->id);
-        $info = new \core_availability\info_module($cm);
-        $str = '';
-        // Get section info for cm.
-        // Check section is accessable by user.
-        $section = $cm->get_section_info();
-        $sectioninfo = new \core_availability\info_section($section);
-
-        if ($sectioninfo->is_available($str, false, $userid, $modinfo) && $info->is_available($str, false, $userid, $modinfo )) {
+        if ($isvisble) {
             $status = COMPLETION_COMPLETE;
         } else {
             return COMPLETION_INCOMPLETE;
@@ -638,6 +651,29 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
 }
 
 /**
+ * Check user has access to the module
+ *
+ * @param cm_info $cm Course Module instance
+ * @param int $userid User record id
+ * @param \core_availability\info_section $sectioninfo Section availability info
+ * @param  course_modinfo $modinfo course Module info.
+ * @param \core_availability\info_module $info Module availability info.
+ * @return void
+ */
+function pulse_mod_uservisible($cm, $userid, $sectioninfo, $modinfo, $info) {
+    $context = $cm->context;
+    if ((!$cm->visible && !has_capability('moodle/course:viewhiddenactivities', $context, $userid))) {
+        return false;
+    }
+
+    $str = '';
+    if ($sectioninfo->is_available($str, false, $userid, $modinfo)
+        && $info->is_available($str, false, $userid, $modinfo )) {
+        return true;
+    }
+    return false;
+}
+/**
  * Seperate the record data into context and course and cm.
  * In function mod_pulse_completion_crontask, data fetched using JOIN queries,
  * Here the joined datas are seperated.
@@ -650,6 +686,9 @@ function pulse_process_recorddata($keys, $record) {
     // Context.
     $ctxpos = array_search('contextid', $keys);
     $ctxendpos = array_search('locked', $keys);
+    if (!$ctxendpos) {
+        $ctxendpos = array_search('tenantid', $keys);
+    }
     $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
     $context['id'] = $context['contextid'];
     unset($context['contextid']);
@@ -678,9 +717,9 @@ function mod_pulse_completion_crontask() {
 
     require_once($CFG->dirroot.'/mod/pulse/locallib.php');
 
-    mtrace('Pulse activity completion - Pulse Starting');
+    pulse_mtrace('Pulse activity completion - Pulse Starting');
 
-    mtrace('Fetching pulse instance list - MOD-Pulse INIT');
+    pulse_mtrace('Fetching pulse instance list - MOD-Pulse INIT');
 
     $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
             JOIN {capabilities} cap ON rc.capability = cap.name
@@ -702,7 +741,7 @@ function mod_pulse_completion_crontask() {
     $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
 
     if (empty($records)) {
-        mtrace('No pulse instance are added yet'."\n");
+        pulse_mtrace('No pulse instance are added yet'."\n");
         return true;
     }
     $modinfo = [];
@@ -716,7 +755,7 @@ function mod_pulse_completion_crontask() {
         $pulse = array_slice($record, 0, $pulseendpos);
         $pulse['id'] = $pulse['nid'];
 
-        mtrace("Check the user module completion - Pulse id: ".$pulse['id']);
+        pulse_mtrace("Check the user module completion - Pulse name: ".$pulse['name']);
         // Precess results.
         list($course, $context, $cm) = pulse_process_recorddata($keys, $record);
         // Get enrolled users with capability.
@@ -727,7 +766,7 @@ function mod_pulse_completion_crontask() {
                 FROM {user} u
                 JOIN (
                     SELECT DISTINCT eu1_u.id, pc.id as pcid, pc.userid as userid, pc.pulseid,
-                    pc.approvalstatus, pc.selfcompletion, cmc.id as coursemodulecompletionid
+                    pc.approvalstatus, pc.selfcompletion, cmc.id as coursemodulecompletionid, cmc.completionstate as completionstate
                         FROM {user} eu1_u
                         JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
                         JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
@@ -768,15 +807,21 @@ function mod_pulse_completion_crontask() {
                 $context = context_module::instance($cm->id);
                 if ($completion->is_enabled($cm) ) {
                     foreach ($students as $key => $user) {
-                        $modinfo[$course->id]->changeuserid($user->id);
+                        $modinfo[$course->id]->set_userid($user->id);
                         $md = $modinfo[$course->id];
                         // Get pulse module completion state for user.
-                        $result = pulse_get_completion_state($course, $cm, $user->id, COMPLETION_UNKNOWN, $pulse, $user, $md);
+                        $currentstate = ($user->completionstate) ?? COMPLETION_INCOMPLETE;
+                        $result = pulse_get_completion_state($course, $cm, $user->id, $currentstate, $pulse, $user, $md);
+                        if (isset($user->completionstate) && $result == $currentstate) {
+                            continue;
+                        }
                         $activitycompletion = new \stdclass();
                         $activitycompletion->coursemoduleid = $cm->id;
                         $activitycompletion->userid = $user->id;
                         $activitycompletion->viewed = null;
                         $activitycompletion->overrideby = null;
+                        $activitycompletion->reaggregate = 0;
+                        $activitycompletion->timecompleted = time();
                         if ($user->coursemodulecompletionid == '') {
                             $activitycompletion->completionstate = $result;
                             $activitycompletion->timemodified = time();
@@ -787,7 +832,7 @@ function mod_pulse_completion_crontask() {
                             $activitycompletion->timemodified = time();
                             $DB->update_record('course_modules_completion', $activitycompletion);
                         }
-                        mtrace("Updated course module completion - user ". $user->id);
+                        pulse_mtrace("Updated course module completion - user ". $user->id);
 
                         // Trigger an event for course module completion changed.
                         $event = \core\event\course_module_completion_updated::create(array(
@@ -804,11 +849,11 @@ function mod_pulse_completion_crontask() {
                     }
                 }
             } else {
-                mtrace('There is not users to update pulse module completion');
+                pulse_mtrace('There is not users to update pulse module completion');
             }
         }
     }
-    mtrace('Course module completions are updated for all pulse module....');
+    pulse_mtrace('Course module completions are updated for all pulse module....');
     return true;
 }
 
@@ -1094,8 +1139,9 @@ function pulse_user_isstudent($cmid) {
     $modulecontext = context_module::instance($cmid);
     $roles = get_user_roles($modulecontext, $USER->id);
     $hasrole = false;
+    $studentroles = array_keys(get_archetype_roles('student'));
     foreach ($roles as $key => $role) {
-        if ($role->shortname == 'student') {
+        if (in_array($role->roleid, $studentroles)) {
             $hasrole = true;
             break;
         }
@@ -1598,4 +1644,18 @@ function mod_pulse_render_content(string $content, string $boxicon, string $boxt
     $html .= html_writer::end_tag('div');
     $html .= html_writer::end_tag('div');
     return $html;
+}
+
+/**
+ * Custom method to prevent the mtrace logs based on admin config.
+ *
+ * @param string $message Message to log on cron.
+ * @param bool $detail Need to display this in log even detailedlog config disable state.
+ * @return void
+ */
+function pulse_mtrace($message, $detail=false) {
+    $showdetail = get_config('mod_pulse', 'detailedlog');
+    if ($showdetail || $detail) {
+        mtrace($message);
+    }
 }

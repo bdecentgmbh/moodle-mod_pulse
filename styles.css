@@ -129,3 +129,46 @@
 .modtype_pulse .pulse-box-icon .icon {
     font-size: 1.5rem;
 }
+
+/* modtype_pulse - environment. */
+.modtype_pulse .pulse-box .alert-danger, .modtype_pulse .pulse-box .environmenttable .error {
+    color: #691911;
+    background-color: #f4d6d2;
+    border-color: #f0c5c1;
+}
+
+.modtype_pulse .pulse-box .alert-primary {
+    color: #083a66;
+    background-color: #cfe2f3;
+    border-color: #bcd7ef;
+}
+
+.modtype_pulse .pulse-box .alert-secondary {
+    color: #6b6e71;
+    background-color: #f5f6f8;
+    border-color: #f1f3f5;
+}
+
+.modtype_pulse .pulse-box .alert-light {
+    color: #818182;
+    background-color: #fefefe;
+    border-color: #fdfdfe;
+}
+
+.modtype_pulse .pulse-box .alert-dark {
+    color: #1b1e21;
+    background-color: #d6d8d9;
+    border-color: #c6c8ca;
+}
+
+.modtype_pulse .pulse-box .alert-success, .modtype_pulse .pulse-box .environmenttable .ok {
+    color: #1c3f1a;
+    background-color: #d7e4d6;
+    border-color: #c6dac6;
+}
+
+.modtype_pulse .pulse-box .alert-warning, .environmenttable .warn {
+    color: #7d5a29;
+    background-color: #fcefdc;
+    border-color: #fbe8cd;
+}

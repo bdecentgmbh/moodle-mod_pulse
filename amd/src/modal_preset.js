@@ -77,10 +77,11 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
                 data.originalEvent.preventDefault();
             }
             event.preventDefault();
-
+            
         }.bind(this));
 
         this.getModal().on(CustomEvents.events.activate, SELECTORS.CANCEL_BUTTON, function() {
+            this.hide();
             this.destroy();
         }.bind(this));
     };
