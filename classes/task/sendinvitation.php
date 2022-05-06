@@ -35,12 +35,15 @@ class sendinvitation extends \core\task\adhoc_task {
      * @return void
      */
     public function execute() {
-        global $CFG;
+        global $CFG, $DB;
 
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
         $instance = $this->get_custom_data();
         // Check pulse enabled.
 
+        if (!$DB->record_exists('course_modules', ['id' => $instance->cm->id])) {
+            return true;
+        }
         // Filter users from course pariticipants by completion.
         $listofusers = mod_pulse_get_course_students((array) $instance->students, $instance);
         // Extend the pulse pro version to send notifications on selected recipients.
