@@ -24,8 +24,6 @@
 
 namespace mod_pulse\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Send notification to users - scheduled task execution observer.
  */

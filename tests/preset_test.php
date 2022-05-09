@@ -22,12 +22,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
+namespace mod_pulse;
 
 /**
  * Pulse resource preset create and customize settings phpunit test cases defined.
  */
-class mod_pulse_preset_testcase extends advanced_testcase {
+class preset_test extends \advanced_testcase {
 
     /**
      * Setup the course and admin user to test the presets.
@@ -45,7 +45,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
     /**
      * Test case to insert method for presets, this function creates the default already defined presets
      * which is shipped with plugin source installation.
-     *
+     * @covers ::pulse_create_presets
      * @return void
      */
     public function test_pulse_create_presets() {
@@ -59,7 +59,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
 
     /**
      * Test the create pulse activity using the preset method apply and save with custom configurable params.
-     *
+     * @covers ::apply_presets
      * @return void
      */
     public function test_apply_save_preset(): void {
@@ -68,7 +68,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         $records = $DB->get_records('pulse_presets');
         $record = reset($records);
 
-        $preset = new mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
+        $preset = new \mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
         $configdata = ['importmethod' => 'save', 'presetid' => $record->id, 'name' => 'Welcome Message'];
         $result = $preset->apply_presets($configdata);
         $result = json_decode($result);
@@ -81,7 +81,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
 
     /**
      * Test the create pulse activity using the preset method apply and customize with custom configurable params.
-     *
+     * @covers ::customize_preset
      * @return void
      */
     public function test_apply_customize_preset() {
@@ -91,7 +91,7 @@ class mod_pulse_preset_testcase extends advanced_testcase {
         $record = reset($records);
         $customname = 'Welcome Message';
         $subject = 'Preset pulse subject - customize';
-        $preset = new mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
+        $preset = new \mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
 
         $configdata = [
             'importmethod' => 'customize', 'presetid' => $record->id, 'name' => $customname, 'pulse_subject' => $subject

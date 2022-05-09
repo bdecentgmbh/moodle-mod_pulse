@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
-
 /**
  * Course modinfo wrapper.
  */
@@ -35,7 +33,6 @@ class pulse_course_modinfo extends course_modinfo {
      * @var int
      */
     public $groupuserid;
-    
 
     /**
      * Standard properties to fetch.
@@ -51,8 +48,6 @@ class pulse_course_modinfo extends course_modinfo {
         'groups' => 'get_groups_all',
         'groupuserid' => 'get_group_userid', // User id to get groups.
     );
-
-    
 
     /**
      * Get current group user id.

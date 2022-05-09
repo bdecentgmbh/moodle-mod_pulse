@@ -38,7 +38,7 @@ require_once($CFG->dirroot.'/mod/pulse/mod_form.php');
 /**
  * Create pulse using the backup file of mod pulse. Defined preset form to extract the template file data.
  */
-class preset extends \moodleform  {
+class preset extends \moodleform {
 
     /**
      * Preset form to replace the module form during the apply and customize method.

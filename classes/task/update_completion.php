@@ -24,8 +24,6 @@
 
 namespace mod_pulse\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Update user completion status for pulse. triggered from scheduled task.
  */

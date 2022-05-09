@@ -24,8 +24,6 @@
 
 namespace mod_pulse;
 
-defined('MOODLE_INTERNAL') || die('No direct access !');
-
 /**
  * Observer class for the course module deleted and user enrolment deleted events. It will remove the user data from pulse.
  */
@@ -52,7 +50,6 @@ class eventobserver {
             if ($DB->record_exists('pulse_users', ['pulseid' => $pulseid])) {
                 $DB->delete_records('pulse_users', ['pulseid' => $pulseid]);
             }
-
         }
     }
 

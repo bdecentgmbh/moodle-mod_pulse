@@ -22,13 +22,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
-
+namespace mod_pulse;
 
 /**
  * Pulse resource phpunit test cases defined.
  */
-class mod_pulse_lib_testcase extends advanced_testcase {
+class lib_test extends \advanced_testcase {
 
     /**
      * Module intro content.
@@ -57,7 +56,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
 
     /**
      * Test the pulse student test function to check it identifies the students.
-     *
+     * @covers ::pulse_user_isstudent
      * @return void
      */
     public function test_is_studentuser() {
@@ -76,7 +75,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
 
     /**
      * Test course students count based on sending notification.
-     *
+     * @covers ::mod_pulse_get_course_students
      * @return void
      */
     public function test_get_course_students() {
@@ -89,7 +88,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
             'username' => 'student2'
         ]);
 
-        $instance = new stdclass();
+        $instance = new \stdclass();
         $instance->course = $this->course;
         $instance->pulse = $this->module;
         $instance->cm = $this->cm;
@@ -103,7 +102,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
     }
     /**
      * Test the pulse fetch course senders for send notification.
-     *
+     * @covers \mod_pulse\task\sendinvitation::find_user_sender
      * @return void
      */
     public function test_course_sender() {
@@ -118,21 +117,21 @@ class mod_pulse_lib_testcase extends advanced_testcase {
         $sender2 = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher', [
             'email' => 'sender2@test.com', 'username' => 'sender2'
         ]);
-        $contacts = mod_pulse\task\sendinvitation::get_sender($course->id);
+        $contacts = \mod_pulse\task\sendinvitation::get_sender($course->id);
         $coursecontact = $contacts->coursecontact;
         $this->assertEquals('sender1', $coursecontact->username);
         // Assign teacher sender2 and user in group.
         $groupid = $this->getDataGenerator()->create_group(array('courseid' => $course->id));
         $this->getDataGenerator()->create_group_member(array('userid' => $user, 'groupid' => $groupid));
         $this->getDataGenerator()->create_group_member(array('userid' => $sender2, 'groupid' => $groupid));
-        $contacts = mod_pulse\task\sendinvitation::get_sender($course->id);
+        $contacts = \mod_pulse\task\sendinvitation::get_sender($course->id);
         $sender = \mod_pulse\task\sendinvitation::find_user_sender($contacts, $user->id);
         $this->assertEquals('sender2', $sender->username);
     }
 
     /**
      * Test pulse email placeholder filters function.
-     *
+     * @covers ::mod_pulse_update_emailvars
      * @return void
      */
     public function test_pulse_update_email_vars() {
@@ -149,7 +148,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
 
     /**
      * Send messages.
-     *
+     * @covers ::mod_pulse_cron_task
      * @return void
      */
     public function send_message() {
@@ -158,17 +157,17 @@ class mod_pulse_lib_testcase extends advanced_testcase {
         // Setup adhoc task to send notifications.
         mod_pulse_cron_task(false);
         // Check adhock task count.
-        $tasklist = core\task\manager::get_adhoc_tasks('mod_pulse\task\sendinvitation');
+        $tasklist = \core\task\manager::get_adhoc_tasks('mod_pulse\task\sendinvitation');
         // ...cron_run_adhoc_tasks(time());.
         // Run all adhoc task to send notification.
-        phpunit_util::run_all_adhoc_tasks();
+        \phpunit_util::run_all_adhoc_tasks();
         $messages = $slink->get_messages();
         return ['tasklist' => $tasklist, 'messages' => $messages];
     }
 
     /**
      * Test pulse sends the message for enrolled users.
-     *
+     * @covers ::send_message
      * @return void
      */
     public function test_pulse_sending_messages() {
@@ -199,7 +198,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
 
     /**
      * test_pulse_different_message
-     *
+     * @covers ::pulse_different_message
      * @return void
      */
     public function test_pulse_different_message() {
@@ -234,7 +233,7 @@ class mod_pulse_lib_testcase extends advanced_testcase {
 
     /**
      * Test the notifications are send to inactive users enrolments.
-     *
+     * @covers ::send_message
      * @return void
      */
     public function test_user_inactive_enrolment() {
