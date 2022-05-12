@@ -133,6 +133,20 @@ class approveuser extends \table_sql  {
     }
 
     /**
+     * Lastaccess by user;
+     *
+     * @param object $data
+     * @return void
+     */
+    public function col_lastaccess($data) {
+        if ($data->lastaccess) {
+            return format_time(time() - $data->lastaccess);
+        }
+
+        return get_string('never');
+    }
+
+    /**
      * User approved status and status update actions column.
      *
      * @param  mixed $row

@@ -1027,11 +1027,11 @@ function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=tr
         $userid = $USER->id;
     }
     $modulecontext = context_module::instance($cmid);
-    $approvalroles = json_decode($completionapprovalroles);
+    $approvalroles = json_decode($completionapprovalroles, true);
     $roles = get_user_roles($modulecontext, $userid);
     $hasrole = false;
     foreach ($roles as $key => $role) {
-        if (in_array($role->roleid, $approvalroles)) {
+        if (!empty($approvalroles) && in_array($role->roleid, $approvalroles)) {
             $hasrole = true;
         }
     }
@@ -1049,7 +1049,7 @@ function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=tr
     $roleassignments = $DB->get_records_sql($sql, array($userid, CONTEXT_USER));
     if ($roleassignments) {
         foreach ($roleassignments as $role) {
-            if (in_array($role->roleid, $approvalroles)) {
+            if (!empty($approvalroles) && in_array($role->roleid, $approvalroles)) {
                 return true;
             }
         }
@@ -1141,7 +1141,7 @@ function pulse_user_isstudent($cmid) {
     $hasrole = false;
     $studentroles = array_keys(get_archetype_roles('student'));
     foreach ($roles as $key => $role) {
-        if (in_array($role->roleid, $studentroles)) {
+        if (!empty($studentroles) && in_array($role->roleid, $studentroles)) {
             $hasrole = true;
             break;
         }
@@ -1657,5 +1657,33 @@ function pulse_mtrace($message, $detail=false) {
     $showdetail = get_config('mod_pulse', 'detailedlog');
     if ($showdetail || $detail) {
         mtrace($message);
+    }
+}
+
+if (!function_exists('make_backup_temp_directory')) {
+    /**
+     * Create a directory under $CFG->backuptempdir and make sure it is writable.
+     *
+     * Do not use for storing generic temp files - see make_temp_directory() instead for this purpose.
+     *
+     * Backup temporary files must be on a shared storage.
+     *
+     * @param string $directory  the relative path of the directory to be created under $CFG->backuptempdir
+     * @param bool $exceptiononerror throw exception if error encountered
+     * @return string|false Returns full path to directory if successful, false if not; may throw exception
+     */
+    function make_backup_temp_directory($directory, $exceptiononerror = true) {
+        global $CFG;
+        if (!isset($CFG->backuptempdir)) {
+            $CFG->backuptempdir = "$CFG->tempdir/backup";
+        }
+
+        if ($CFG->backuptempdir !== "$CFG->tempdir/backup") {
+            check_dir_exists($CFG->backuptempdir, true, true);
+            protect_directory($CFG->backuptempdir);
+        } else {
+            protect_directory($CFG->tempdir);
+        }
+        return make_writable_directory("$CFG->backuptempdir/$directory", $exceptiononerror);
     }
 }
