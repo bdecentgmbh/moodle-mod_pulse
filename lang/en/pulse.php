@@ -25,19 +25,29 @@
 $string['pluginname'] = 'Pulse';
 $string['modulename'] = 'Pulse';
 $string['modulenameplural'] = 'Pulses';
-$string['pulse:addinstance'] = 'Add a new pulse';
-$string['pulse:view'] = 'View pulse';
+$string['pulse:addinstance'] = 'Add a new Pulse';
+$string['pulse:view'] = 'View Pulse';
 $string['content'] = 'Content';
-$string['modulename_help'] = 'TPulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. <br><br>
-(1) Notifications:<br>
-Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager. <br><br>
-(2) Completion workflows: <br>
-Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.';
-$string['modulename_link'] = 'mod/pulse/view';
-$string['privacy:metadata'] = 'The pulse plugin does not store any personal data.';
+$string['modulename_help'] = 'Pulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. <br><br>
+<ol>
+<li><strong>Notifications</strong><br/>
+Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager.</li>
+<li><strong>Completion workflows</strong><br/>
+Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.</li>
+<br/><br/>
+<p>As with all things automation, it is essential to put enough thought into what you actually want. Ideally, write down what should happen in which case. This also helps us to support you! If it does not work as you expect, here are the most common issues:</p>
+<ul>
+<li>The course has not <b>started</b>. Pulse only works in a course which is currently running —> Check if the start date is in the past.</li>
+<li>The course has <b>ended</b>. Pulse only works in a course which is currently running —> Check if the end date is set, and if it is, make sure it is in the future.</li>
+<li>The course has <b>enrolled students</b>. Pulse (free) only works for students —> Check if the course actually has an enrolled user with an active enrolment status.</li>
+<li>The Pulse activity is <b>available</b>. Pulse only works if the activity is available to the student. That is the "trigger" or "condition" we use to determine if we shall actually do something (e.g. award credits). —> Check if the Pulse activity is hidden or has a restriction which is not met by the student; in both cases, it is "disabled" and will not work. If you are not sure, just login as the student and check if the student sees the Pulse activity — if the student sees it, it is enabled; if the student does not see it, it is disabled.</li>
+<li>The <b>cron job</b> is not running or has not run yet — awarding credits is done through a scheduled task. It is therefor required that the cron job is running regularly. Moodle recommends every minute, and we can only encourage you to follow that recommendation!</li>
+</ul>';
+$string['modulename_link'] = 'Pulse';
+$string['privacy:metadata'] = 'The Pulse plugin does not store any personal data.';
 $string['pluginadministration'] = 'Pulse administration';
 $string['search:activity'] = 'Pulse';
-$string['sendnotificaton'] = 'Send notification';
+$string['sendnotificaton'] = 'Send Pulse notification';
 $string['diffnotification'] = 'Use notification content instead of general content';
 $string['enable:disable'] = 'Enable / Disable';
 $string['pulsenotification'] = 'Pulse notification';
@@ -47,7 +57,7 @@ $string['notifyusers'] = 'Notify course students';
 $string['pulse:notifyuser'] = 'Send notification';
 $string['messageprovider:mod_pulse'] = 'Send notifcation';
 $string['instancename'] = 'Pulse';
-$string['resendnotification'] = 'Re-send Notification';
+$string['resendnotification'] = 'Re-send notification';
 $string['resendnotificationdesc'] = 'Invitation has been scheduled for re-sending';
 $string['completionrequireapproval'] = 'Require approval by one of the following roles ';
 $string['completewhenavaialble'] = 'Completion when available';
@@ -61,14 +71,14 @@ $string['approve'] = 'Approve';
 $string['approveuser'] = 'Approve users - {$a->course}';
 $string['approveuserbtn'] = 'Approve users';
 
-$string['restrictionmet'] = 'Restriction Met';
+$string['restrictionmet'] = 'Restriction met';
 
 $string['markcomplete'] = 'Mark complete';
 $string['noreaction'] = 'No Reaction';
 $string['rate'] = 'Rate';
 $string['updatecompletion'] = 'Update pulse modules completion';
-$string['approvedsuccess'] = 'User approved successfully';
-$string['approvedeclined'] = 'User completion declined';
+$string['approvedsuccess'] = 'Approval successful';
+$string['approvedeclined'] = 'Approval denied';
 $string['selfmarked'] = 'Self marked complete on {$a->date}';
 $string['approveduser'] = 'Approved by: {$a->user}';
 $string['approvedon'] = 'Approved on {$a->date} by {$a->user}';
@@ -80,7 +90,7 @@ $string['completion:available'] = 'Restrictions must be met';
 $string['reactions'] = 'Reaction';
 $string['displaytype:notificationonly'] = 'Notification only';
 $string['displaytype:contentonly'] = 'Content only';
-$string['displaytype:notificationcontent'] = 'Notification and Content';
+$string['displaytype:notificationcontent'] = 'Both';
 
 $string['head:firstreminder'] = 'First reminder';
 $string['head:secondreminder'] = 'Second reminder';
@@ -139,13 +149,13 @@ $string['reactiontype_help'] = 'List of reaction types.';
 $string['reactiondisplaytype_help'] = 'Please choose where the reaction should be displayed.';
 $string['enablereminder:first_help'] = 'If enabled, Pulse will send the first reminder.';
 $string['remindersubject_help'] = 'Content will used as subject for the Reminder notifications.';
-$string['remindercontent_help'] = 'Entered content will send to recipients, Use the placeholders to use the receipients data dynamically.';
+$string['remindercontent_help'] = 'The content you enter here will be sent to recipients.';
 
 $string['reminderschedule_help'] = 'Define the reminder notification schedule type, <br>
-                                    If fixed date enabled, Then reminder will send to the selected roles when the selected date will reached. <br>
-                                    If Relative date enabled, then the reminder will send to the users once when the given duration will matched the user duration from when the activity available to user.';
-$string['enablereminder:second_help'] = 'If enabled, Pulse will send the Second reminder to selected recipients based on the schedule.';
-$string['enablereminder:recurring_help'] = 'If enabled, Pulse will send the Recurring reminder to selected recipients. Recurring reminders will send to the user in the given interval untill the user enrolment end or suspended.';
+                                    If fixed date is selected, the reminder is sent when the selected date is reached. <br>
+                                    If relative date is selected, the reminder is sent after the selected time has passed. The timer starts when the Pulse activity becomes available to the user.';
+$string['enablereminder:second_help'] = 'If enabled, Pulse will send a second reminder to selected recipients based on the schedule.';
+$string['enablereminder:recurring_help'] = 'If enabled, Pulse will send a recurring reminder to selected recipients. Recurring reminders will send to the user in the given interval until the user is no longer enrolled or suspended.';
 
 $string['notsameuser'] = 'You are not the correct user to apply reaction';
 $string['previousreminders'] = 'Previous reminders';
@@ -166,7 +176,7 @@ $string['privacy:metadata:completion:approvalstatus'] = 'User approved status';
 $string['privacy:metadata:completion:approveduser'] = 'ID of the user who approved the student user';
 $string['privacy:metadata:completion:approvaltime'] = 'Time when the user approved by other.';
 $string['privacy:metadata:completion:selfcompletion'] = 'Status of the user completion by self';
-$string['privacy:metadata:completion:selfcompletiontime'] = 'Time when the user completion pulse by self';
+$string['privacy:metadata:completion:selfcompletiontime'] = 'Time when the user marked the Pulse activity as complete';
 $string['privacy:metadata:completion:timemodified'] = 'Time of completion modified';
 $string['privacy:metadata:users:userid'] = 'ID of notified user';
 $string['privacy:metadata:users:status'] = 'Status of the invitation to find the notification is previous or current one';
@@ -203,18 +213,18 @@ $string['confirmdeletetemplate'] = 'Are you sure! do you want to delete the pres
 $string['presetdeleted'] = 'Preset deleted successfully';
 $string['apply_customize'] = 'Apply and Customize';
 $string['apply_save'] = 'Apply and Save';
-$string['promotionaltext'] = 'With Pulse Pro you get powerful reminders, In-email reactions and you can create your own presets. ';
+$string['promotionaltext'] = 'With Pulse Pro you get powerful reminders, in-email reactions and you can create your own presets. ';
 $string['learnmore'] = 'Learn More';
 $string['presetmodaltitle'] = 'Use preset {$a->title}';
 // Credits lang strings.
 $string['credits'] = 'Credits';
-$string['notificationheader'] = 'Notification Header';
+$string['notificationheader'] = 'Notification header';
 $string['notificationheaderdesc'] = '{$a->placeholders}';
-$string['notificationfooter'] = 'Notification Footer';
+$string['notificationfooter'] = 'Notification footer';
 $string['notificationfooterdesc'] = '{$a->placeholders}';
 $string['creditsfield'] = 'Credits user profile field';
 $string['creditsfielddesc'] = 'Select any of the user custom profile field to maintain the user credits records <br>
-NOTE: Make the selected field hidden for students, otherwise student can able to change their credit scores';
+NOTE: Lock the selected field for students to prevent that students change their credit scores';
 $string['setupcredit'] = 'In order to use this feature, you need to configure the user profile field first.
 Please ask your local administrator to set this up.';
 $string['creditesgroup'] = 'Credit score';
@@ -235,7 +245,7 @@ $string['boxicon'] = 'Box Icon';
 $string['boxtype'] = 'Box Type';
 $string['updateusercredits'] = 'Update user credits';
 $string['logintoreact'] = 'Login before apply reaction';
-$string['tokenexpired'] = "Token expired! Can't able to save your response.";
+$string['tokenexpired'] = "Token expired! Your response was not saved.";
 $string['detailedlog'] = 'Display detailed log for scheduled task — only use for troubleshooting purposes and disable on a production site';
 $string['showhide'] = 'Detailed log';
 $string['configintro'] = 'Global configuration settings for Pulse';
