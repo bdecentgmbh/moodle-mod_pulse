@@ -132,8 +132,8 @@ class provider implements
         }
 
         $params = [
-            'instanceid'    => $context->instanceid,
-            'modulename'    => 'pulse',
+            'instanceid' => $context->instanceid,
+            'modulename' => 'pulse',
         ];
 
          // Discussion authors.
