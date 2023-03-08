@@ -27,11 +27,11 @@ defined('MOODLE_INTERNAL') || die;
 $functions = array(
 
     'mod_pulse_apply_presets' => array(
-        'classname'   => 'mod_pulse\external',
-        'methodname'  => 'apply_presets',
+        'classname' => 'mod_pulse\external',
+        'methodname' => 'apply_presets',
         'description' => 'Apply presets in mod pulse form',
-        'type'        => 'write',
-        'ajax'          => true,
+        'type' => 'write',
+        'ajax' => true,
         'loginrequired' => true,
     ),
 );
