@@ -140,7 +140,7 @@ $string['resendnotification_help'] = 'If enabled, Invitation reminder will resch
 $string['diffnotification_help'] = 'If enabled, the invitation will use notification content and subject (instead of general content and title).';
 $string['invitationsubject_help'] = 'Add the subject for the invitation here.';
 $string['remindercontent_help'] = 'If notification content enabled, then this content will used as main content for invitations.';
-$string['recipients_help'] = 'Please choose the roles which you want to send the notification to. Only users enrolled in this course and with the selected role will receeive notifications. Please note that users with a user context role users don\'t need to be enrolled in the course. ';
+$string['recipients_help'] = 'Please choose the roles which you want to send the notification to. Only users enrolled in this course and with the selected role will receive notifications. Please note that users with a user context role users don\'t need to be enrolled in the course. ';
 
 $string['reactiontype'] = 'Type';
 $string['reactiontype_help'] = 'List of reaction types.';
