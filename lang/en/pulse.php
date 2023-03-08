@@ -28,13 +28,11 @@ $string['modulenameplural'] = 'Pulses';
 $string['pulse:addinstance'] = 'Add a new Pulse';
 $string['pulse:view'] = 'View Pulse';
 $string['content'] = 'Content';
-$string['modulename_help'] = 'Pulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses. <br><br>
-<ol>
-<li><strong>Notifications</strong><br/>
+$string['modulename_help'] = 'Pulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses:
+<ul><li><strong>Notifications</strong><br/>
 Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager.</li>
 <li><strong>Completion workflows</strong><br/>
-Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.</li>
-<br/><br/>
+Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.</li></ul>
 <p>As with all things automation, it is essential to put enough thought into what you actually want. Ideally, write down what should happen in which case. This also helps us to support you! If it does not work as you expect, here are the most common issues:</p>
 <ul>
 <li>The course has not <b>started</b>. Pulse only works in a course which is currently running —> Check if the start date is in the past.</li>
