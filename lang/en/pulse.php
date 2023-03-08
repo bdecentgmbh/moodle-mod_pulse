@@ -100,9 +100,9 @@ $string['reaction:rate'] = '';
 $string['reaction:approve'] = ' <a href="{$a->reactionurl}" style="color: #fff;background: #0f6fc5;padding:.375rem .75rem;text-decoration-line: none;" > Approve </a> ';
 $string['title_help'] = 'The title is used as activity name. It is used as subject to send the invitation.';
 $string['content_help'] = 'Content will be displayed on the course page and used as message body content for the invitation.';
-$string['completewhenavaialble_help']  = 'If enabled, the activity will be considered completed when the user has access to it (i.e. when it is available based on availability restricitions).';
-$string['completionself_help']  = 'If enabled, the activity will be considered completed when the student marks it as complete on the course page.';
-$string['completionrequireapproval_help']  = 'If enabled, the activity will be considered completed when any of the selected roles approves the user.';
+$string['completewhenavaialble_help'] = 'If enabled, the activity will be considered completed when the user has access to it (i.e. when it is available based on availability restricitions).';
+$string['completionself_help'] = 'If enabled, the activity will be considered completed when the student marks it as complete on the course page.';
+$string['completionrequireapproval_help'] = 'If enabled, the activity will be considered completed when any of the selected roles approves the user.';
 
 $string['completereaction'] = 'Complete reaction';
 $string['reminders:first'] = 'First reminder';
