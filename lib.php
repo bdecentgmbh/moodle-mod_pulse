@@ -132,10 +132,14 @@ function pulse_delete_instance($pulseid) {
  * @uses FEATURE_COMPLETION_TRACKS_VIEWS
  * @uses FEATURE_GRADE_HAS_GRADE
  * @uses FEATURE_GRADE_OUTCOMES
+ * @uses FEATURE_MOD_PURPOSE
  * @param string $feature FEATURE_xx constant for requested feature
  * @return bool|null True if module supports feature, false if not, null if doesn't know
  */
 function pulse_supports($feature) {
+    if (defined('FEATURE_MOD_PURPOSE') && $feature == FEATURE_MOD_PURPOSE) {
+        return MOD_PURPOSE_ADMINISTRAION;
+    }    
     switch($feature) {
         case FEATURE_IDNUMBER:
             return true;
