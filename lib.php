@@ -138,7 +138,7 @@ function pulse_delete_instance($pulseid) {
  */
 function pulse_supports($feature) {
     if (defined('FEATURE_MOD_PURPOSE') && $feature == FEATURE_MOD_PURPOSE) {
-        return MOD_PURPOSE_ADMINISTRAION;
+        return MOD_PURPOSE_ADMINISTRATION;
     }    
     switch($feature) {
         case FEATURE_IDNUMBER:
