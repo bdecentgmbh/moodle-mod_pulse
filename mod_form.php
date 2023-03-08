@@ -99,7 +99,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse_subject', 'invitationsubject', 'mod_pulse');
 
         // Pulse content editor.
-        $editoroptions  = pulse_get_editor_options();
+        $editoroptions = pulse_get_editor_options();
         $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
             ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
