@@ -90,6 +90,9 @@ class sendinvitation extends \core\task\adhoc_task {
                     // Rewrite the plugin file placeholders in the email text.
                     $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
                         $context->id, 'mod_pulse', $filearea, 0);
+                    // Format filter supports. filter the enabled filters.
+                    $messagehtml = format_text($messagehtml, FORMAT_HTML);
+
                     $messageplain = html_to_text($messagehtml); // Plain text.
                     // Send message to user.
                     pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
