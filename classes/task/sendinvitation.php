@@ -97,12 +97,23 @@ class sendinvitation extends \core\task\adhoc_task {
                     // Send message to user.
                     pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
 
-                    $messagesend = mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender);
-                    if ($messagesend) {
-                        $notifiedusers[] = $userto->id;
+                    try {
+                        $transaction = $DB->start_delegated_transaction();
+                        if (mod_pulse_update_notified_user($userto->id, $pulse)) {
+                            $messagesend = mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender);
+                            if ($messagesend) {
+                                $notifiedusers[] = $userto->id;
+                            } else {
+                                throw new \moodle_exception('mailnotsend', 'pulse');
+                            }
+                        } else {
+                            throw new \moodle_exception('invitationDB', 'pulse');
+                        }
+                        $transaction->allow_commit();
+                    } catch (\Exception $e) {
+                        $transaction->rollback($e);
                     }
                 }
-                mod_pulse_update_notified_users($notifiedusers, $pulse);
             }
         }
     }
@@ -176,7 +187,7 @@ class sendinvitation extends \core\task\adhoc_task {
             return [];
         }
 
-        $coursecontact = reset($records); // Get first course contact user.
+        $coursecontact = current($records); // Get first course contact user.
 
         // Get group based contacts.
         $groups = array_keys(groups_get_all_groups($courseid));

@@ -249,3 +249,5 @@ $string['showhide'] = 'Detailed log';
 $string['configintro'] = 'Global configuration settings for Pulse';
 $string['tasklimituser'] = 'Limit users per task';
 $string['tasklimituserdesc'] = 'Use this setting to limit how many users are processed per task. Lower the number of users if the task is taking too long to finish.';
+$string['invitationdbpro'] = 'Invitation send to user not inserted. Please check pulsepro';
+$string['invitationnotsend'] = 'Invitation not send to user';

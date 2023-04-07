@@ -42,5 +42,5 @@ If you are running a legacy version of Moodle, but want or need to run the lates
 This Moodle plugin is shipped with an english language pack only. All translations into other languages must be managed through AMOS (https://lang.moodle.org) by what they will become part of Moodle's official language pack.
 
 # Copyright
-bdecent gmbh 
+bdecent gmbh
 bdecent.de

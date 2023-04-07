@@ -196,24 +196,24 @@ function pulse_get_editor_options() {
 /**
  * Update the user id in the db notified users list.
  *
- * @param  mixed $users List of users currently notified.
+ * @param  int $userid User ID.
  * @param  mixed $pulse Pulse instance object.
- * @return void
+ * @return bool
  */
-function mod_pulse_update_notified_users($users, $pulse) {
+function mod_pulse_update_notified_user($userid, $pulse) {
     global $DB;
 
-    if (!empty($users)) {
-        foreach ($users as $userid) {
-            $record = new stdclass();
-            $record->userid = $userid;
-            $record->pulseid = $pulse->id;
-            $record->status = 1;
-            $record->timecreated = time();
-            $records[] = $record;
-        }
-        $DB->insert_records('pulse_users', $records);
+    if (!empty($userid)) {
+
+        $record = new stdclass();
+        $record->userid = $userid;
+        $record->pulseid = $pulse->id;
+        $record->status = 1;
+        $record->timecreated = time();
+
+        return $DB->insert_record('pulse_users', $record);
     }
+    return false;
 }
 
 /**
@@ -731,6 +731,10 @@ function mod_pulse_completion_crontask() {
     JOIN {course} cu on cu.id = nt.course
     RIGHT JOIN {context} ctx on ctx.instanceid = cm.id and contextlevel = 70
     WHERE md.name = 'pulse' AND cu.visible = 1 AND cu.startdate <= :startdate AND  (cu.enddate = 0 OR cu.enddate >= :enddate)";
+
+    // Completion available criteria is only based on restrictions and others are based on actions.
+    // Approval, Self completion are updated when the action is triggered.
+    $sql .= ' AND nt.completionavailable = 1';
     $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
 
     if (empty($records)) {
@@ -754,6 +758,7 @@ function mod_pulse_completion_crontask() {
         // Get enrolled users with capability.
         $contextlevel = explode('/', $context['path']);
         list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
+
         // Enrolled  users list.
         $usersql = "SELECT u.*, je.*
                 FROM {user} u
@@ -785,65 +790,52 @@ function mod_pulse_completion_crontask() {
         $params[] = time();
         $params[] = time();
         $params[] = 1;
-        $students = $DB->get_records_sql($usersql, $params);
 
         $courseid = $pulse['course'];
         $course = (object) $course;
         $pulse = (object) $pulse;
+
         if (!in_array($courseid, $modinfo)) {
             $modinfo[$courseid] = new \pulse_course_modinfo($course, 0);
         }
-        if (!empty($modinfo[$courseid]->cms[$cm['id']])) {
-            $cm = $modinfo[$course->id]->get_cm($cm['id']);
-            if (!empty($students)) {
-                $completion = new completion_info($course);
-                $context = context_module::instance($cm->id);
-                if ($completion->is_enabled($cm) ) {
-                    foreach ($students as $key => $user) {
-                        $modinfo[$course->id]->set_userid($user->id);
-                        $md = $modinfo[$course->id];
-                        // Get pulse module completion state for user.
-                        $currentstate = ($user->completionstate) ?? COMPLETION_INCOMPLETE;
-                        $result = pulse_get_completion_state($course, $cm, $user->id, $currentstate, $pulse, $user, $md);
-                        if (isset($user->completionstate) && $result == $currentstate) {
-                            continue;
-                        }
-                        $activitycompletion = new \stdclass();
-                        $activitycompletion->coursemoduleid = $cm->id;
-                        $activitycompletion->userid = $user->id;
-                        $activitycompletion->viewed = null;
-                        $activitycompletion->overrideby = null;
-                        if ($user->coursemodulecompletionid == '') {
-                            $activitycompletion->completionstate = $result;
-                            $activitycompletion->timemodified = time();
-                            $activitycompletion->id = $DB->insert_record('course_modules_completion', $activitycompletion);
-                        } else {
-                            $activitycompletion->id = $user->coursemodulecompletionid;
-                            $activitycompletion->completionstate = $result;
-                            $activitycompletion->timemodified = time();
-                            $DB->update_record('course_modules_completion', $activitycompletion);
-                        }
-                        pulse_mtrace("Updated course module completion - user ". $user->id);
 
-                        // Trigger an event for course module completion changed.
-                        $event = \core\event\course_module_completion_updated::create(array(
-                            'objectid' => $activitycompletion->id,
-                            'context' => (object) $context,
-                            'relateduserid' => $user->id,
-                            'other' => array(
-                                'relateduserid' => $user->id
-                            )
-                        ));
-                        $event->add_record_snapshot('course_modules_completion', $activitycompletion);
-                        $event->trigger();
+        if (empty($modinfo[$courseid]->cms[$cm['id']])) {
+            continue;
+        }
+        $cm         = $modinfo[$course->id]->get_cm($cm['id']);
+        $completion = new completion_info($course);
+        if (!$completion->is_enabled($cm)) {
+            continue;
+        }
+        $students = $DB->get_records_sql($usersql, $params);
+        pulse_mtrace('- ' . count($students) . ' user(s) to process');
 
-                    }
+        if (!empty($students)) {
+            $completion = new completion_info($course);
+            $context = context_module::instance($cm->id);
+            foreach ($students as $key => $user) {
+                $modinfo[$course->id]->set_userid($user->id);
+                $md = $modinfo[$course->id];
+                // Get pulse module completion state for user.
+                $currentstate = ($user->completionstate) ?? COMPLETION_INCOMPLETE;
+                $result = pulse_get_completion_state($course, $cm, $user->id, $currentstate, $pulse, $user, $md);
+                if (isset($user->completionstate) && $result == $currentstate) {
+                    continue;
                 }
-            } else {
-                pulse_mtrace('There is not users to update pulse module completion');
+
+                if ($user->coursemodulecompletionid === null && $result > 0) { // ADD.
+                    pulse_mtrace("-- Added completion [NEW => $result] - user " . $user->id);
+                    $completion->update_state($cm, $result, $user->id);
+                } else if ((int) $user->completionstate !== (int) $result) { // UPDATE.
+                    pulse_mtrace("-- Updated completion [OLD => $user->completionstate, NEW => $result] - user " . $user->id);
+                    $completion->update_state($cm, $result, $user->id);
+                }
             }
+        } else {
+            pulse_mtrace('There is not users to update pulse module completion');
         }
     }
+
     pulse_mtrace('Course module completions are updated for all pulse module....');
     return true;
 }
