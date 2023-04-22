@@ -25,7 +25,7 @@
 /**
  * Filter for notification content placeholders.
  */
-class EmailVars {
+class pulse_email_vars {
     // Objects the vars refer to.
 
     /**
@@ -113,7 +113,7 @@ class EmailVars {
      *
      **/
     public static function vars() {
-        $reflection = new ReflectionClass("EmailVars");
+        $reflection = new ReflectionClass("pulse_email_vars");
         $amethods = $reflection->getMethods();
 
         // These fields refer to the objects declared at the top of this class. User_ -> $this->user, etc.

@@ -36,6 +36,6 @@ function xmldb_pulse_install() {
     // Inital plugin release - v1.0.
 
     // Plugin release - v1.1.
-    pulse_create_presets();
+    \mod_pulse\preset::pulse_create_presets();
     return true;
 }

@@ -50,7 +50,7 @@ class preset_test extends \advanced_testcase {
      */
     public function test_pulse_create_presets() {
         global $DB;
-        pulse_create_presets();
+        \mod_pulse\preset::pulse_create_presets();
 
         $records = $DB->get_records('pulse_presets');
         $this->assertCount(3, $records);
@@ -64,7 +64,7 @@ class preset_test extends \advanced_testcase {
      */
     public function test_apply_save_preset(): void {
         global $DB;
-        pulse_create_presets();
+        \mod_pulse\preset::pulse_create_presets();
         $records = $DB->get_records('pulse_presets');
         $record = reset($records);
 
@@ -86,7 +86,8 @@ class preset_test extends \advanced_testcase {
      */
     public function test_apply_customize_preset() {
         global $DB;
-        pulse_create_presets();
+        \mod_pulse\preset::pulse_create_presets();
+
         $records = $DB->get_records('pulse_presets');
         $record = reset($records);
         $customname = 'Welcome Message';

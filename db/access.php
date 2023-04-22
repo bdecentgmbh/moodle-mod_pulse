@@ -53,4 +53,16 @@ $capabilities = array(
             'student' => CAP_ALLOW,
         )
     ),
+
+    'mod/pulse:sender' => array(
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_PREVENT
+        ),
+        'clonepermissionsfrom' => 'mod/pulse:addinstance'
+    ),
 );

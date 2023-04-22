@@ -162,7 +162,7 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return void
      */
     public function pulse_email_placeholders(&$mform) {
-        $vars = \EmailVars::vars();
+        $vars = \pulse_email_vars::vars();
         $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
         <div class='col-md-9'><div class='emailvars'>");
         $optioncount = 0;

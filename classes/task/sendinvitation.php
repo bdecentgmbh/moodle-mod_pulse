@@ -156,7 +156,7 @@ class sendinvitation extends \core\task\adhoc_task {
         JOIN {capabilities} cap ON rc.capability = cap.name
         JOIN {context} ctx on rc.contextid = ctx.id
         WHERE rc.capability = :capability ";
-        $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:addinstance']);
+        $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:sender']);
         $roles = array_column($roles, 'roleid');
 
         list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
