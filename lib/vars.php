@@ -229,3 +229,21 @@ class pulse_email_vars {
         return pulse_extend_reaction($this);
     }
 }
+
+
+// If the version is not iomad, set empty emailvars class for provide previous pro versions compatibility.
+if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
+
+    class EmailVars extends pulse_email_vars{
+
+        /**
+         * Set up all the methods that can be called and used for substitution var in email templates.
+         *
+         * @return array
+         *
+         **/
+        public static function vars() {
+            return parent::vars();
+        }
+    }
+}

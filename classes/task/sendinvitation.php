@@ -64,7 +64,8 @@ class sendinvitation extends \core\task\adhoc_task {
      * @return void
      */
     public function send_pulse($users, $pulse, $course, $context) {
-        global $DB;
+        global $DB, $USER;
+        $currentuser = $USER;
         if (!empty($pulse) && !empty($users)) {
             // Get course module using instanceid.
             $senderdata = self::get_sender($course->id, $context->id);
@@ -90,6 +91,8 @@ class sendinvitation extends \core\task\adhoc_task {
                     // Rewrite the plugin file placeholders in the email text.
                     $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
                         $context->id, 'mod_pulse', $filearea, 0);
+                    // Set current student as user, filtercodes plugin uses current User data.
+                    \core\session\manager::set_user($student);
                     // Format filter supports. filter the enabled filters.
                     $messagehtml = format_text($messagehtml, FORMAT_HTML);
 
@@ -111,11 +114,15 @@ class sendinvitation extends \core\task\adhoc_task {
                         }
                         $transaction->allow_commit();
                     } catch (\Exception $e) {
+                        // Return to current USER;
+                        \core\session\manager::set_user($currentuser);
                         $transaction->rollback($e);
                     }
                 }
             }
         }
+        // Return to current USER;
+        \core\session\manager::set_user($currentuser);
     }
 
     /**
