@@ -64,6 +64,20 @@ class pulse_email_vars {
     protected $sender = null;
 
     /**
+     * Pulse instance data record.
+     *
+     * @var object
+     */
+    public $pulse = null;
+
+    /**
+     * User enrolment start and end date for the current course.
+     *
+     * @var object
+     */
+    public $enrolment = null;
+
+    /**
      * Placeholder doesn't have dynamic filter then it will replaced with blank value.
      *
      * @var string
@@ -94,6 +108,7 @@ class pulse_email_vars {
             $this->url = new moodle_url($wwwroot .'/user/profile.php', array('id' => $this->user->id));
         }
         $this->site = get_site();
+        $this->enrolment = $this->get_user_enrolment();
     }
 
     /**
@@ -123,7 +138,7 @@ class pulse_email_vars {
             'User_Institution', 'User_Department',
             'User_Address', 'User_City', 'User_Country',
             // Course fields .
-            'Course_FullName', 'Course_ShortName', 'courseurl',
+            'Course_FullName', 'Course_ShortName', 'courseurl', 'enrolment_startdate', 'enrolment_enddate',
             // Site fields.
             'Site_FullName', 'Site_ShortName', 'Site_Summary',
             // Sender information fields .
@@ -227,6 +242,37 @@ class pulse_email_vars {
      */
     public function reaction() {
         return pulse_extend_reaction($this);
+    }
+
+    /**
+     * Find the user enrolment start date and enddate for the current course.
+     *
+     * @return array
+     */
+    public function get_user_enrolment() {
+        global $PAGE, $CFG;
+
+        $emptystartdate = get_string('enrolmentemptystartdate', 'mod_pulse');
+        $emptyenddate = get_string('enrolmentemptyenddate', 'mod_pulse');
+
+        if (empty($this->course) || empty($this->user)) {
+            return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
+        }
+        require_once($CFG->dirroot.'/enrol/locallib.php');
+
+        $enrolmanager = new course_enrolment_manager($PAGE, $this->course);
+        $enrolments = $enrolmanager->get_user_enrolments($this->user->id);
+
+        if (!empty($enrolments)) {
+            $firstinstance = current($enrolments);
+            return (object) [
+                'startdate' => $firstinstance->timestart
+                    ? userdate($firstinstance->timestart, get_string('strftimedatetimeshort', 'langconfig')) : $emptystartdate,
+                'enddate' => $firstinstance->timeend
+                    ? userdate($firstinstance->timeend, get_string('strftimedatetimeshort', 'langconfig')) : $emptyenddate,
+            ];
+        }
+        return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
     }
 }
 
