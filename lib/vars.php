@@ -146,13 +146,15 @@ class pulse_email_vars {
             // Miscellaneouss fields.
             'linkurl', 'siteurl', 'reaction'
         );
+        // List of methods which doesn't used as placeholders.
+        $novars = ['get_user_enrolment'];
 
         // Add all methods of this class that are ok2call to the $result array as well.
         // This means you can add extra methods to this class to cope with values that don't fit in objects mentioned above.
         // Or to create methods with specific formatting of the values (just don't give those methods names starting with
         // 'User_', 'Course_', etc).
         foreach ($amethods as $method) {
-            if (self::ok2call($method->name) && !in_array($method->name, $result) ) {
+            if (self::ok2call($method->name) && !in_array($method->name, $result) && !in_array($method->name, $novars) ) {
                 $result[] = $method->name;
             }
         }
