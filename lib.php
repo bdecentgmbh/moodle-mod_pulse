@@ -30,9 +30,6 @@ global $PAGE;
 
 require_once($CFG->libdir."/completionlib.php");
 require_once($CFG->dirroot.'/lib/filelib.php');
-require_once($CFG->dirroot.'/mod/pulse/locallib.php');
-require_once($CFG->dirroot.'/mod/pulse/lib/extendpro.php');
-require_once($CFG->dirroot.'/mod/pulse/lib/pulse_course_modinfo.php');
 
 /**
  * Add pulse instance.
@@ -57,7 +54,7 @@ function pulse_add_instance($pulse) {
     // Insert the instance in DB.
     $pulseid = $DB->insert_record('pulse', $pulse);
     // Extend the pro features.
-    pulse_extend_add_instance($pulseid, $pulse);
+    \mod_pulse\extendpro::pulse_extend_add_instance($pulseid, $pulse);
 
     // Retrun new instance id.
     return $pulseid;
@@ -99,7 +96,7 @@ function pulse_update_instance($pulse) {
     // Update instance data.
     $updates = $DB->update_record('pulse', $pulse);
     // Extend the updated module instance pro features.
-    pulse_extend_update_instance($pulse, $context);
+    \mod_pulse\extendpro::pulse_extend_update_instance($pulse, $context);
 
     return $updates;
 }
@@ -117,7 +114,7 @@ function pulse_delete_instance($pulseid) {
         $cm = get_coursemodule_from_instance('pulse', $pulseid);
 
         if ($DB->delete_records('pulse', ['id' => $pulseid])) {
-            pulse_extend_delete_instance($cm->id, $pulseid);
+            \mod_pulse\extendpro::pulse_extend_delete_instance($cm->id, $pulseid);
             return true;
         }
     }
@@ -201,7 +198,7 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
         return false;
     }
     // Get extended plugins fileareas.
-    $availablefiles = pulse_extend_filearea();
+    $availablefiles = \mod_pulse\extendpro::pulse_extend_filearea();
     $availablefiles += ['pulse_content', 'intro', 'notificationheader', 'notificationfooter'];
     // Make sure the filearea is one of those used by the plugin.
     if (!in_array($filearea, $availablefiles)) {
@@ -345,7 +342,7 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
             // Check section is accessable by user.
             $section = $cm->get_section_info();
             $sectioninfo = new \core_availability\info_section($section);
-            $isvisble = pulse_mod_uservisible($cm, $userid, $sectioninfo, $modinfo, $info);
+            $isvisble = \mod_pulse\helper::pulse_mod_uservisible($cm, $userid, $sectioninfo, $modinfo, $info);
         }
         if ($isvisble) {
             $status = COMPLETION_COMPLETE;
@@ -374,177 +371,6 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
     return $status;
 }
 
-/**
- * Pulse form editor element options.
- *
- * @return array
- */
-function pulse_get_editor_options() {
-    return array(
-        'maxfiles' => EDITOR_UNLIMITED_FILES,
-        'trusttext' => true
-    );
-}
-
-/**
- * Update the user id in the db notified users list.
- *
- * @param  int $userid User ID.
- * @param  mixed $pulse Pulse instance object.
- * @return bool
- */
-function mod_pulse_update_notified_user($userid, $pulse) {
-    global $DB;
-
-    if (!empty($userid)) {
-
-        $record = new stdclass();
-        $record->userid = $userid;
-        $record->pulseid = $pulse->id;
-        $record->status = 1;
-        $record->timecreated = time();
-
-        return $DB->insert_record('pulse_users', $record);
-    }
-    return false;
-}
-
-
-/**
- * Filter the users who has access to view the instance and not notified before.
- *
- * @param  mixed $students List of student users enrolled in course.
- * @param  mixed $instance Pulse instance
- * @return array List of students who has access.
- */
-function mod_pulse_get_course_students($students, $instance) {
-    global $DB, $CFG;
-    // Filter available users.
-    pulse_mtrace('Filter users based on their availablity..');
-    foreach ($students as $student) {
-        $modinfo = new \course_modinfo((object) $instance->course, $student->id);
-        $cm = $modinfo->get_cm($instance->cm->id);
-        if (!$cm->uservisible || pulseis_notified($student->id, $instance->pulse->id)) {
-            unset($students[$student->id]);
-        }
-    }
-    return $students;
-}
-
-/**
- * Confirm the pulse instance send the invitation to the shared user.
- *
- * @param  int $studentid User id
- * @param  int $pulseid pulse instance id
- * @return bool true if user not notified before.
- */
-function pulseis_notified($studentid, $pulseid) {
-    global $DB;
-    if ($DB->record_exists('pulse_users', ['pulseid' => $pulseid, 'userid' => $studentid, 'status' => 1])) {
-        return true;
-    }
-    return false;
-}
-
-/**
- * Send pulse notifications to the users.
- *
- * @param  mixed $userto
- * @param  mixed $subject
- * @param  mixed $messageplain
- * @param  mixed $messagehtml
- * @param  mixed $pulse
- * @param  mixed $sender
- * @return void
- */
-function mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender=true) {
-    $eventdata = new \core\message\message();
-    $eventdata->name = 'mod_pulse';
-    $eventdata->component = 'mod_pulse';
-    $eventdata->courseid = $pulse->course;
-    $eventdata->modulename = 'pulse';
-    $eventdata->userfrom = $sender ? $sender : core_user::get_support_user();
-    $eventdata->userto = $userto;
-    $eventdata->subject = $subject;
-    $eventdata->fullmessage = $messageplain;
-    $eventdata->fullmessageformat = FORMAT_HTML;
-    $eventdata->fullmessagehtml = $messagehtml;
-    $eventdata->smallmessage = $subject;
-    if (message_send($eventdata)) {
-        pulse_mtrace( "Pulse send to the user.");
-        return true;
-    } else {
-        pulse_mtrace( "Failed - Pulse send to the user. -".fullname($userto), true);
-        return false;
-    }
-}
-
-/**
- * Get list of instance added in the course.
- *
- * @param  int $courseid Course id.
- * @return array list of pulse instance added in the course.
- */
-function pulse_course_instancelist($courseid) {
-    global $DB;
-    $sql = "SELECT cm.*, pl.name FROM {course_modules} cm
-            JOIN {pulse} pl ON pl.id = cm.instance
-            WHERE cm.course=:courseid AND cm.module IN (SELECT id FROM {modules} WHERE name=:pulse)";
-    return $DB->get_records_sql($sql, ['courseid' => $courseid, 'pulse' => 'pulse']);
-}
-
-/**
- * Check user has access to the module
- *
- * @param cm_info $cm Course Module instance
- * @param int $userid User record id
- * @param \core_availability\info_section $sectioninfo Section availability info
- * @param  course_modinfo $modinfo course Module info.
- * @param \core_availability\info_module $info Module availability info.
- * @return void
- */
-function pulse_mod_uservisible($cm, $userid, $sectioninfo, $modinfo, $info) {
-    $context = $cm->context;
-    if ((!$cm->visible && !has_capability('moodle/course:viewhiddenactivities', $context, $userid))) {
-        return false;
-    }
-
-    $str = '';
-    if ($sectioninfo->is_available($str, false, $userid, $modinfo)
-        && $info->is_available($str, false, $userid, $modinfo )) {
-        return true;
-    }
-    return false;
-}
-/**
- * Seperate the record data into context and course and cm.
- * In function mod_pulse_completion_crontask, data fetched using JOIN queries,
- * Here the joined datas are seperated.
- *
- * @param  mixed $keys List of fields available for sql data return.
- * @param  mixed $record Pulse Instance data from sql data
- * @return array Returns course, context, cm data.
- */
-function pulse_process_recorddata($keys, $record) {
-    // Context.
-    $ctxpos = array_search('contextid', $keys);
-    $ctxendpos = array_search('locked', $keys);
-    $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
-    $context['id'] = $context['contextid'];
-    unset($context['contextid']);
-    // Course module.
-    $cmpos = array_search('cmid', $keys);
-    $cmendpos = array_search('deletioninprogress', $keys);
-    $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1 );
-    $cm['id'] = $cm['cmid'];
-    unset($cm['cmid']);
-    // Course records.
-    $coursepos = array_search('courseid', $keys);
-    $course = array_slice($record, $coursepos);
-    $course['id'] = $course['courseid'];
-
-    return [0 => $course, 1 => $context, 2 => $cm];
-}
 
 /**
  * This function receives a calendar event and returns the action associated with it, or null if there is none.
@@ -605,7 +431,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     $course = $cm->get_course();
     $senderdata = \mod_pulse\task\sendinvitation::get_sender($course->id, $cm->context->id);
     $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
-    list($subject, $content) = mod_pulse_update_emailvars($content, '', $course,
+    list($subject, $content) = \mod_pulse\helper::update_emailvars($content, '', $course,
                             $USER, $pulse, $sender);
     $cm->set_content($content);
     if (isset($pulse->cssclass) && $pulse->cssclass) {
@@ -615,11 +441,11 @@ function mod_pulse_cm_info_view(cm_info $cm) {
         $boxtype = ($pulse->boxtype) ? $pulse->boxtype : 'primary';
         $boxicon = ($pulse->boxicon) ? $pulse->boxicon : '';
         $content = $cm->content;
-        $content = mod_pulse_render_content($content, $boxicon, $boxtype);
+        $content = \mod_pulse\helper::pulse_render_content($content, $boxicon, $boxtype);
         $cm->set_content($content);
     }
 
-    $completionbtn = mod_pulse_cm_completionbuttons($cm, $pulse);
+    $completionbtn = \mod_pulse\helper::cm_completionbuttons($cm, $pulse);
     if (!empty($completionbtn)) {
         $content = $cm->content;
         $content .= html_writer::tag('div', $completionbtn, ['class' => 'pulse-completion-btn']);
@@ -639,4 +465,136 @@ function pulse_mtrace($message, $detail=false) {
     if ($showdetail || $detail) {
         mtrace($message);
     }
+}
+
+/**
+ * Fragement output to preview the selected preset. Loads all the available informations and configurable params as form elements.
+ *
+ * @param array $args Preset ID and Course ID with context.
+ */
+function mod_pulse_output_fragment_get_preset_preview(array $args) : ?string {
+    global $CFG;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $presetid = $args['presetid'];
+    $courseid = $args['courseid'];
+    $sectionid = $args['section'];
+    $preset = new \mod_pulse\preset($presetid, $courseid, $context, $sectionid);
+    return $preset->output_fragment();
+}
+
+/**
+ * Fragement output to result of apply methods on selected preset.
+ * Trigger the apply preset method in preset to create the pulse module using the selected preset and apply method.
+ *
+ * @param array $args Custom config data and Current module form data with context.
+ */
+function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
+    global $CFG;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $formdata = $args['formdata'];
+    $pageparams = $args['pageparams'];
+    $external = new \mod_pulse\external();
+    $result = $external->apply_presets($context->id, $formdata, $pageparams);
+
+    return $result;
+}
+
+/**
+ * Fragement output to list all the presets in the pulse module add/edit form.
+ *
+ * @param array $args context and Course ID with context.
+ */
+function mod_pulse_output_fragment_get_presetslist(array $args) {
+    global $OUTPUT;
+    $context = $args['context'];
+
+    if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
+        return null;
+    }
+    $courseid = $args['courseid'];
+    $presets = \mod_pulse\preset::generate_presets_list($courseid);
+    return $OUTPUT->render_from_template('mod_pulse/presets_list', $presets);
+}
+
+/**
+ * Generate approval buttons and self mark completions buttons based on user roles and availability.
+ *
+ * @param  array $args List of modules id available in the course page
+ * @return string encoded html string.
+ */
+function mod_pulse_output_fragment_completionbuttons($args) {
+    global $CFG, $DB, $USER;
+
+    $modules = json_decode($args['modules']);
+    list($insql, $inparams) = $DB->get_in_or_equal($modules);
+    $sql = "SELECT cm.*, nf.completionapproval, nf.completionapprovalroles, nf.completionself FROM {course_modules} cm
+    JOIN {modules} AS md ON md.id = cm.module
+    JOIN {pulse} nf ON nf.id = cm.instance WHERE cm.id $insql AND md.name = 'pulse'";
+    $records = $DB->get_records_sql($sql, $inparams);
+
+    $html = [];
+
+    foreach ($modules as $moduleid) {
+        if (isset($records[$moduleid])) {
+            $data = $records[$moduleid];
+            $html[$moduleid] = '';
+            $extend = true;
+            // Approval button generation for selected roles.
+            if ($data->completionapproval == 1) {
+                $roles = $data->completionapprovalroles;
+                if (\mod_pulse\helper::pulse_has_approvalrole($roles, $moduleid)) {
+                    $approvelink = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid]);
+                    $html[$moduleid] .= html_writer::tag('div',
+                        html_writer::link($approvelink, get_string('approveuserbtn', 'pulse'),
+                        ['class' => 'btn btn-primary pulse-approve-users']),
+                        ['class' => 'approve-user-wrapper']
+                    );
+                } else if (\mod_pulse\helper::pulse_user_isstudent($moduleid)) {
+                    if (!class_exists('core_completion\activity_custom_completion')
+                        && $message = \mod_pulse\helper::pulse_user_approved($records[$moduleid]->instance, $USER->id) ) {
+                        $html[$moduleid] .= $message.'<br>';
+                    }
+                }
+            }
+            // Generate self mark completion buttons for students.
+            if (\mod_pulse\helper::pulse_is_uservisible($moduleid, $USER->id, $data->course)) {
+                if ($data->completionself == 1 && \mod_pulse\helper::pulse_user_isstudent($moduleid)
+                    && !\mod_pulse\helper::pulse_isusercontext($data->completionapprovalroles, $moduleid)) {
+                    // Add self mark completed informations.
+                    if (!class_exists('core_completion\activity_custom_completion')
+                        && $date = \mod_pulse\helper::pulse_already_selfcomplete($records[$moduleid]->instance, $USER->id)) {
+                        $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
+                        $html[$moduleid] .= html_writer::tag('div', $selfmarked,
+                        ['class' => 'pulse-self-marked badge badge-success']);
+                    } else {
+                        $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
+                        $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
+                            ['class' => 'btn btn-primary pulse-approve-users']
+                        );
+                        $html[$moduleid] .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-approve-users']);
+                    }
+                }
+            } else {
+                $extend = false;
+            }
+            // Extend the pro features if the logged in users has able to view the module.
+            if ($extend) {
+                $instance = new stdclass();
+                $instance->pulse = $data;
+                $instance->pulse->id = $data->instance;
+                $instance->user = $USER;
+                $html[$moduleid] .= \mod_pulse\extendpro::pulse_extend_reaction($instance, 'content');
+            }
+        }
+    }
+
+    return json_encode($html);
 }

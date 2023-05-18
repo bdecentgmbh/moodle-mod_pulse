@@ -30,6 +30,27 @@ namespace mod_pulse;
 class lib_test extends \advanced_testcase {
 
     /**
+     * Course instance data
+     *
+     * @var stdclass
+     */
+    public $course;
+
+    /**
+     * Module instance data
+     *
+     * @var stdclass
+     */
+    public $module;
+
+    /**
+     * Course module instance data
+     *
+     * @var stdclass
+     */
+    public $cm;
+
+    /**
      * Module intro content.
      *
      * @var string
@@ -56,26 +77,26 @@ class lib_test extends \advanced_testcase {
 
     /**
      * Test the pulse student test function to check it identifies the students.
-     * @covers ::pulse_user_isstudent
+     * @covers ::\mod_pulse\helper::pulse_user_isstudent
      * @return void
      */
     public function test_is_studentuser() {
         // Student.
         $user = self::getDataGenerator()->create_and_enrol($this->course, 'student');
         $this->setUser($user);
-        $result = pulse_user_isstudent($this->cm->id);
+        $result = \mod_pulse\helper::pulse_user_isstudent($this->cm->id);
         $this->assertTrue($result);
 
         // Editing teacher.
         $user = self::getDataGenerator()->create_and_enrol($this->course, 'editingteacher');
         $this->setUser($user);
-        $result = pulse_user_isstudent($this->cm->id);
+        $result = \mod_pulse\helper::pulse_user_isstudent($this->cm->id);
         $this->assertFalse($result);
     }
 
     /**
      * Test course students count based on sending notification.
-     * @covers ::mod_pulse_get_course_students
+     * @covers ::get_course_students
      * @return void
      */
     public function test_get_course_students() {
@@ -93,11 +114,11 @@ class lib_test extends \advanced_testcase {
         $instance->pulse = $this->module;
         $instance->cm = $this->cm;
         // Before send message users count should be 2.
-        $availableusers = mod_pulse_get_course_students($students, $instance);
+        $availableusers = \mod_pulse\helper::get_course_students($students, $instance);
         $this->assertEquals(2, count($availableusers));
         // Send notification.
         $this->send_message();
-        $result = pulseis_notified($students[0]->id, $this->module->id);
+        $result = \mod_pulse\helper::pulseis_notified($students[0]->id, $this->module->id);
         $this->assertTrue($result);
     }
     /**
@@ -131,7 +152,7 @@ class lib_test extends \advanced_testcase {
 
     /**
      * Test pulse email placeholder filters function.
-     * @covers ::mod_pulse_update_emailvars
+     * @covers ::update_emailvars
      * @return void
      */
     public function test_pulse_update_email_vars() {
@@ -141,21 +162,23 @@ class lib_test extends \advanced_testcase {
         ]);
         $templatetext = "Mail to {User_Email} - mail from {Sender_Email} content";
         $subject = '';
-        list($subject, $template) = mod_pulse_update_emailvars($templatetext, $subject, $this->course, $user, $this->cm, $sender);
+        list($subject, $template) = \mod_pulse\helper::update_emailvars(
+            $templatetext, $subject, $this->course, $user, $this->cm, $sender
+        );
         $actualcontent = "Mail to testuser1@test.com - mail from sender1@test.com content";
         $this->assertEquals($actualcontent, $template);
     }
 
     /**
      * Send messages.
-     * @covers ::mod_pulse_cron_task
+     * @covers ::pulse_cron_task
      * @return void
      */
     public function send_message() {
         $this->preventResetByRollback();
         $slink = $this->redirectMessages();
         // Setup adhoc task to send notifications.
-        mod_pulse_cron_task(false);
+        \mod_pulse\task\notify_users::pulse_cron_task(false);
         // Check adhock task count.
         $tasklist = \core\task\manager::get_adhoc_tasks('mod_pulse\task\sendinvitation');
         // ...cron_run_adhoc_tasks(time());.

@@ -51,6 +51,20 @@ class approveuser extends \core_user\table\participants {
     protected $cm;
 
     /**
+     * Current pulse instance record data.
+     *
+     * @var stdclass
+     */
+    public $pulse;
+
+    /**
+     * Pulse completion data for current pulse instance.
+     *
+     * @var stdclass
+     */
+    public $completion;
+
+    /**
      * Fetch completions users list.
      *
      * @param  mixed $tableid
@@ -166,8 +180,8 @@ class approveuser extends \core_user\table\participants {
         list($twhere, $tparams) = $this->get_sql_where();
         $psearch = new approveuser_search($this->course, $this->context, $this->filterset);
         // Add filter for user context assigned users.
-        if (!pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {
-            if ($mentesusers = pulse_user_getmentessuser() ) {
+        if (!\mod_pulse\helper::pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {
+            if ($mentesusers = \mod_pulse\helper::pulse_user_getmentessuser() ) {
                 global $DB;
                 list($userinsql, $userinparams) = $DB->get_in_or_equal($mentesusers, SQL_PARAMS_NAMED, 'mentees', true);
                 $twhere .= ($twhere != '') ? " AND udistinct.id $userinsql" : " udistinct.id $userinsql ";

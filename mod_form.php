@@ -73,7 +73,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('introeditor', 'content', 'mod_pulse');
 
         // Extend the reaction sections.
-        mod_pulse_extend_form($mform, $this, 'reaction');
+        \mod_pulse\extendpro::mod_pulse_extend_form($mform, $this, 'reaction');
 
         $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse'));
 
@@ -99,7 +99,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse_subject', 'invitationsubject', 'mod_pulse');
 
         // Pulse content editor.
-        $editoroptions = pulse_get_editor_options();
+        $editoroptions = \mod_pulse\helper::get_editor_options();
         $mform->addElement('editor', 'pulse_content_editor', get_string('remindercontent', 'pulse'),
             ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
         $mform->setType('pulse_content_editor', PARAM_RAW);
@@ -117,7 +117,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addElement('hidden', 'showdescription', 1);
         $mform->setType('showdescription', PARAM_INT);
 
-        mod_pulse_extend_form($mform, $this);
+        \mod_pulse\extendpro::mod_pulse_extend_form($mform, $this);
 
         $mform->addElement('header', 'appearance', get_string('appearance', 'core'));
 
@@ -257,7 +257,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($data->completionapprovalroles)) {
             $data->completionapprovalroles = json_encode($data->completionapprovalroles);
         }
-        pulse_extend_postprocessing($data);
+        \mod_pulse\extendpro::pulse_extend_postprocessing($data);
     }
 
     /**
@@ -267,7 +267,7 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return void
      */
     public function data_preprocessing(&$defaultvalues) {
-        $editoroptions = pulse_get_editor_options();
+        $editoroptions = \mod_pulse\helper::get_editor_options();
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
@@ -296,7 +296,7 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         $defaultvalues['resend_pulse'] = get_string('resendnotification', 'pulse');
         // Pre pocessing extend.
-        pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
+        \mod_pulse\extendpro::pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
     }
 
     /**
@@ -319,7 +319,7 @@ class mod_pulse_mod_form extends moodleform_mod {
             }
         }
 
-        $extenderrors = mod_pulse_extend_formvalidation($data, $files);
+        $extenderrors = \mod_pulse\extendpro::mod_pulse_extend_formvalidation($data, $files);
         if (is_array($extenderrors)) {
             $errors = array_merge($errors, $extenderrors);
         }

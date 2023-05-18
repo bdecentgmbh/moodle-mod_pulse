@@ -97,6 +97,27 @@ class preset extends \moodleform {
     public $pulseform;
 
     /**
+     * Preset instance data
+     *
+     * @var stdclass
+     */
+    public $preset;
+
+    /**
+     * Id of current preset.
+     *
+     * @var int
+     */
+    public $presetid;
+
+    /**
+     * Course instance data.
+     *
+     * @var stdclass
+     */
+    public $course;
+
+    /**
      * Basic data stored as moodle form element, used to pass the preset and course data to modal.
      *
      * @return void
@@ -390,7 +411,7 @@ class preset extends \moodleform {
      * Extract the xml data files from selected preset template backup(mbz) file into the backup temp directory
      *
      * @param [type] $configdata
-     * @return void
+     * @return string
      */
     public function apply_presets($configdata) {
 
@@ -582,7 +603,7 @@ class preset extends \moodleform {
                     unset($configdata['pulse_contenteditor']);
                     unset($configdata['introeditor']);
                     // Update the pro reminder contents.
-                    pulse_preset_update($pulseid, $configdata);
+                    \mod_pulse\extendpro::pulse_preset_update($pulseid, $configdata);
                     if (!empty($configdata)) {
                         $configdata['id'] = $pulseid;
                         $configdata['timemodified'] = time();
@@ -757,7 +778,7 @@ class preset extends \moodleform {
                     return (!in_array($key, $excluedfields));
                 }, ARRAY_FILTER_USE_KEY);
 
-                pulse_extend_preset('cleandata', $record);
+                \mod_pulse\extendpro::pulse_extend_preset('cleandata', $record);
             }
         }
 

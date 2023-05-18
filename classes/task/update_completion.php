@@ -105,7 +105,7 @@ class update_completion extends \core\task\scheduled_task {
 
             pulse_mtrace("Check the user module completion - Pulse name: ".$pulse['name']);
             // Precess results.
-            list($course, $context, $cm) = pulse_process_recorddata($keys, $record);
+            list($course, $context, $cm) = \mod_pulse\helper::process_recorddata($keys, $record);
             // Get enrolled users with capability.
             $contextlevel = explode('/', $context['path']);
             list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
@@ -148,7 +148,7 @@ class update_completion extends \core\task\scheduled_task {
             $pulse = (object) $pulse;
 
             if (!in_array($courseid, $modinfo)) {
-                $modinfo[$courseid] = new \pulse_course_modinfo($course, 0);
+                $modinfo[$courseid] = new \mod_pulse\pulse_course_modinfo($course, 0);
             }
 
             if (empty($modinfo[$courseid]->cms[$cm['id']])) {

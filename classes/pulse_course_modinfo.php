@@ -22,10 +22,16 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_pulse;
+
+defined('MOODLE_INTERNAL') || die('No direct access');
+
+require_once($CFG->dirroot.'/lib/modinfolib.php');
+
 /**
  * Course modinfo wrapper.
  */
-class pulse_course_modinfo extends course_modinfo {
+class pulse_course_modinfo extends \course_modinfo {
 
     /**
      * Userid to check the group availability.

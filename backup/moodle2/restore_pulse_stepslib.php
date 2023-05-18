@@ -41,7 +41,7 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         $paths[] = new restore_path_element('pulse_users', '/activity/pulse/notifiedusers/pulse_users');
         $paths[] = new restore_path_element('pulse_completion', '/activity/pulse/usercompletion/pulse_completion');
 
-        $methods = pulse_extend_restore_structure($paths);
+        $methods = \mod_pulse\extendpro::pulse_extend_restore_structure($paths);
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }

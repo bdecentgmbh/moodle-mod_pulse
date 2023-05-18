@@ -50,7 +50,7 @@ class notify_users extends \core\task\scheduled_task {
     public function execute() {
         global $CFG;
 
-        $this->mod_pulse_cron_task();
+        self::pulse_cron_task();
     }
 
     /**
@@ -62,12 +62,12 @@ class notify_users extends \core\task\scheduled_task {
      * @param  mixed $extend Extend the pro invitation method.
      * @return void
      */
-    public function mod_pulse_cron_task($extend=true) {
+    public static function pulse_cron_task($extend=true) {
         global $DB;
 
         pulse_mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
 
-        if ($extend && pulse_extend_invitation()) {
+        if ($extend && \mod_pulse\extendpro::pulse_extend_invitation()) {
             return true;
         }
 
@@ -82,7 +82,8 @@ class notify_users extends \core\task\scheduled_task {
 
         $sql = "SELECT nt.id AS nid, nt.*, '' AS pulseend,
             cm.id as cmid, cm.*, md.id AS mid,
-            ctx.id as contextid, ctx.*, cu.id as courseid, cu.* FROM {pulse} nt
+            ctx.id as contextid, ctx.*, cu.id as courseid, cu.*,
+            cu.idnumber as courseidnumber, cu.groupmode as coursegroupmode FROM {pulse} nt
             JOIN {course_modules} cm ON cm.instance = nt.id
             JOIN {modules} md ON md.id = cm.module
             JOIN {course} cu ON cu.id = nt.course
@@ -118,6 +119,8 @@ class notify_users extends \core\task\scheduled_task {
             $coursepos = array_search('courseid', $keys);
             $course = array_slice($record, $coursepos);
             $course['id'] = $course['courseid'];
+            $course['groupmode'] = isset($course['coursegroupmode']) ? $course['coursegroupmode'] : '';
+            $course['idnumber'] = isset($course['courseidnumber']) ? $course['courseidnumber'] : '';
             pulse_mtrace( 'Initiate pulse module - '.$pulse['name'].' course - '. $course['id'] );
             // Get enrolled users with capability.
             $contextlevel = explode('/', $context['path']);
@@ -156,7 +159,7 @@ class notify_users extends \core\task\scheduled_task {
             $instance->context = (object) $context;
             $instance->cm = (object) $cm;
             $instance->students = $students;
-            $this->pulse_set_notification_adhoc($instance);
+            self::pulse_set_notification_adhoc($instance);
         }
         pulse_mtrace('Pulse message sending completed....');
         return true;
@@ -168,7 +171,7 @@ class notify_users extends \core\task\scheduled_task {
      * @param  mixed $instance
      * @return void
      */
-    public function pulse_set_notification_adhoc($instance) {
+    public static function pulse_set_notification_adhoc($instance) {
         $task = new \mod_pulse\task\sendinvitation();
         $task->set_custom_data($instance);
         $task->set_component('pulse');

@@ -67,7 +67,7 @@ class eventobserver {
         $userid = $event->relateduserid; // Unenrolled user id.
         $courseid = $event->courseid;
         // Retrive list of pulse instance added in course.
-        $list = pulse_course_instancelist($courseid);
+        $list = \mod_pulse\helper::course_instancelist($courseid);
         if (!empty($list)) {
             $pulselist = array_column($list, 'instance');
             list($insql, $inparams) = $DB->get_in_or_equal($pulselist);

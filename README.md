@@ -4,7 +4,7 @@ Pulse is an activity plugin for Moodle that enhances student engagement and comp
 
 Pulse also has its own completion criteria, such as approval from specified course roles, marking it as complete by the user, and completion upon availability. Pulse helps with creation and setup using presets, enabling course creators to easily import configurations from preset files.
 
-# Pulse PRO
+## Pulse PRO
 
 PulsePro is an advanced version of the mod_pulse plugin and a Moodle general-type plugin. It extends the main feature of Pulse by providing options to create unlimited presets, customizes existing presets, and more. Another key feature of PulsePro is reactions, which allows teachers to approve any user without accessing the LMS. Students can also mark their Pulse completion and share their opinions about the course/pulse using reactions.
 
@@ -12,7 +12,7 @@ With PulsePro reports, administrators can view user reactions, notification repo
 
 By understanding how Pulse sends notifications, you can optimize the plugin's settings to best meet your course's needs. Pulse and PulsePro are powerful tools that can significantly enhance student engagement and compliance in Moodle courses.
 
-# Installation and Initial Setup.
+## Installation and Initial Setup.
 
 You can install the Pulse plugin using the Moodle plugin installer. Here are the steps to follow:
 
@@ -34,7 +34,7 @@ Alternatively, you can also install the Pulse plugin manually. Here are the step
 6. Follow the prompts to install the plugin.
 
 
-# Global Configuration Options.
+## Global Configuration Options.
 
 Pulse Pro comes with global configurations
 
@@ -56,7 +56,9 @@ The "Notification Header" and "Notification Footer" settings allow you to add a 
 
 It's important to note that these settings are global and will apply to all Pulse Pro activities in your Moodle instance. You can access these settings by navigating to the Pulse Pro settings page in your Moodle administration panel.
 
-# Invitation
+![globalsettings-pulsepro](https://lmsacelab.com/doc-images/global-settings.png)
+
+## Invitation
 
 The Pulse plugin runs in the background using Moodle's scheduled and ad hoc tasks. Notifications are processed and sent to users on each cron run using the "*`mod_pulse\task\notify_users`*" task. If you need to modify the interval time of the Pulse schedule task, please refer to the Moodle task log.
 
@@ -66,7 +68,7 @@ For each pulse instance, a new ad-hoc task will be set to send notifications.
 
 Once the students to notify are identified, Pulse finds the correct sender user, who is the user with the "*`mod/pulse:sender`*" capability. When an instance has more than one sender, Pulse will use the first user as the sender. If the course is in group mode, Pulse will use the sender from the group.
 
-## Configuring Pulse Invitations
+### Configuring Pulse Invitations
 
 Pulse provides several configurations to customize and prepare invitations for course participants.
 
@@ -84,7 +86,7 @@ Pulse provides separate options for the invitation subject and content. Tags are
 
 ![invitation-pulse](https://lmsacelab.com/doc-images/invitation.png)
 
-## Pulse Pro Invitations
+### Pulse Pro Invitations
 
 Pulse Pro offers even more reliable invitations and additional features. In the Pro version, you can set invitation recipients by course role. For example, if you set the recipient role as "teacher", course teachers will receive notifications for each student.
 
@@ -92,7 +94,7 @@ Course creators can use this feature to notify teachers when new students are en
 
 ![invitation-pulse](https://lmsacelab.com/doc-images/invitation-pro.png)
 
-# Reminders
+## Reminders
 
 The Reminders feature in Pulse allows teachers to configure and send multiple notifications to course participants. With the free version of Pulse, only one notification can be sent, but the Pro version provides additional options for sending reminders.
 
@@ -139,8 +141,7 @@ It's worth noting that reminders will not be sent if the pulse instance is not c
 
 ![secondreminder-pulsepro](https://lmsacelab.com/doc-images/second-reminder.png)
 
-
-# Feature: Credits
+## Feature: Credits
 
 PulsePro provides another great feature, credits, which can help motivate students to engage with the course by giving them rewards for completing modules or meeting certain criteria.
 
@@ -148,7 +149,7 @@ Credits are awarded to students through a scheduled task called "*`local_pulsepr
 
 The enrol_credit plugin enables students to enroll in courses using their accumulated credits. This plugin works by checking the user's credit balance before allowing them to enroll in the course. If the user has enough credits, they will be enrolled, otherwise, they will be prompted to earn more credits before gaining access to the course.
 
-## Configuration
+### Configuration
 
 1. To set up the credit system, create a custom text field in the user's profile and select it in the PulsePro global settings as the "**Credits user profile field**".
 2. Once the field is configured, the actions section in Pulse will have a "Credit score" option that allows instructors to assign credits to students.
@@ -157,10 +158,9 @@ The feature can be used to restrict access to Pulse based on other activity comp
 
 In summary, Pulse's credit feature is a valuable tool for motivating students and promoting engagement. With careful configuration and appropriate restrictions, students can be rewarded for their efforts and encouraged to continue their learning journey.
 
-![credits-pulsepro](https://lmsacelab.com/doc-images/credits.png)
+![credits-pulsepro](https://lmsacelab.com/doc-images/credit.png)
 
-
-# Feature: Reactions
+## Feature: Reactions
 
 PulsePro includes a reactions feature that enables recipients of notifications to react directly from the email without being logged into the platform. This feature uses tokenized links, which are valid for a configurable amount of time (set in the global settings). Once the configured amount of time elapses, the recipient can still react, but they will need to log into the platform.
 
@@ -188,9 +188,11 @@ Once a reaction is enabled, the teacher can decide where the reaction is display
 
 The reactions feature provides an easy way to get immediate responses to notifications and to quickly mark activities as complete or approved. The tokenized links ensure that recipients can react directly from the email without having to log into the platform, making it a convenient feature for busy students and teachers alike.
 
-Reactions setup and output IMAGES ARE GOES HERE.
+![reaction-pulsepro](https://lmsacelab.com/doc-images/reaction-rate-mail.png)
 
-# Feature: Pulse Presets
+![reaction-config-pulsepro](https://lmsacelab.com/doc-images/reaction-placeholder.png)
+
+## Feature: Pulse Presets
 
 Pulse Presets are a set of pre-configured settings for Pulse activities that can be saved and reused later, making it easier for teachers to create and manage Pulse activities. Admins can create and customize presets for teachers, allowing them to easily use Pulse for common tasks without having to configure each Pulse activity manually.
 
@@ -200,7 +202,9 @@ In Pulse Pro, admins can create new presets, adjust the existing ones to their n
 
 Pulse Presets improve the usability of Pulse, given its complexity and various use cases, making it super simple and fast to use.
 
-# Completion
+![presets-pulsepro](https://lmsacelab.com/doc-images/pulse-presets.png)
+
+## Feature: Completion
 
 One of the key features of Pulse is its support for completion criteria, which allows course creators to specify when an activity is considered complete. In this document, we will describe the three completion criteria available in Pulse: Complete When Available, Self Mark Completed, and Require Approval.
 
@@ -221,6 +225,8 @@ For example, if the specified role is set as "teacher," then a teacher will need
 To set the completion criteria for an activity in Pulse, navigate to the activity settings, and choose "Completion Tracking." Then, select the desired completion criteria from the dropdown menu. Once saved, the activity will be considered complete based on the selected criteria.
 
 In summary, Pulse's completion criteria options provide course creators with the flexibility to customize how activities are considered complete based on their unique needs and goals.
+
+![pulse-completion](https://lmsacelab.com/doc-images/pulse-completion.png)
 
 # Reports
 
@@ -243,4 +249,40 @@ The report includes the following information:
 8. Pulse completion status: This section provides information about the user's completion status for each activity. The completion criteria can be set by the teacher or administrator.
 
 The report can be exported to various formats such as CSV, Excel, and PDF for further analysis or sharing. This report helps course creators and administrators to track the progress of their students, monitor engagement, and identify areas where improvements can be made.
+
+## Changelog:
+
+### [1.3] - 2023-04-22
+- Moved the lib functions to separate functions for better codebase management
+- Fixed the issue of missing records in downloaded reports
+- Renamed the EmailVars class to pulse_emailvars for improved clarity and consistency
+
+### [1.1] - 2019-08-17
+- Initial release of the Pulse plugin for Moodle
+- Supports notifications for module availability and completion
+- Supports credits for completion of specific modules
+- Includes presets for easy setup and configuration
+
+## Troubleshooting Hints
+
+By following these troubleshooting hints, you should be able to diagnose and resolve common issues with Pulse in Moodle. If you continue to experience issues, consider reaching out to the Moodle community or contacting the Pulse support team for further assistance.
+
+1. **Cron not running regularly:** Check your Moodle site's cron settings and ensure that the cron job is running at the desired frequency. You can also try manually running the cron job to see if it resolves the issue.
+
+2. **Scheduled task failed:** Check the Moodle logs for any error messages related to the task that failed. Ensure that the task is properly configured and that all required settings are in place. If you are experiencing high query loads with Pulse, consider upgrading your server configuration to improve performance. You may also want to check for any other processes or plugins that may be causing high server loads and address them accordingly."
+
+Please note that upgrading the server configuration may not always be necessary or sufficient to resolve high query load issues, and it is important to identify and address any underlying causes of the issue. If you continue to experience performance issues with Pulse, consider the Pulse support team for further assistance.
+
+3. **Course not running:** Check that the course is properly configured and that all necessary resources and activities are available. Verify that the course start date is correct and that all access restrictions are properly set.
+
+4. **Pulse hidden:** Check the course settings to ensure that Pulse is enabled and visible to students. Verify that Pulse is enabled and visible to students in the course modules. Check for any issues with the Pulse module settings, such as access restrictions or enrollment issues.
+
+5. **No students enrolled:** Verify that the course is properly set up and that students have been enrolled. Check for any enrollment restrictions or issues that may be preventing students from accessing the course.
+
+6. **Course hidden:** Check the course settings to ensure that the course is enabled and visible to students. Verify that the course is properly placed in the correct category and that all necessary permissions are in place.
+
+7. **No email configured:** Verify that the email settings for Pulse are properly configured. Check for any issues with the email server or SMTP settings. Test the email settings by sending a test email.
+
+8. **Course end date:** Check that the course end date is correctly set and that all course activities and resources are available until the end of the course. Verify that any access restrictions or conditions are properly configured to allow students to complete the course on time.
+
 

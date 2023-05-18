@@ -52,7 +52,7 @@ class approveuser_search extends \core_user\table\participants_search {
     protected $course;
 
     /**
-     * @var context_course $context The course context being searched.
+     * @var \context $context The course context being searched.
      */
     protected $context;
 
@@ -60,6 +60,20 @@ class approveuser_search extends \core_user\table\participants_search {
      * @var string[] $userfields Names of any extra user fields to be shown when listing users.
      */
     protected $userfields;
+
+    /**
+     * Current pulse instance record data.
+     *
+     * @var stdclass
+     */
+    public $pulse;
+
+    /**
+     * Course module instance data
+     *
+     * @var stdclass
+     */
+    public $cm;
 
     /**
      * Class constructor.
@@ -136,7 +150,7 @@ class approveuser_search extends \core_user\table\participants_search {
         // Note: This means results will always be limited to allowed groups, even if the user applies their own groups filtering.
 
         $canaccessallgroups = (has_capability('moodle/site:accessallgroups', $this->context)
-                                    || pulse_isusercontext($this->pulse, $this->cm->id));
+                                    || \mod_pulse\helper::pulse_isusercontext($this->pulse, $this->cm->id));
         $forcegroups = ($this->course->groupmode == SEPARATEGROUPS && !$canaccessallgroups);
 
         if ($forcegroups) {

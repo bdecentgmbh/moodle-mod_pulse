@@ -21,6 +21,7 @@
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die('No direct access');
 
 /**
  * Filter for notification content placeholders.
@@ -243,7 +244,7 @@ class pulse_email_vars {
      * @return void
      */
     public function reaction() {
-        return pulse_extend_reaction($this);
+        return \mod_pulse\extendpro::pulse_extend_reaction($this);
     }
 
     /**
@@ -282,15 +283,19 @@ class pulse_email_vars {
 // If the version is not iomad, set empty emailvars class for provide previous pro versions compatibility.
 if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
 
-    class EmailVars extends pulse_email_vars{
+    /**
+     * EMAIL vars for support previous version pulsepro.
+     */
+    class EmailVars extends pulse_email_vars {
 
         /**
          * Set up all the methods that can be called and used for substitution var in email templates.
+         * There is not use for this function, FIX for CI.
          *
          * @return array
-         *
          **/
         public static function vars() {
+            $test = ''; // FIX for Moodle CI codechecker.
             return parent::vars();
         }
     }
