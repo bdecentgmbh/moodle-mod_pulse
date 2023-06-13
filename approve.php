@@ -50,7 +50,7 @@ foreach ($roles as $key => $role) {
     }
 }
 $approvalroles = $pulse->completionapprovalroles;
-$hasrole = pulse_has_approvalrole($approvalroles, $cmid);
+$hasrole = \mod_pulse\helper::pulse_has_approvalrole($approvalroles, $cmid);
 
 require_login();
 

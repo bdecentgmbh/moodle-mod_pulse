@@ -54,7 +54,7 @@ class restore_pulse_activity_task extends restore_activity_task {
 
         $contents[] = new restore_decode_content('pulse', array('intro', 'pulse_content'), 'pulse');
 
-        pulse_extend_restore_content($contents);
+        \mod_pulse\extendpro::pulse_extend_restore_content($contents);
 
         return $contents;
     }

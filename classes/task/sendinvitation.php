@@ -45,7 +45,7 @@ class sendinvitation extends \core\task\adhoc_task {
             return true;
         }
         // Filter users from course pariticipants by completion.
-        $listofusers = mod_pulse_get_course_students((array) $instance->students, $instance);
+        $listofusers = \mod_pulse\helper::get_course_students((array) $instance->students, $instance);
         // Extend the pulse pro version to send notifications on selected recipients.
         if (!empty($listofusers)) {
             $this->send_pulse($listofusers, $instance->pulse, $instance->course, $instance->context);
@@ -64,7 +64,36 @@ class sendinvitation extends \core\task\adhoc_task {
      * @return void
      */
     public function send_pulse($users, $pulse, $course, $context) {
-        global $DB;
+        global $DB, $USER, $PAGE;
+
+        // Store current user for update the user after filter.
+        $currentuser = $USER;
+        // Store the current page course and cm for support the filtercodes.
+        $currentcourse = $PAGE->course;
+        $currentcm = $PAGE->cm;
+        $currentcontext = $PAGE->context;
+        // Set the current pulse course as page course. Support for filter shortcodes.
+        // Filtercodes plugin used $PAGE->course proprety for coursestartdate, course enddata and other course related shortcodes.
+        // Tried to use $PAGE->set_course(), But the theme already completed the setup, so we can't use that moodle method.
+        // For this reason, here updated the protected _course property using reflection.
+        if (\mod_pulse\helper::change_pagevalue()) {
+
+            $coursereflection = new \ReflectionProperty(get_class($PAGE), '_course');
+            $coursereflection->setAccessible(true);
+            $coursereflection->setValue($PAGE, $course);
+
+            // Setup the course module data to support filtercodes.
+            $pulsecm = get_coursemodule_from_instance('pulse', $pulse->id);
+            $cmreflection = new \ReflectionProperty(get_class($PAGE), '_cm');
+            $cmreflection->setAccessible(true);
+            $cmreflection->setValue($PAGE, $pulsecm);
+
+            $contextreflection = new \ReflectionProperty(get_class($PAGE), '_context');
+            $contextreflection->setAccessible(true);
+            $context = \context_module::instance($pulsecm->id);
+            $contextreflection->setValue($PAGE, $context);
+        }
+
         if (!empty($pulse) && !empty($users)) {
             // Get course module using instanceid.
             $senderdata = self::get_sender($course->id, $context->id);
@@ -85,22 +114,56 @@ class sendinvitation extends \core\task\adhoc_task {
                         $filearea = 'pulse_content';
                     }
                     // Replace the email text placeholders with data.
-                    list($subject, $messagehtml) = mod_pulse_update_emailvars($template, $subject, $course,
+                    list($subject, $messagehtml) = \mod_pulse\helper::update_emailvars($template, $subject, $course,
                         $student, $pulse, $sender);
                     // Rewrite the plugin file placeholders in the email text.
                     $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
                         $context->id, 'mod_pulse', $filearea, 0);
+                    // Set current student as user, filtercodes plugin uses current User data.
+                    \core\session\manager::set_user($student);
+                    // Format filter supports. filter the enabled filters.
+                    $messagehtml = format_text($messagehtml, FORMAT_HTML);
+
                     $messageplain = html_to_text($messagehtml); // Plain text.
                     // Send message to user.
                     pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
 
-                    $messagesend = mod_pulse_messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender);
-                    if ($messagesend) {
-                        $notifiedusers[] = $userto->id;
+                    try {
+                        $transaction = $DB->start_delegated_transaction();
+                        if (\mod_pulse\helper::update_notified_user($userto->id, $pulse)) {
+                            $messagesend = \mod_pulse\helper::messagetouser(
+                                $userto, $subject, $messageplain, $messagehtml, $pulse, $sender
+                            );
+                            if ($messagesend) {
+                                $notifiedusers[] = $userto->id;
+                            } else {
+                                throw new \moodle_exception('mailnotsend', 'pulse');
+                            }
+                        } else {
+                            throw new \moodle_exception('invitationDB', 'pulse');
+                        }
+                        $transaction->allow_commit();
+                    } catch (\Exception $e) {
+                        // Return to current USER.
+                        \core\session\manager::set_user($currentuser);
+                        $transaction->rollback($e);
                     }
                 }
-                mod_pulse_update_notified_users($notifiedusers, $pulse);
             }
+        }
+
+        if (\mod_pulse\helper::change_pagevalue()) {
+            // Return to current USER.
+            \core\session\manager::set_user($currentuser);
+
+            // SEtup the page course and cm to current values.
+            $coursereflection->setValue($PAGE, $currentcourse);
+
+            // Setup the course module data to support filtercodes.
+            $cmreflection->setValue($PAGE, $currentcm);
+
+            // Setup the module context to support filtercodes.
+            $contextreflection->setValue($PAGE, $currentcontext);
         }
     }
 
@@ -134,7 +197,7 @@ class sendinvitation extends \core\task\adhoc_task {
      * Get list of available senders users from group and course seperately.
      *
      * @param  mixed $courseid
-     * @return void
+     * @return object
      */
     public static function get_sender($courseid) {
         global $DB;
@@ -142,7 +205,7 @@ class sendinvitation extends \core\task\adhoc_task {
         JOIN {capabilities} cap ON rc.capability = cap.name
         JOIN {context} ctx on rc.contextid = ctx.id
         WHERE rc.capability = :capability ";
-        $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:addinstance']);
+        $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:sender']);
         $roles = array_column($roles, 'roleid');
 
         list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
@@ -173,7 +236,7 @@ class sendinvitation extends \core\task\adhoc_task {
             return [];
         }
 
-        $coursecontact = reset($records); // Get first course contact user.
+        $coursecontact = current($records); // Get first course contact user.
 
         // Get group based contacts.
         $groups = array_keys(groups_get_all_groups($courseid));

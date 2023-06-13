@@ -118,6 +118,6 @@ class behat_pulse extends behat_base {
     public function i_create_demo_presets(): void {
         global $CFG;
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
-        pulse_create_presets();
+        \mod_pulse\preset::pulse_create_presets();
     }
 }

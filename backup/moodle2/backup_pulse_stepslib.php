@@ -77,7 +77,7 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
 
-        $pulse = pulse_extend_backup_steps($pulse, $userinfo);
+        $pulse = \mod_pulse\extendpro::pulse_extend_backup_steps($pulse, $userinfo);
 
         // Return the root element (data), wrapped into standard activity structure.
         return $this->prepare_activity_structure($pulse);

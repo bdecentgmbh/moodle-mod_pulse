@@ -21,11 +21,12 @@
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die('No direct access');
 
 /**
  * Filter for notification content placeholders.
  */
-class EmailVars {
+class pulse_email_vars {
     // Objects the vars refer to.
 
     /**
@@ -64,6 +65,20 @@ class EmailVars {
     protected $sender = null;
 
     /**
+     * Pulse instance data record.
+     *
+     * @var object
+     */
+    public $pulse = null;
+
+    /**
+     * User enrolment start and end date for the current course.
+     *
+     * @var object
+     */
+    public $enrolment = null;
+
+    /**
      * Placeholder doesn't have dynamic filter then it will replaced with blank value.
      *
      * @var string
@@ -94,6 +109,7 @@ class EmailVars {
             $this->url = new moodle_url($wwwroot .'/user/profile.php', array('id' => $this->user->id));
         }
         $this->site = get_site();
+        $this->enrolment = $this->get_user_enrolment();
     }
 
     /**
@@ -113,7 +129,7 @@ class EmailVars {
      *
      **/
     public static function vars() {
-        $reflection = new ReflectionClass("EmailVars");
+        $reflection = new ReflectionClass("pulse_email_vars");
         $amethods = $reflection->getMethods();
 
         // These fields refer to the objects declared at the top of this class. User_ -> $this->user, etc.
@@ -123,7 +139,7 @@ class EmailVars {
             'User_Institution', 'User_Department',
             'User_Address', 'User_City', 'User_Country',
             // Course fields .
-            'Course_FullName', 'Course_ShortName', 'courseurl',
+            'Course_FullName', 'Course_ShortName', 'courseurl', 'enrolment_startdate', 'enrolment_enddate',
             // Site fields.
             'Site_FullName', 'Site_ShortName', 'Site_Summary',
             // Sender information fields .
@@ -131,13 +147,15 @@ class EmailVars {
             // Miscellaneouss fields.
             'linkurl', 'siteurl', 'reaction'
         );
+        // List of methods which doesn't used as placeholders.
+        $novars = ['get_user_enrolment'];
 
         // Add all methods of this class that are ok2call to the $result array as well.
         // This means you can add extra methods to this class to cope with values that don't fit in objects mentioned above.
         // Or to create methods with specific formatting of the values (just don't give those methods names starting with
         // 'User_', 'Course_', etc).
         foreach ($amethods as $method) {
-            if (self::ok2call($method->name) && !in_array($method->name, $result) ) {
+            if (self::ok2call($method->name) && !in_array($method->name, $result) && !in_array($method->name, $novars) ) {
                 $result[] = $method->name;
             }
         }
@@ -226,6 +244,59 @@ class EmailVars {
      * @return void
      */
     public function reaction() {
-        return pulse_extend_reaction($this);
+        return \mod_pulse\extendpro::pulse_extend_reaction($this);
+    }
+
+    /**
+     * Find the user enrolment start date and enddate for the current course.
+     *
+     * @return array
+     */
+    public function get_user_enrolment() {
+        global $PAGE, $CFG;
+
+        $emptystartdate = get_string('enrolmentemptystartdate', 'mod_pulse');
+        $emptyenddate = get_string('enrolmentemptyenddate', 'mod_pulse');
+
+        if (empty($this->course) || empty($this->user)) {
+            return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
+        }
+        require_once($CFG->dirroot.'/enrol/locallib.php');
+
+        $enrolmanager = new course_enrolment_manager($PAGE, $this->course);
+        $enrolments = $enrolmanager->get_user_enrolments($this->user->id);
+
+        if (!empty($enrolments)) {
+            $firstinstance = current($enrolments);
+            return (object) [
+                'startdate' => $firstinstance->timestart
+                    ? userdate($firstinstance->timestart, get_string('strftimedatetimeshort', 'langconfig')) : $emptystartdate,
+                'enddate' => $firstinstance->timeend
+                    ? userdate($firstinstance->timeend, get_string('strftimedatetimeshort', 'langconfig')) : $emptyenddate,
+            ];
+        }
+        return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
+    }
+}
+
+
+// If the version is not iomad, set empty emailvars class for provide previous pro versions compatibility.
+if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
+
+    /**
+     * EMAIL vars for support previous version pulsepro.
+     */
+    class EmailVars extends pulse_email_vars {
+
+        /**
+         * Set up all the methods that can be called and used for substitution var in email templates.
+         * There is not use for this function, FIX for CI.
+         *
+         * @return array
+         **/
+        public static function vars() {
+            $test = ''; // FIX for Moodle CI codechecker.
+            return parent::vars();
+        }
     }
 }

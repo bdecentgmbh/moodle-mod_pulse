@@ -97,6 +97,27 @@ class preset extends \moodleform {
     public $pulseform;
 
     /**
+     * Preset instance data
+     *
+     * @var stdclass
+     */
+    public $preset;
+
+    /**
+     * Id of current preset.
+     *
+     * @var int
+     */
+    public $presetid;
+
+    /**
+     * Course instance data.
+     *
+     * @var stdclass
+     */
+    public $course;
+
+    /**
      * Basic data stored as moodle form element, used to pass the preset and course data to modal.
      *
      * @return void
@@ -390,7 +411,7 @@ class preset extends \moodleform {
      * Extract the xml data files from selected preset template backup(mbz) file into the backup temp directory
      *
      * @param [type] $configdata
-     * @return void
+     * @return string
      */
     public function apply_presets($configdata) {
 
@@ -582,7 +603,7 @@ class preset extends \moodleform {
                     unset($configdata['pulse_contenteditor']);
                     unset($configdata['introeditor']);
                     // Update the pro reminder contents.
-                    pulse_preset_update($pulseid, $configdata);
+                    \mod_pulse\extendpro::pulse_preset_update($pulseid, $configdata);
                     if (!empty($configdata)) {
                         $configdata['id'] = $pulseid;
                         $configdata['timemodified'] = time();
@@ -757,10 +778,73 @@ class preset extends \moodleform {
                     return (!in_array($key, $excluedfields));
                 }, ARRAY_FILTER_USE_KEY);
 
-                pulse_extend_preset('cleandata', $record);
+                \mod_pulse\extendpro::pulse_extend_preset('cleandata', $record);
             }
         }
 
         return $record;
+    }
+
+    /**
+     * Create presets during the plugin installation and upgradation.
+     *
+     * @param array $presets List of presets with details.
+     * @param boolean $pro Create template for pro version.
+     * @return array List of created presets id.
+     */
+    public static function pulse_create_presets($presets=[], $pro=false) {
+        global $DB, $CFG;
+        if (!isloggedin() || isguestuser()) {
+            return [];
+        }
+        $fs = get_file_storage();
+        if (empty($presets)) {
+            $presets = self::pulse_free_presets();
+        }
+        foreach ($presets as $key => $preset) {
+            $sql = "SELECT id FROM {pulse_presets} WHERE ".$DB->sql_like('title', ':title');
+            if ($DB->record_exists_sql($sql, ['title' => $preset['title']])) {
+                continue;
+            }
+            $file = $preset['preset_template'];
+            $preset['preset_template'] = file_get_unused_draft_itemid();
+            $presetid = $DB->insert_record('pulse_presets', $preset);
+
+            $filerecord = new stdClass();
+            $filerecord->component = 'mod_pulse';
+            $filerecord->contextid = \context_system::instance()->id;
+            $filerecord->filearea = "preset_template";
+            $filerecord->filepath = '/';
+            $filerecord->itemid = $presetid;
+            $filerecord->filename = $file;
+
+            if (!$fs->file_exists($filerecord->contextid, $filerecord->component, $filerecord->filearea,
+            $filerecord->itemid, $filerecord->filepath, $filerecord->filename)) {
+                if ($pro) {
+                    $backuppath = $CFG->dirroot . "/local/pulsepro/assets/$file";
+                } else {
+                    $backuppath = $CFG->dirroot . "/mod/pulse/assets/$file";
+                }
+                $fs->create_file_from_pathname($filerecord, $backuppath);
+            }
+            $created[] = $presetid;
+        }
+        return (isset($created)) ? $created : [];
+    }
+
+
+    /**
+     * Demo presets data shipped with plugin by default for demo purpose.
+     *
+     * @return array List of demo presets.
+     */
+    public static function pulse_free_presets(): array {
+        global $CFG;
+        if (file_exists($CFG->dirroot.'/mod/pulse/assets/presets.xml')) {
+            $presetsxml = simplexml_load_file($CFG->dirroot.'/mod/pulse/assets/presets.xml');
+            $result = json_decode(json_encode($presetsxml), true);
+            return $result;
+        }
+        return array();
     }
 }
