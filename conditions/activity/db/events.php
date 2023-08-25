@@ -15,18 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Define event observers.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Need to define list of events that plugin will go to observe.
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2023051814;
-$plugin->requires = 2020061500; // Requires Moodle 3.90.
-$plugin->release = 'v1.3';
-$plugin->maturity = MATURITY_RC;
-$plugin->supported = [39, 401];
+$observers = [
+    array(
+        'eventname' => 'core\event\course_module_completion_updated',
+        'callback' => '\pulsecondition_activity\conditionform::module_completed',
+    ),
+];

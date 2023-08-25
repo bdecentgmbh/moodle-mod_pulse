@@ -254,3 +254,47 @@ $string['invitationnotsend'] = 'Invitation not send to user';
 $string['enrolmentemptystartdate'] = '-';
 $string['enrolmentemptyenddate'] = '-';
 
+
+/**
+ * Strings for the pulse automation templates.
+ */
+
+ // ...Templates list string.
+$string['autotemplates'] = 'Automation templates';
+$string['autotemplates_desc'] = 'Automation templates define the kind of automations you can use on this moodle site. Depending on the configuration of an automation template, they either work as "default" and will be applied to new courses can be forced onto every course or can be used to create and automation instance from within a course.';
+// ...create new template btn.
+$string['templatecreatenew'] = 'Create new template';
+// ...Edit templates page stirng.
+$string['templatessettings'] = 'Edit template';
+// ...Templates edit/create strings
+$string['reference'] = 'Reference';
+$string['show'] = 'Show';
+$string['hidden'] = 'Hidden';
+$string['visibility'] = 'Visibility';
+$string['internalnotes'] = 'Internal notes';
+$string['status'] = 'Status';
+$string['tags'] = 'Tags';
+$string['availablefortenants'] = 'Available for tenants';
+$string['availableincoursecategories'] = 'Available in course categories';
+$string['deletetemplate'] = 'Delete template';
+// ...Auto templates user notifications strings.
+$string['templateupdatesuccess'] = 'Template updated successfully';
+$string['templateinsertsuccess'] = 'Template inserted successfully';
+$string['templatedeleted'] = 'Automation template "{$a}" deleted successfully.';
+// ...Admin settings.
+$string['generalsettings'] = 'General settings';
+$string['conditiontrigger'] = 'Triggers';
+$string['triggeroperator'] = 'Trigger operator';
+$string['all'] = 'All';
+$string['any'] = 'Any';
+// ...Add template in instance.
+$string['addtemplatebtn'] = 'Add automation instance';
+$string['managetemplate'] = 'Manage templates';
+$string['upcoming'] = 'Upcoming';
+// ...Form tabs
+$string['tabgeneral'] = 'General';
+$string['tabcondition'] = 'Condition';
+$string['autoinstances'] = 'Auto instances';
+$string['editinstance'] = 'Edit instance';
+// ...Update status modal
+$string['templatestatusudpate'] = 'Are your sure! Update the status of template to all of instance or only for upcoming instance';

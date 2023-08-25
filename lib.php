@@ -598,3 +598,50 @@ function mod_pulse_output_fragment_completionbuttons($args) {
 
     return json_encode($html);
 }
+
+
+function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
+
+    if ($itemtype === 'title') {
+        global $DB, $PAGE;
+        $context = \context_system::instance();
+        $PAGE->set_context($context);
+        require_login();
+
+        $record = $DB->get_record('pulse_autotemplates', array('id' => $itemid), '*', MUST_EXIST);
+        // Must call validate_context for either system, or course or course module context.
+        // TODO: This will both check access and set current context.
+        // \external_api::validate_context(context_system::instance());
+        // Check permission of the user to update this item.
+        // require_capability('tool/mytest:update', context_system::instance());
+        // Clean input and update the record.
+        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
+        $DB->update_record('pulse_autotemplates', array('id' => $itemid, 'title' => $newvalue));
+        // Prepare the element for the output:
+        $record->title = $newvalue;
+        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
+            format_string($record->title), $record->title, 'Edit template title',  'New value for ' . format_string($row->title));
+    }
+}
+
+
+function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context){
+
+    $addnode = true; // $context->contextlevel === 50;
+    $addnode = $addnode && has_capability('gradereport/grader:view', $context); // TODO: Custom capability.
+    if ($addnode) {
+        $id = $context->instanceid;
+        $url = new moodle_url('/mod/pulse/automation/instances/list.php', [
+            'courseid' => $id,
+        ]);
+
+        $node = $navigation->create(get_string('autotemplates','pulse'), $url, navigation_node::TYPE_SETTING, null, null);
+        $node->add_class('automation-templates');
+        $node->set_force_into_more_menu(false);
+        $node->set_show_in_secondary_navigation(true);
+        $navigation->add_node($node, 'gradebooksetup');
+
+    }
+
+    // ...
+}

@@ -15,18 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * List of scheduled tasks to send pulses in background.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die('No direct access !');
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2023051814;
-$plugin->requires = 2020061500; // Requires Moodle 3.90.
-$plugin->release = 'v1.3';
-$plugin->maturity = MATURITY_RC;
-$plugin->supported = [39, 401];
+$tasks = [
+    [
+        'classname' => 'pulseaction_notification\task\notify_users',
+        'blocking' => 0,
+        'minute' => '*',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];

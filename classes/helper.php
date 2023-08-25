@@ -472,6 +472,10 @@ class helper {
      * @return void
      */
     public static function messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender=true) {
+        global $CFG;
+
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+
         $eventdata = new \core\message\message();
         $eventdata->name = 'mod_pulse';
         $eventdata->component = 'mod_pulse';

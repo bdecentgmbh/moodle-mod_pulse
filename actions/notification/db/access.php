@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Define plugin capabilities.
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
@@ -24,9 +24,26 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_pulse';
-$plugin->version = 2023051814;
-$plugin->requires = 2020061500; // Requires Moodle 3.90.
-$plugin->release = 'v1.3';
-$plugin->maturity = MATURITY_RC;
-$plugin->supported = [39, 401];
+$capabilities = array(
+    // Capability to recieve notifications.
+    'pulseaction/notification:receivenotification' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'student' => CAP_ALLOW,
+            'guest' => CAP_ALLOW,
+        )
+    ),
+
+    'pulseaction/notification:sender' => array(
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_PREVENT
+        ),
+        'clonepermissionsfrom' => 'mod/pulse:addinstance'
+    ),
+);
