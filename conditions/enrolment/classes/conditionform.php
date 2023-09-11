@@ -1,7 +1,7 @@
 <?php
 
 
-namespace pulsecondition_enrol;
+namespace pulsecondition_enrolment;
 
 use mod_pulse\automation\condition_base;
 
@@ -28,7 +28,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
      * @return void
      */
     public function include_action(&$option) {
-        $option['userenrolment'] = get_string('enrolment', 'pulsecondition_enrol');
+        $option['enrolment'] = get_string('enrolment', 'pulsecondition_enrolment');
     }
 
     /**
@@ -40,11 +40,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
      */
     public function load_instance_form(&$mform, $forminstance) {
 
-        $mform->addElement('html', '<h3>'.get_string('enrolment', 'pulsecondition_enrol').'</h3>');
+        $completionstr = get_string('enrolment', 'pulsecondition_enrolment');
 
-        $completionstr = get_string('enrolment', 'pulsecondition_enrol');
-
-        $mform->addElement('select', 'condition[enrol]', $completionstr, $this->get_options());
+        $mform->addElement('select', 'condition[enrolment][status]', $completionstr, $this->get_options());
+        $mform->addHelpButton('condition[enrolment][status]', 'enrolment', 'pulsecondition_enrolment');
     }
 
     /**

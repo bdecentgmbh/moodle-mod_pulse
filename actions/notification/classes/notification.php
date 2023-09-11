@@ -9,6 +9,10 @@ use mod_pulse\automation\helper;
 use mod_pulse\automation\instances;
 use mod_pulse\helper as pulsehelper;
 use mod_pulse\plugininfo\pulseaction;
+use moodle_url;
+use html_writer;
+use stdClass;
+use tool_dataprivacy\form\context_instance;
 
 class notification {
 
@@ -34,7 +38,16 @@ class notification {
     const DYNAMIC_DESCRIPTION = '1';
     const DYNAMIC_CONTENT = '2';
 
+    const STATUS_FAILED = 0;
+    const STATUS_DISABLED = 1;
+    const STATUS_QUEUED = 2;
+    const STATUS_SEND = 3;
+
+    const SUPPRESSREACHED = 1;
+
     protected $instancedata;
+
+    protected $notificationdata;
 
     protected $notificationid; //
 
@@ -62,14 +75,32 @@ class notification {
         global $DB;
 
         $notification = $DB->get_record('pulseaction_notification_ins', ['id' => $this->notificationid]);
-        $action = instances::create($notification->instanceid);
-        $this->set_instance_data($action->get_instance_data());
+
+        $instance = instances::create($notification->instanceid);
+        $autoinstance = $instance->get_instance_data();
+
+        $notificationdata = $autoinstance->actions['notification'];
+
+        unset($autoinstance->actions['notification']); // Remove actions.
+
+        $this->set_notification_data($notificationdata, $autoinstance);
     }
 
-    public function set_instance_data($instancedata) {
+    /**
+     * Undocumented function
+     *
+     * @param [type] $notificationdata Contains notification data.
+     * @param [type] $instancedata Contains other than actions.
+     * @return void
+     */
+    public function set_notification_data($notificationdata, $instancedata) {
+        $data = (object) $notificationdata;
+        $this->notificationdata = $this->update_data_structure($data);
+
         $data = (object) $instancedata;
-        $this->instancedata = $this->update_data_structure($data);
+        $this->instancedata = $instancedata;
     }
+
 
     public function update_data_structure($actiondata) {
 
@@ -80,60 +111,121 @@ class notification {
         $actiondata->cc = is_array($actiondata->cc) ? $actiondata->cc : json_decode($actiondata->cc);
 
         $actiondata->notifyinterval = is_array($actiondata->notifyinterval)
-            ? $actiondata->notifyinterval : json_decode($actiondata->notifyinterval);
-
-        /* $isoverride = '';
-        $context = ($isoverride) ? \context_course::instance($actiondata->courseid) : \context_system::instance();
-        $id = $actiondata->instanceid ?? $actiondata->templateid;
-
-        $actiondata->headercontent = file_rewrite_pluginfile_urls(
-            $actiondata->headercontent, 'pluginfile.php', $context->id, 'mod_pulse',
-            'pulsenotification_headercontent', $id
-        );
-        $actiondata->staticcontent = file_rewrite_pluginfile_urls(
-            $actiondata->staticcontent, 'pluginfile.php', $context->id, 'mod_pulse',
-            'pulsenotification_staticcontent', $id
-        );
-        $actiondata->footercontent = file_rewrite_pluginfile_urls(
-            $actiondata->footercontent, 'pluginfile.php', $context->id, 'mod_pulse',
-            'pulsenotification_footercontent', $id
-        ); */
+            ? $actiondata->notifyinterval : json_decode($actiondata->notifyinterval, true);
 
         return $actiondata;
     }
 
+
     protected function generate_schedule_record(int $userid) {
         $record = [
-            'instanceid' => $this->instancedata->instanceid,
+            'instanceid' => $this->notificationdata->instanceid,
             'userid' => $userid,
-            'type' => $this->instancedata->notifyinterval->interval,
-            'status' => 1,
+            'type' => $this->notificationdata->notifyinterval['interval'],
+            'status' => self::STATUS_QUEUED,
             'timecreated' => time(),
             'timemodified' => time(),
         ];
         return $record;
     }
 
-    protected function insert_schedule($data) {
+    protected function insert_schedule($data, $newschedule=false) {
         global $DB;
 
-        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $data['instanceid'], 'userid' => $data['userid']])) {
+        $sql = 'SELECT * FROM {pulseaction_notification_sch}
+                WHERE instanceid = :instanceid AND userid = :userid AND (status = :disabledstatus  OR status = :queued)';
+
+        if ($record = $DB->get_record_sql($sql, [
+                'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'disabledstatus' => self::STATUS_DISABLED,
+                'queued' => self::STATUS_QUEUED
+            ])) {
+
             $data['id'] = $record->id;
             // Update the status to enable for notify.
             $DB->update_record('pulseaction_notification_sch', $data);
-        } else {
-            $DB->insert_record('pulseaction_notification_sch', $data);
+
+            return $record->id;
+        }
+
+        // Dont create new schedule for already notified users until is not new schedule.
+        // It prevents creating new record for user during the update of instance interval.
+        if (!$newschedule && $DB->record_exists('pulseaction_notification_sch', [
+            'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'status' => self::STATUS_SEND
+        ])) {
+            return false;
+        }
+
+        return $DB->insert_record('pulseaction_notification_sch', $data);
+    }
+
+    protected function disable_user_schedule($userid) {
+        global $DB;
+
+        $sql = "SELECT * FROM {pulseaction_notification_sch}
+                WHERE instanceid = :instanceid AND userid = :userid AND (status = :disabledstatus  OR status = :queued)";
+
+        $params = [
+            'instanceid' => $this->notificationdata->instanceid, 'userid' => $userid, 'disabledstatus' => self::STATUS_DISABLED,
+            'queued' => self::STATUS_QUEUED
+        ];
+
+        if ($record = $DB->get_record_sql($sql, $params)) {
+            // print_object($record);exit;
+            $DB->set_field('pulseaction_notification_sch', 'status', self::STATUS_DISABLED, ['id' => $record->id]);
+        }
+    }
+
+    public function remove_user_schedules($userid) {
+        global $DB;
+
+        $sql = "SELECT * FROM {pulseaction_notification_sch}
+                WHERE instanceid = :instanceid AND userid = :userid AND (status = :disabledstatus  OR status = :queued)";
+
+        $params = [
+            'instanceid' => $this->notificationdata->instanceid, 'userid' => $userid, 'disabledstatus' => self::STATUS_DISABLED,
+            'queued' => self::STATUS_QUEUED
+        ];
+
+        if ($record = $DB->get_record_sql($sql, $params)) {
+            $DB->delete_records('pulseaction_notification_sch', ['id' => $record->id]);
         }
     }
 
     protected function get_schedule($data) {
         global $DB;
 
-        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $data->instanceid, 'userid' => $data->userid])) {
+        if ($record = $DB->get_record('pulseaction_notification_sch', [
+            'instanceid' => $data->instanceid, 'userid' => $data->userid
+        ])) {
             return $record;
         }
 
         return false;
+    }
+
+    protected function find_last_notifiedtime($userid) {
+        global $DB;
+
+        $id = $this->notificationdata->instanceid;
+
+        // Get last notified schedule for this instance to the user.
+        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND);
+        $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
+
+        return !empty($records) ? current($records)->notifiedtime : '';
+    }
+
+
+    protected function find_notify_count($userid) {
+        global $DB;
+
+        $id = $this->notificationdata->instanceid;
+
+        // Get last notified schedule for this instance to the user.
+        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND);
+        $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
+
+        return !empty($records) ? current($records)->notifycount : '';
     }
 
     /**
@@ -147,9 +239,9 @@ class notification {
     protected function is_user_notified(int $userid) {
         global $DB;
 
-        $id = $this->instancedata->instanceid;
-        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $id, 'userid' => $userid])) {
-            return $record->lastrun != null ? true : false;
+        $id = $this->notificationdata->instanceid;
+        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND])) {
+            return $record->notifiedtime != null ? true : false;
         }
         return false;
     }
@@ -162,19 +254,22 @@ class notification {
     protected function remove_schedules() {
         global $DB;
 
-        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id]);
+        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id, 'status' => self::STATUS_SEND]);
     }
 
 
-    public function create_schedule_forinstance() {
+
+
+    public function create_schedule_forinstance($newenrolment=false) {
         // Generate the notification instance data.
         if (empty($this->instancedata)) {
             $this->create_instance_data();
         }
+
         // Course context.
         $context = \context_course::instance($this->instancedata->courseid);
         // Roles to receive the notifications.
-        $roles = $this->instancedata->recipients;
+        $roles = $this->notificationdata->recipients;
         if (empty($roles)) {
             // No roles are defined to recieve notifications. Remove the schedules for this instance.
             $this->remove_schedules();
@@ -183,7 +278,7 @@ class notification {
         // Get the users for this receipents roles.
         $users = $this->get_users_withroles($roles, $context);
         foreach ($users as $userid => $user) {
-            $this->create_schedule_foruser($user->id);
+            $this->create_schedule_foruser($user->id, null, 0, null, $newenrolment);
         }
 
         return true;
@@ -195,86 +290,150 @@ class notification {
      * @param int $userid
      * @return void
      */
-    public function create_schedule_foruser($userid) {
+    public function create_schedule_foruser($userid, $lastrun='', $notifycount=0, $expectedruntime=null, $isnewuser=false, $newschedule=false) {
 
         if (empty($this->instancedata)) {
             $this->create_instance_data();
         }
-        // Notification interval is once per user, it already notified to the user. break the trigger here.
-        if ($this->instancedata->notifyinterval->interval == self::INTERVALONCE && $this->is_user_notified($userid)) {
+
+        // Verify the user passed the instance condition.
+        if (!instances::create($this->notificationdata->instanceid)
+            ->find_user_completion_conditions($this->instancedata->condition, $this->instancedata, $userid, $isnewuser)) {
+            // Remove the user condition.
+            $this->disable_user_schedule($userid);
             return true;
         }
+
+        // TODO: Verify it realy need to verify the suppress reached status.
+        /*if ($suppressreached) {
+            return true;
+        }*/
+        $notifycount = $notifycount ?: $this->find_notify_count($userid);
+        // Verify the Limit is reached, if 0 then its unlimited.
+        if ($this->notificationdata->notifylimit > 0 && ($notifycount >= $this->notificationdata->notifylimit)) {
+            return false;
+        }
+
+        // Notification interval is once per user, it already notified to the user. break the trigger here.
+        if ($this->notificationdata->notifyinterval['interval'] == self::INTERVALONCE && $this->is_user_notified($userid)) {
+            return true;
+        }
+
+        $lastrun = $lastrun ?: $this->find_last_notifiedtime($userid);
 
         // Generate the schedule record.
         $data = $this->generate_schedule_record($userid);
 
+        $data['notifycount'] = $notifycount;
         // # Find the next run.
-        $nextrun = $this->generate_the_nextrun($userid);
+        $nextrun = $this->generate_the_scheduletime($userid, $lastrun, $expectedruntime);
         // Include the next run to schedule.
-        $data['nextrun'] = date('Y-m-d H:i:s', $nextrun);
+        $data['scheduletime'] = $nextrun;
         // Insert the new schedule or update schedule.
-        $this->insert_schedule($data);
+        $scheduleid = $this->insert_schedule($data, $newschedule);
 
-        return true;
+        return $scheduleid;
     }
 
-    protected function generate_the_nextrun($userid, $schedule=null) {
+    /**
+     * Generate the schedule time for this notification.
+     *
+     * @param [type] $userid
+     * @param [type] $schedule
+     * @return int
+     */
+    protected function generate_the_scheduletime($userid, $lastrun=null, $expectedruntime=null) {
         global $DB;
 
-        $data = $this->instancedata;
+        $data = $this->notificationdata;
         $data->userid = $userid;
 
-        if (!$schedule) {
-            $schedule = $this->get_schedule($data);
+        $now = new DateTime('now', \core_date::get_server_timezone_object());
+
+        if ($expectedruntime) {
+            $expectedruntime = $now->setTimestamp($expectedruntime);
         }
-        $nextrun = new DateTime('last day');
-        if (!empty($schedule)  && !empty($schedule->lastrun)) {
-            $lastrun = new DateTime($schedule->lastrun);
+
+        $nextrun = $expectedruntime ?: $now;
+        if (!empty($lastrun)) {
+            $lastrun = ($lastrun instanceof DateTime)
+                ?: (new DateTime('now', \core_date::get_server_timezone_object()))->setTimestamp($lastrun);
             $nextrun = $lastrun;
         }
 
-        $interval = self::INTERVALMONTHLY; // $data->notifyinterval->interval;
+        $interval = $data->notifyinterval['interval'];
 
         switch ($interval) {
 
             case self::INTERVALDAILY:
-                $time = $data->notifyinterval->time;
-                $nextrun->modify('+1 day');
+                $time = $data->notifyinterval['time'];
+                $nextrun->modify('+1 day'); // TODO: Change this to Dateinterval().
                 $timeex = explode(':', $time);
                 $nextrun->setTime(...$timeex);
                 break;
 
             case self::INTERVALWEEKLY:
-                $day = $data->notifyinterval->weekday;
-                $time = $data->notifyinterval->time;
+                $day = $data->notifyinterval['weekday'];
+                $time = $data->notifyinterval['time'];
                 $nextrun->modify("Next ".$day);
                 $timeex = explode(':', $time);
                 $nextrun->setTime(...$timeex);
                 break;
 
             case self::INTERVALMONTHLY:
-                $monthdate = $data->notifyinterval->monthdate;
+                $monthdate = $data->notifyinterval['monthdate'];
                 if ($monthdate != 31) { // If the date is set as 31 then use the month end.
                     $nextrun->modify('first day of next month');
-                    $date = $data->notifyinterval->monthdate ? $data->notifyinterval->monthdate - 1 : $data->notifyinterval->monthdate;
+                    $date = $data->notifyinterval['monthdate'] ? $data->notifyinterval['monthdate'] - 1 : $data->notifyinterval['monthdate'];
                     $nextrun->modify("+$date day");
                 } else {
                     $nextrun->modify('last day of next month');
                 }
 
-                $time = $data->notifyinterval->time ?? '0:00';
+                $time = $data->notifyinterval['time'] ?? '0:00';
                 $timeex = explode(':', $time);
                 $nextrun->setTime(...$timeex);
                 break;
+
+            case self::INTERVALONCE:
+                $nextrun = $expectedruntime ?: $now;
+                break;
+        }
+
+        // Add limit of available.
+        if ($data->notifydelay == self::DELAYAFTER) {
+            $delay = $data->delayduration;
+            $nextrun->modify("+ $delay seconds");
+        } else if ($data->notifydelay == self::DELAYBEFORE) {
+            $delay = $data->delayduration;
+
+            if ($expectedruntime) {
+                // SEssion condition only send the expected runtime.
+                // Reduce the delay directly from the expected runtime.
+                $nextrun->modify("- $delay seconds");
+
+            } else if (method_exists('\pulsecondition_session\conditionform', 'get_session_time')) {
+                // Confirm any f2f module added in condition.
+                $sessionstarttime = \pulsecondition_session\conditionform::get_session_time($data, $this->instancedata);
+
+                if (!empty($sessionstarttime)) {
+                    $nextrun->setTimestamp($sessionstarttime);
+                    $nextrun->modify("- $delay seconds");
+                }
+            }
         }
 
         return $nextrun->getTimestamp();
     }
 
+
     protected function get_users_withroles(array $roles, $context) {
         global $DB;
 
         // TODO: Cache the role users.
+        if (empty($roles)) {
+            return [];
+        }
 
         list($insql, $inparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'rle');
 
@@ -292,36 +451,121 @@ class notification {
         return $users;
     }
 
-    protected function build_notification_content($user, $data, $context) {
+    /**
+     * Build the notification content.
+     *
+     * @param [type] $user
+     * @param [type] $data
+     * @param [type] $context
+     * @return void
+     */
+    public function build_notification_content($cm=null, $context=null, $overrides=[]) {
+        global $CFG, $DB;
+
+        $syscontext = \context_system::instance();
+
+        $headercontent = $this->notificationdata->headercontent;
+        $staticcontent = $this->notificationdata->staticcontent;
+        $footercontent = $this->notificationdata->footercontent;
+
+        // Rewrite the plugin url for files in editors.
+        foreach (['headercontent', 'staticcontent', 'footercontent'] as $editor) {
+
+            $content = $$editor;
+
+            $field = 'pulsenotification_'.$editor;
+            $prefix = (isset($overrides[$field]) || isset($overrides[$field.'_editor'])) ? '_instance' : '';
+            $id = (isset($overrides[$field]) || isset($overrides[$field.'_editor'])) ? $this->notificationdata->instanceid : $this->instancedata->templateid;
+
+            $$editor = file_rewrite_pluginfile_urls(
+                $content, 'pluginfile.php', $syscontext->id,
+                'mod_pulse', $field.$prefix, $id
+            );
+        }
+
+        $dynamiccontent = $this->notificationdata->dynamiccontent;
+
+        if ($dynamiccontent) {
+
+            if ($cm == null) {
+                $module = get_coursemodule_from_id('', $dynamiccontent);
+                $cm = (object) [
+                    'instance' => $module->instance,
+                    'modname' => $module->modname,
+                    'id' => $module->id,
+                ];
+            }
+
+            $modcontext = \context_module::instance($dynamiccontent);
+
+            $staticcontent .= self::generate_dynamic_content(
+                $this->notificationdata->contenttype,
+                $this->notificationdata->contentlength,
+                $this->notificationdata->chapterid,
+                $modcontext,
+                $cm
+            ); // Concat the dynamic content after static content.
+        }
+
+        return format_text($headercontent . $staticcontent . $footercontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
+    }
+
+    /**
+     * Gernerate the dynamic content.
+     *
+     * @param [type] $contenttype
+     * @param [type] $contentlength
+     * @param [type] $chapterid
+     * @param [type] $context
+     * @param [type] $data
+     * @return void
+     */
+    public static function generate_dynamic_content($contenttype, $contentlength, $chapterid, $context, $cm) {
+
         global $CFG, $DB;
 
         require_once($CFG->dirroot.'/lib/modinfolib.php');
         require_once($CFG->dirroot.'/mod/book/lib.php');
         require_once($CFG->libdir.'/filelib.php');
 
+        if ($contenttype == self::DYNAMIC_CONTENT) {
 
-        $headercontent = format_text($this->instancedata->headercontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
-        $staticcontent = format_text($this->instancedata->staticcontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
-        $footercontent = format_text($this->instancedata->footercontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
-
-        $dynamiccontent = $this->instancedata->dynamiccontent;
-        $cm = get_coursemodule_from_id($data->md_name, $data->cm_id);
-
-        if ($dynamiccontent) {
-            if ($data->md_name == 'book') {
-                // TODO: Chapterid.
-                $chapter = $DB->get_record('book_chapters', ['id' => 1, 'bookid' => $data->cm_instance]);
+            if ($cm->modname == 'book') {
+                $chapter = $DB->get_record('book_chapters', ['id' => $chapterid, 'bookid' => $cm->instance]);
                 $chaptertext = \file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
-                // TODO: Content length strip.
-                $staticcontent .= format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true]);
+
+                $content = format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true]);
+                $link = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $chapterid]);
             } else {
-                $page = $DB->get_record('page', array('id' => $data->cm_instance), '*', MUST_EXIST);
-                // TODO: Content length.
-                $staticcontent .= file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
+                $page = $DB->get_record('page', array('id' => $cm->instance), '*', MUST_EXIST);
+
+                $content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
+                $link = new moodle_url('/mod/page/view.php', ['id' => $cm->id]);
             }
+
+        } else {
+            // TODO: Need to cache module intro content.
+            $activity = $DB->get_record("$cm->modname", ['id' => $cm->instance]);
+            $content = format_module_intro($cm->modname, $activity, $cm->id, true);
+            $link = new moodle_url("/mod/$cm->modname/view.php", ['id' => $cm->id]);
         }
 
-        return $headercontent . $staticcontent . $footercontent;
+        // Verify the contnet length.
+        switch ($contentlength) {
+
+            case self::LENGTH_TEASER:
+                preg_match('/<p>(.*?)<\/p>/s', $content, $match);
+                $content = $match[0] ?? $content;
+
+                $content .= html_writer::link($link, get_string('readmore', 'pulseaction_notification'));
+                break;
+
+            case self::LENGTH_LINKED:
+                $content .= html_writer::link($link, get_string('readmore', 'pulseaction_notification'));
+                break;
+        }
+
+        return $content;
     }
 
     /**
@@ -330,27 +574,21 @@ class notification {
      * @param object $data
      * @return stdclass
      */
-    public function generate_notification_details($data) {
-        // Course data.
-        $course = helper::filter_record_byprefix($data, 'c');
-        // User record data.
-        $user = helper::filter_record_byprefix($data, 'ue');
-        // Course context data.
-        $context = (object) helper::filter_record_byprefix($data, 'ctx');
+    public function generate_notification_details($moddata, $user, $context, $notificationoverrides=[]) {
 
         // Find the cc and bcc users for this schedule.
-        $roles = array_merge($this->instancedata->cc, $this->instancedata->bcc);
+        $roles = array_merge($this->notificationdata->cc, $this->notificationdata->bcc);
         // Get the users for this bcc and cc roles.
         $roleusers = $this->get_users_withroles($roles, $context);
 
         // Filter the cc users for this instance.
-        $cc =  $this->instancedata->cc;
+        $cc =  $this->notificationdata->cc;
         $ccusers = array_filter($roleusers, function($value) use ($cc) {
             return in_array($value->roleid, $cc);
         });
 
         // Filter the bcc users for this instance.
-        $bcc = $this->instancedata->bcc;
+        $bcc = $this->notificationdata->bcc;
         $bccusers = array_filter($roleusers, function($value) use ($bcc) {
             return in_array($value->roleid, $bcc);
         });
@@ -359,8 +597,8 @@ class notification {
             'recipient' => (object) $user,
             'cc'        => implode(',', array_column($ccusers, 'email')),
             'bcc'       => implode(',', array_column($bccusers, 'email')),
-            'subject'   => format_string($this->instancedata->subject),
-            'content'   => $this->build_notification_content($user, $data, $context),
+            'subject'   => format_string($this->notificationdata->subject),
+            'content'   => $this->build_notification_content($moddata, $context, $notificationoverrides),
         ];
 
         return (object) $result;
@@ -372,176 +610,6 @@ class notification {
     }
 
 
-    /**
-     * Send the notificatino schedule to users based on the limit.
-     *
-     * @return void
-     */
-    public static function send_scheduled_notification() {
-        global $DB, $CFG;
-
-        require_once($CFG->dirroot.'/mod/pulse/automation/autmationlib.php');
-
-        $timestamp = date('Y-m-d H:i:s'); // Current timestamp in sql timestamp format.
-
-        $select[] = 'ns.id AS id'; // Set the schdule id as unique column.
-
-        // Get columns not increase table queries.
-        // TODO: Fetch only used columns. Fetching all the fields in a query will make double the time of query result.
-        // TODO: All field 0.0010919570922852 => Width id only 0.00058603286743164 seconds.
-        $tables = [
-            'ns' => $DB->get_columns('pulseaction_notification_sch'),
-            'ai' => $DB->get_columns('pulse_autoinstances'),
-            'pat' => $DB->get_columns('pulse_autotemplates'),
-            'pati' => $DB->get_columns('pulse_autotemplates_ins'),
-            'ni' => $DB->get_columns('pulseaction_notification_ins'),
-            'an' => $DB->get_columns('pulseaction_notification'),
-            'ue' => $DB->get_columns('user'),
-            'c' => $DB->get_columns('course'),
-            'ctx' => $DB->get_columns('context'),
-            'cm' => array_fill_keys(["id", "course", "module", "instance"], ""),
-            'md' => array_fill_keys(['name'], "")
-        ];
-
-        foreach ($tables as $prefix => $table) {
-            $columns = array_keys($table);
-            // Columns.
-            array_walk($columns, function(&$value, $key, $prefix) {
-                $value = "$prefix.$value AS ".$prefix."_$value";
-            }, $prefix);
-
-            $select = array_merge($select, $columns);
-        }
-        // Final list of select columns, convert to sql mode.
-        $select = implode(', ', $select);
-
-        // Number of notification to send in this que.
-        $limit = 100;
-
-        $senderjoin = '';
-
-        // $select .= ", (".self::sender_sql().") AS sender";
-        $DB->set_debug(true);
-
-        // Fetch the schedule which is status as 1 and nextrun not empty and not greater than now.
-        $sql = "SELECT $select FROM {pulseaction_notification_sch} ns
-            JOIN {pulse_autoinstances} AS ai ON ai.id = ns.instanceid
-            JOIN {pulse_autotemplates} AS pat ON pat.id = ai.templateid
-            JOIN {pulse_autotemplates_ins} AS pati ON pati.instanceid = ai.id
-            JOIN {pulseaction_notification_ins} AS ni ON ni.instanceid = ns.instanceid
-            JOIN {pulseaction_notification} AS an ON an.templateid = ai.templateid
-            JOIN {user} AS ue ON ue.id = ns.userid
-            JOIN {course} as c ON c.id = ai.courseid
-            JOIN {context} AS ctx ON ctx.instanceid = c.id AND ctx.contextlevel = 50
-            JOIN {course_modules} AS cm ON cm.id = ni.dynamiccontent
-            JOIN {modules} AS md ON md.id = cm.module
-            WHERE ns.status = 1 AND ns.nextrun <> 0 AND ns.nextrun <= :current_timestamp ORDER BY ns.timemodified ASC ";
-
-        $schedules = $DB->get_records_sql($sql, ['current_timestamp' => $timestamp] , 0, $limit);
-
-        $supportuser = \core_user::get_support_user();
-
-        foreach ($schedules as $sid => $notify) {
-            // Schedule data.
-            $schedule = (object) helper::filter_record_byprefix($notify, 'ns');
-            // Course data.
-            $course = (object) helper::filter_record_byprefix($notify, 'c');
-            // Course data.
-            $user = (object) helper::filter_record_byprefix($notify, 'ue');
-            // Filter the notification data by its prefix.
-            $notificationdata = helper::filter_record_byprefix($notify, 'an');
-            // Filter the notification instance data by its prefix.
-            $notificationinstancedata = helper::filter_record_byprefix($notify, 'ni');
-            // Merge the notification overrides data and its notification data.
-            $notifymergedata = (object) helper::merge_instance_overrides($notificationinstancedata, $notificationdata);
-
-            // Verify the notification instance limit of notification is reached for this user.
-            if (isset($schedule->limit) && $schedule->limit >= $notifymergedata->limit) {
-                continue; // Limit reached break this continue to next user.
-            }
-
-            // Create notification instance.
-            // Set the notification instance data merge with notification and instance data .
-            $notification = self::instance($notify->an_id);
-            $notification->set_instance_data($notifymergedata);
-
-            // Generate the details to send the notification, it contains user, cc, bcc and schedule data.
-            $detail = $notification->generate_notification_details($notify);
-
-            // Courseid is needed in the message api.
-            $pulse = (object) ['course' => $notify->c_id];
-
-            // Find the sender for this schedule.
-            if ($notifymergedata->sender == self::SENDERCUSTOM) {
-                // Use the custom sender email as the support user email.
-                $sender = (object) ['firstname' => '', 'lastname' => '', 'email' => $notifymergedata->senderemail];
-            } else if ($notifymergedata->sender == self::SENDERTENANTROLE) {
-                $sender = $notification->get_tenantrole_sender($notify);
-            } else {
-                // Get user groups is sender is configured as group teacher.
-                $groupids = $notifymergedata->sender == self::SENDERGROUPTEACHER ? groups_get_user_groups($notify->c_id, $notify->ns_userid) : 0;
-                // Course context data.
-                $context = \mod_pulse_context_course::create_instance_fromrecord((object) helper::filter_record_byprefix($notify, 'ctx'));
-                // Get the course teacher if group teacher not available it will fallback to course teacher automatically.
-                $sender = (object) self::get_sender_users($context, $groupids);
-            }
-
-            // Add bcc and CC to sender user custom headers.
-            $sender->customheaders = [
-                "Bcc: $detail->bcc\r\n",
-                "Cc: $detail->cc\r\n",
-            ];
-
-            // Message main content.
-            $subject = $detail->subject;
-
-            // Update the email placeholders.
-            // list($subject, $messagehtml) = pulsehelper::update_emailvars($detail->content, $subject, $course, $user, null, $sender);
-
-            $messagehtml = $detail->content;
-            $messageplain = html_to_text($messagehtml);
-            // Send the notification to user
-            // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
-            $messagesend = \mod_pulse\helper::messagetouser(
-                $detail->recipient, $subject, $messageplain, $messagehtml, $pulse, $sender
-            );
-
-            // $messagesend = email_to_user($detail->recipient, $sender, $subject, $messageplain, $messagehtml);
-
-            if ($messagesend) {
-                // Update the current time as lastrun.
-                // Update the lastrun and increase the limit.
-                $lastrun = date('Y-m-d H:i:s');
-                $schedule->lastrun = $lastrun;
-                $update = [
-                    'id' => $notify->id,
-                    'lastrun' => $lastrun,
-                    'limit' => $schedule->limit ? $schedule->limit + 1 : 1,
-                    'timemodified' => time(), // TODO: Update the timemodified for all other record update.
-                ];
-
-                // Generate a next runtime. Only if user has limit to receive notifications. otherwise made the nextrun null.
-                $update['nextrun'] = ($schedule->limit >= $update['limit'])
-                    ? null : $notification->generate_the_nextrun($notify->ue_id, $schedule);
-                // Update the schedule.
-                $DB->update_record('pulseaction_notification_sch', $update);
-            }
-        }
-
-        $DB->set_debug(false);
-
-    }
-
-/*  public static function sender_sql() {
-
-        $now = time();
-        return "SELECT eu1_u.*
-                FROM {user} eu1_u
-                JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
-                JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = c.id)
-                WHERE 1 = 1 AND ej1_ue.status = 0 AND ej1_e.status = 0 AND ej1_ue.timestart < $now AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > $now) AND eu1_u.deleted = 0 AND eu1_u.id <> 1 AND eu1_u.deleted = 0 LIMIT 1";
-    } */
-
 
     /**
      * Undocumented function
@@ -552,7 +620,7 @@ class notification {
      */
     protected static function get_sender_users($coursecontext, $groupid) {
 
-        $withcapability = 'mod/pulse:addinstance';
+        $withcapability = 'pulseaction/notification:sender';
         $sender = get_enrolled_users(
             $coursecontext,
             $withcapability,
@@ -564,10 +632,84 @@ class notification {
             true
         );
 
-        return current($sender);
+
+        return !empty($sender) ? current($sender) : [];
     }
 
+    /**
+     * Load book chapters.
+     *
+     * @param int $cmid Course module id.
+     * @return array
+     */
+    public static function load_book_chapters(int $cmid) {
+        global $DB;
+        $mod = get_coursemodule_from_id('', $cmid);
 
+        $list = '';
+        if ($mod->modname == 'book') {
+            $chapters = $DB->get_records('book_chapters', ['bookid' => $mod->instance]);
+            return $chapters;
+        }
+        return $list;
+    }
+
+    public static function get_schedule_status($value) {
+        if ($value == self::STATUS_DISABLED) {
+            return get_string('onhold', 'pulseaction_notification');
+        } else if ($value == self::STATUS_QUEUED) {
+            return get_string('queued', 'pulseaction_notification');
+        } else if ($value == self::STATUS_SEND) {
+            return get_string('send', 'pulseaction_notification');
+        } else {
+            return get_string('failed', 'pulseaction_notification');
+        }
+    }
+
+    protected static function get_modules_data($modules) {
+        global $DB, $CFG;
+
+        if (file_exists($CFG->dirroot.'/local/metadata/lib.php')) {
+            require_once($CFG->dirroot.'/local/metadata/lib.php');
+        }
+
+        $list = [];
+        foreach ($modules as $modname => $instances) {
+
+            $tablename = $DB->get_prefix().$modname;
+            list($insql, $inparams) = $DB->get_in_or_equal($instances, SQL_PARAMS_NAMED, 'md');
+
+            $sql = "SELECT md.*, cm.id as cmid FROM $tablename md
+            JOIN {modules} m ON m.name = '$modname'
+            JOIN {course_modules} cm ON cm.instance = md.id AND cm.module = m.id
+            WHERE md.id $insql";
+
+            $records = $DB->get_records_sql($sql, $inparams);
+
+            foreach ($records as $modid => $mod) {
+                $mod->type = $modname;
+
+                if (isset($list[$modname][$modid])) {
+                    continue;
+                }
+
+                if (function_exists('local_metadata_load_data')) {
+                    $newmod = (object) ['id' => $mod->cmid];
+                    local_metadata_load_data($newmod, CONTEXT_MODULE);
+                    unset($newmod->cmid);
+                    foreach ($newmod as $name => $value) {
+                        $key = str_replace('local_metadata_field_', 'metadata', $name);
+                        $mod->$key = $value;
+                    }
+                }
+
+                $list[$modname][$modid] = $mod;
+            }
+        }
+
+
+        return $list;
+    }
 }
 
 

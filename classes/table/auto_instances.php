@@ -21,14 +21,17 @@ class auto_instances extends table_sql {
     public function out($pagesize, $useinitialsbar, $downloadhelpbutton = '') {
 
         // Define table headers and columns.
-        $columns = ['title', 'reference', 'actions'];
-        $headers = ["", "", ""];
+        $columns = ['title', 'idnumber', 'actions'];
+        $headers = ["", "idnumber", ""];
 
         $this->define_columns($columns);
         $this->define_headers($headers);
 
         // Remove sorting for some fields.
-        $this->sortable(false, 'sortorder', SORT_ASC);
+        $this->sortable(true, 'sortorder', SORT_ASC);
+
+        $this->no_sorting('title');
+        $this->no_sorting('actions');
 
         $this->set_attribute('id', 'pulse_automation_template');
 
@@ -41,7 +44,8 @@ class auto_instances extends table_sql {
      * Guess the base url for the automation table.
      */
     public function guess_base_url(): void {
-        $this->baseurl = new moodle_url('/mod/pulse/automation/templates/list.php');
+        global $PAGE;
+        $this->baseurl = $PAGE->url;
     }
 
     /**
@@ -56,24 +60,36 @@ class auto_instances extends table_sql {
 
         $courseid = $PAGE->course->id;
         // Fetch all avialable records from smart menu table.
-        $this->set_sql('*, ai.id as id', '{pulse_autoinstances} ai JOIN {pulse_autotemplates_ins} AS ati ON ati.instanceid=ai.id', 'courseid=:courseid', ['courseid' => $courseid]);
+        $reference = "IF (ati.reference <> '', ati.reference, pat.reference)";
+        // $title = "IF (ati.title <> '', ati.title, pat.title)";
+
+        $this->set_sql(
+            "ai.*, ati.*, ai.id as id, $reference as idnumber",
+            '{pulse_autoinstances} ai
+            JOIN {pulse_autotemplates_ins} AS ati ON ati.instanceid=ai.id
+            JOIN {pulse_autotemplates} AS pat ON pat.id=ai.templateid',
+            'courseid=:courseid', ['courseid' => $courseid]
+        );
 
         parent::query_db($pagesize, $useinitialsbar);
 
         $rawdata = $this->rawdata;
+
         // Collects all the templates id in a array.
         $templates = array_column($rawdata, 'templateid');
         // Fetch the templates data with its actions for all the instances.
-        $templatedata = \mod_pulse\automation\templates::merge_instance_data($templates);
+        $templatedata = \mod_pulse\automation\templates::get_templates_record($templates);
         // Merge each instances with its templatedata, it will assign the template data for non overridden fields for instance.
         foreach ($rawdata as $key => $data) {
             $templateid = $data->templateid;
             if (isset($templatedata[$templateid])) {
                 // Merge the override instance data with its related template data.
+                // print_object($data);exit;
                 $this->rawdata[$key] = \mod_pulse\automation\helper::merge_instance_overrides($data, $templatedata[$templateid]);
             }
         }
 
+        $this->rawdata = array_filter($this->rawdata);
     }
 
     /**
@@ -90,7 +106,7 @@ class auto_instances extends table_sql {
         // TODO: Editable.
         $editable =  true; // has_capability('tool/mytest:update', context_system::instance());
         $title = new \core\output\inplace_editable(
-            'mod_pulse', 'title', $row->id, $editable, format_string($row->title),
+            'mod_pulse', 'instancetitle', $row->id, $editable, format_string($row->title),
             $row->title, 'Edit template title',  'New value for ' . format_string($row->title)
         );
 
@@ -101,11 +117,18 @@ class auto_instances extends table_sql {
             $value = $result;
         });
 
-        return implode(' ', array_column($actions, 'icon')) . $OUTPUT->render($title) . implode(' ', array_column($actions, 'badge'));
+        $collapseicon = html_writer::tag('span', $OUTPUT->pix_icon('t/collapsed', 'collapsenotes', 'moodle') , [
+            'data-target' => 'notes-collapse',
+            'data-notes' => $row->notes,
+            'data-collapse' => 1,
+            'data-instance' => $row->id
+        ]);
+
+        return $collapseicon . implode(' ', array_column($actions, 'icon')) . $OUTPUT->render($title) . implode(' ', array_column($actions, 'badge'));
     }
 
 
-    public function col_reference($row) {
+    public function col_idnumber($row) {
         $title = html_writer::tag('h5', $row->reference, ['class' => 'template-reference']);
         return $title;
     }
@@ -126,19 +149,24 @@ class auto_instances extends table_sql {
             'attributes' => array('class' => 'action-edit')
         );
 
-        // Make the menu duplicate.
-        /* $actions[] = array(
-            'url' => new \moodle_url($baseurl, ['action' => 'copy']),
-            'icon' => new \pix_icon('t/copy', \get_string('smartmenuscopymenu', 'theme_boost_union')),
-            'attributes' => array('class' => 'action-copy')
-        ); */
-        /* $overrides = '10 (<span> 8 </span>)';
-        $actions[] = html_writer::tag('label', $overrides, ['class' => 'overrides']); */
-
         $listurl = new \moodle_url('/mod/pulse/automation/instances/list.php', [
             'instanceid' => $row->instanceid,
             'sesskey' => \sesskey()
         ]);
+
+        // Make the instance duplicate.
+        $actions[] = array(
+            'url' => new \moodle_url($listurl, ['action' => 'copy']),
+            'icon' => new \pix_icon('t/copy', \get_string('instancecopy', 'pulse')),
+            'attributes' => array('class' => 'action-copy')
+        );
+
+        // Instance reports builder view.
+        $actions[] = array(
+            'url' => new \moodle_url($listurl, ['action' => 'report']),
+            'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
+            'attributes' => array('class' => 'action-copy')
+        );
 
         // Show/Hide.
         if ($row->status) {
@@ -155,29 +183,13 @@ class auto_instances extends table_sql {
             );
         }
 
-        // List of items.
-        // $itemsurl = new \moodle_url('/mod/pulse/automation/templates/edit.php', ['menu' => $row->id]);
-        // $actions[] = $this->edit_switch($row);
-
         // Delete.
         $actions[] = array(
             'url' => new \moodle_url($listurl, array('action' => 'delete')),
             'icon' => new \pix_icon('t/delete', \get_string('delete')),
             'attributes' => array('class' => 'action-delete'),
-            'action' => new \confirm_action(get_string('deletetemplate', 'pulse'))
+            'action' => new \confirm_action(get_string('deleteinstance', 'pulse'))
         );
-
-        /* // Move up/down.
-        $actions[] = array(
-            'url' => new \moodle_url($baseurl, array('action' => 'moveup')),
-            'icon' => new \pix_icon('t/up', \get_string('moveup')),
-            'attributes' => array('data-action' => 'moveup', 'class' => 'action-moveup')
-        );
-        $actions[] = array(
-            'url' => new \moodle_url($baseurl, array('action' => 'movedown')),
-            'icon' => new \pix_icon('t/down', \get_string('movedown')),
-            'attributes' => array('data-action' => 'movedown', 'class' => 'action-movedown')
-        ); */
 
         $actionshtml = array();
         foreach ($actions as $action) {

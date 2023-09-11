@@ -31,14 +31,14 @@ defined('MOODLE_INTERNAL') || die();
 $observers = [
     array(
         'eventname' => 'core\event\user_enrolment_created',
-        'callback' => '\pulsecondition_enrol\conditionform::user_enrolled',
+        'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
     ),
     array(
         'eventname' => 'core\event\user_enrolment_deleted',
-        'callback' => '\pulsecondition_enrol\conditionform::user_enrolled',
+        'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
     ),
     array(
         'eventname' => 'core\event\user_enrolment_updated',
-        'callback' => '\pulsecondition_enrol\conditionform::user_enrolled',
+        'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
     ),
 ];

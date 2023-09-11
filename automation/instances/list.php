@@ -31,6 +31,8 @@ require(__DIR__.'/../../../../config.php');
 // Require admin library.
 require_once($CFG->libdir.'/adminlib.php');
 
+
+
 // Get parameters.
 // $courseid = required_param('course', PARAM_INT); // Course id.
 $action = optional_param('action', null, PARAM_ALPHAEXT);
@@ -55,14 +57,13 @@ if (!($course = $DB->get_record('course', ['id' => $courseid]))) {
 
 // Page values.
 $context = \context_course::instance($courseid);
+// Verify the user capability.
+require_capability('mod/pulse:addtemplateinstance', $context);
 
 // Prepare the page.
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $courseid]));
 $PAGE->set_course($course);
-
-// admin_externalpage_setup('pulseautomation');
-// TODO: Capability checks.
 
 // Process actions.
 if ($action !== null && confirm_sesskey()) {
@@ -93,13 +94,22 @@ if ($action !== null && confirm_sesskey()) {
             // Disable the template visibility.
             $instance->update_status(true);
             break;
+
+        case 'copy':
+            // Duplicate the instance.
+            $instance->duplicate();
+            break;
+
+        case 'report':
+            $redirecturl = $instance->get_report_url();
+            break;
     }
 
     // Allow to update the changes to database.
     $transaction->allow_commit();
 
     // Redirect to the same page to view the templates list.
-    redirect($PAGE->url);
+    redirect($redirecturl ?? $PAGE->url);
 }
 
 $PAGE->add_body_class('mod-pulse-automation-table');
@@ -144,7 +154,36 @@ if ($countmenus < 1) {
 
     // And then show the table.
     $table->out(10, true);
+
+    $PAGE->requires->js_amd_inline('require(["jquery"], function($) {
+        var notes = document.querySelectorAll("[data-target=notes-collapse]");
+
+        if (notes !== null) {
+
+            notes.forEach((note) => {
+                note.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    var target = e.target.closest("[data-target=notes-collapse]");
+                    var collapse = target.dataset.collapse;
+                    var tbody = target.parentNode.parentNode.parentNode;
+                    if (collapse == "1") {
+                        // target.classList.add("show");
+                        var trNode = document.createElement("tr");
+                        trNode.id = "notes_"+target.dataset.instance;
+                        trNode.innerHTML = "<td colspan=\'4\'>"+target.dataset.notes+"</td>";
+                        tbody.insertBefore(trNode, target.parentNode.parentNode.nextSibling);
+                        target.dataset.collapse = 0;
+                    } else {
+                        var id = "#notes_"+target.dataset.instance;
+                        document.querySelector(id).remove();
+                        target.dataset.collapse = 1;
+                    }
+                })
+            });
+        }
+    })');
 }
+
 
 // Finish page output.
 echo $OUTPUT->footer();

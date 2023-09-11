@@ -16,11 +16,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
         global $CFG;
         require_once($CFG->dirroot.'/cohort/lib.php');
 
-        $mform->addElement('html', '<h3>'.get_string('pluginname', 'pulsecondition_cohort').'</h3>');
-
         $completionstr = get_string('condition', 'pulsecondition_cohort');
 
         $mform->addElement('select', 'condition[cohort][status]', $completionstr, $this->get_options());
+        $mform->addHelpButton('condition[cohort][status]', 'condition', 'pulsecondition_cohort');
 
         $cohorts = cohort_get_all_cohorts();
         $cohorts = $cohorts['cohorts'];
@@ -33,21 +32,33 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $cohorts = $mform->addElement('autocomplete', 'condition[cohort][cohorts]', get_string('cohorts', 'pulsecondition_cohort'), $cohorts);
         $cohorts->setMultiple(true);
         $mform->disabledIf('condition[cohort][cohorts]', 'condition[cohort][status]', 'eq', self::DISABLED);
+        $mform->addHelpButton('condition[cohort][cohorts]', 'cohorts', 'pulsecondition_cohort');
+
+        $mform->addElement('hidden', 'override[condition_cohort_cohorts]', 1);
+        $mform->setType('override[condition_cohort_cohorts]', PARAM_RAW);
     }
 
     public function is_user_completed($instancedata, $userid, \completion_info $completion=null) {
         global $CFG;
         require_once($CFG->dirroot.'/cohort/lib.php'); // Cohort library file inclusion.
-        // Get the notification suppres module ids.
+
+        // Find the cohort conditions is enabled if not then make this condition true.
+        if (!isset($instancedata->condition['cohort']['status']) || $instancedata->condition['cohort']['status'] == 0 ) {
+            return true;
+        }
+
+        // Get the cohort ids.
         $cohorts = $instancedata->condition['cohort']['cohorts'] ?? [];
 
         foreach ($cohorts as $cohort) {
+
             if (cohort_is_member($cohort, $userid)) {
                 return true;
             }
         }
 
-        return true;
+        // Cohorts are configured but not completed.
+        return !empty($cohorts) ? false : true;
     }
 
     /**
@@ -62,7 +73,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $data = $eventdata->get_data();
 
         $cohortid = $data['objectid'];
-        $relateduserid = $data['userid'];
+        $relateduserid = $data['relateduserid'];
 
         // Trigger the instances, this will trigger its related actions for this user.
         $patlike = $DB->sql_like('pat.triggerconditions', ':cohort');
@@ -88,7 +99,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
     }
 
 
-    public function process_instance_save($instanceid, $data) {
+    /*public function process_instance_save($instanceid, $data) {
         global $DB;
 
         $record = [
@@ -108,13 +119,13 @@ class conditionform extends \mod_pulse\automation\condition_base {
         }
 
         return true;
-    }
+    } */
 
-    public function include_data_forinstance(&$instance, $data) {
+ /*    public function include_data_forinstance1(&$instance, $data) {
         $instance->condition[$this->component] = $data->additional ? json_decode($data->additional, true) : [];
         $instance->condition[$this->component]['status'] = $data->status;
         $instance->override['condition_cohort_status'] = 1;
         $instance->override['condition_cohort_cohorts'] = 1;
-    }
+    } */
 
 }

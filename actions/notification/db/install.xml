@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/pulse/actions/notification/db" VERSION="20230825" COMMENT="XMLDB file for Moodle mod/pulse/actions/notification"
+<XMLDB PATH="mod/pulse/actions/notification/db" VERSION="20230914" COMMENT="XMLDB file for Moodle mod/pulse/actions/notification"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
 >
@@ -33,15 +33,15 @@
         <FIELD NAME="timemodified" TYPE="datetime" NOTNULL="false" DEFAULT="current_timestamp()" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="id" TYPE="primary" FIELDS="id"/>
         <KEY NAME="templateid" TYPE="unique" FIELDS="templateid"/>
+        <KEY NAME="id" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="pulseaction_notification_ins" COMMENT="pulseaction_notification_ins table retrofitted from MySQL">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="instanceid" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="sender" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="sender" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="senderemail" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="notifyinterval" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="week" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"/>
@@ -50,7 +50,7 @@
         <FIELD NAME="notifydelay" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="delayduration" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="suppress" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="suppressoperator" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="suppressoperator" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="notifylimit" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="recipients" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="cc" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -61,12 +61,13 @@
         <FIELD NAME="dynamiccontent" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contentlength" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contenttype" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="chapterid" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="footercontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="datetime" NOTNULL="false" DEFAULT="current_timestamp()" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="instanceid" TYPE="unique" FIELDS="instanceid"/>
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="instanceid" TYPE="unique" FIELDS="instanceid"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="pulseaction_notification_sch" COMMENT="pulseaction_notification_sch table retrofitted from MySQL">
@@ -75,16 +76,14 @@
         <FIELD NAME="instanceid" TYPE="int" LENGTH="18" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="18" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="type" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="notifiycount" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="lastrun" TYPE="datetime" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="nextrun" TYPE="datetime" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="notifycount" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="scheduletime" TYPE="int" LENGTH="18" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="notifiedtime" TYPE="int" LENGTH="18" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="2" SEQUENCE="false"/>
         <FIELD NAME="suppressreached" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="instanceid" TYPE="unique" FIELDS="instanceid, userid"/>
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>

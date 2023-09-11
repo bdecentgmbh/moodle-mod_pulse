@@ -601,31 +601,46 @@ function mod_pulse_output_fragment_completionbuttons($args) {
 
 
 function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $DB, $PAGE;
+    $context = \context_system::instance();
+    $PAGE->set_context($context);
+    require_login();
 
-    if ($itemtype === 'title') {
-        global $DB, $PAGE;
-        $context = \context_system::instance();
-        $PAGE->set_context($context);
-        require_login();
+    if ($itemtype === 'templatetitle') {
 
         $record = $DB->get_record('pulse_autotemplates', array('id' => $itemid), '*', MUST_EXIST);
         // Must call validate_context for either system, or course or course module context.
-        // TODO: This will both check access and set current context.
         // \external_api::validate_context(context_system::instance());
         // Check permission of the user to update this item.
-        // require_capability('tool/mytest:update', context_system::instance());
+        require_capability('mod/pulse:addtemplate', context_system::instance());
         // Clean input and update the record.
         $newvalue = clean_param($newvalue, PARAM_NOTAGS);
         $DB->update_record('pulse_autotemplates', array('id' => $itemid, 'title' => $newvalue));
         // Prepare the element for the output:
         $record->title = $newvalue;
         return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
-            format_string($record->title), $record->title, 'Edit template title',  'New value for ' . format_string($row->title));
+            format_string($record->title), $record->title, 'Edit template title',  'New value for ' . format_string($record->title));
+
+    } else if ($itemtype === 'instancetitle') {
+
+        $record = $DB->get_record('pulse_autotemplates_ins', array('instanceid' => $itemid), '*', MUST_EXIST);
+
+        // \external_api::validate_context(context_system::instance());
+        // Check permission of the user to update this item.
+        require_capability('mod/pulse:addtemplateinstance', context_system::instance());
+        // Clean input and update the record.
+        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
+        $DB->update_record('pulse_autotemplates_ins', array('id' => $record->id, 'title' => $newvalue));
+        // Prepare the element for the output:
+        $record->title = $newvalue;
+        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
+            format_string($record->title), $record->title, 'Edit template title',  'New value for ' . format_string($record->title));
     }
 }
 
 
 function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context){
+    global $PAGE;
 
     $addnode = true; // $context->contextlevel === 50;
     $addnode = $addnode && has_capability('gradereport/grader:view', $context); // TODO: Custom capability.
@@ -639,8 +654,10 @@ function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClas
         $node->add_class('automation-templates');
         $node->set_force_into_more_menu(false);
         $node->set_show_in_secondary_navigation(true);
+        $node->key = 'automation-templates';
         $navigation->add_node($node, 'gradebooksetup');
 
+        $PAGE->requires->js_call_amd('mod_pulse/automation', 'instanceMenuLink', []);
     }
 
     // ...

@@ -25,17 +25,21 @@ class template_addinstance_form extends \moodleform {
         $mform->setType('courseid', PARAM_INT);
 
         // List of templates to create instance.
-        $templates = mod_pulse\automation\helper::get_templates_forinstance();
-        $mform->addElement('select', 'templateid', '', $templates);
+        $templates = mod_pulse\automation\helper::get_templates_forinstance($courseid);
+        if (!empty($templates)) {
+            $mform->addElement('select', 'templateid', '', $templates);
+        }
 
         $this->add_action_buttons(false, get_string('addtemplatebtn', 'pulse'));
     }
 }
 
-
+/**
+ * Course context class to create a context_course instance from record
+ */
 class mod_pulse_context_course extends \context_course {
 
     public static function create_instance_fromrecord($data) {
-        return new self($data);
+        return \context::create_instance_from_record($data);
     }
 }

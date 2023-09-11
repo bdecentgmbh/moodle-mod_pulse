@@ -29,7 +29,10 @@ class auto_templates extends table_sql {
         $this->define_headers($headers);
 
         // Remove sorting for some fields.
-        $this->sortable(false, 'sortorder', SORT_ASC);
+        $this->sortable(true, 'sortorder', SORT_ASC);
+
+        $this->no_sorting('title');
+        $this->no_sorting('actions');
 
         $this->set_attribute('id', 'pulse_automation_template');
 
@@ -72,7 +75,7 @@ class auto_templates extends table_sql {
         // TODO: Editable.
         $editable =  true; // has_capability('tool/mytest:update', context_system::instance());
         $title = new \core\output\inplace_editable(
-            'mod_pulse', 'title', $row->id, $editable, format_string($row->title),
+            'mod_pulse', 'templatetitle', $row->id, $editable, format_string($row->title),
             $row->title, 'Edit template title',  'New value for ' . format_string($row->title)
         );
 

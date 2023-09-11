@@ -23,15 +23,17 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define([], function() {
+define(['core_editor/events'], function(events) {
+
+    var tinyEditor = false;
 
     return {
-
         /**
          * Setup the classes to editors works with placeholders.
          */
         init: function() {
             var module = this;
+
             var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             for (var l = 0; l < templatevars.length; l++) {
                 templatevars[l].addEventListener('click', function() {
@@ -39,6 +41,7 @@ define([], function() {
                     module.insertCaretActive(EditorInput);
                 });
             }
+
             var notificationheader = document.getElementById('admin-notificationheader');
             if (notificationheader !== null) {
                 notificationheader.addEventListener('click', function() {
@@ -55,11 +58,57 @@ define([], function() {
                 });
             }
 
+                // console.log(window.tinyMCE.get());
+            var targetNode = document.querySelector('textarea[id$=_editor]');
+            if (targetNode !== null) {
+                var observer = new MutationObserver(function() {
+                    if (targetNode.style.display == 'none') {
+                        setTimeout(initIframeListeners, 100);
+                    }
+                });
+                observer.observe(targetNode, { attributes: true, childList: true });
+            }
+
+            const initIframeListeners = () => {
+                var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
+                if (iframes === null || !iframes.length) {
+                    return false;
+                }
+
+                iframes.forEach((iframe) => {
+                    iframe.contentDocument.addEventListener('click', function(e) {
+
+                        var currentFrame = e.target;
+                        iframes.forEach((frame) => {
+                            var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
+                            if (frameElem != null) {
+                                frameElem.classList.remove("insertatcaretactive");
+                            }
+                        });
+
+                        var contentBody = currentFrame.querySelector('body');
+                        if (contentBody !== null) {
+                            contentBody.classList.add("insertatcaretactive");
+                            var id = contentBody.dataset.id;
+                            var editor = window.tinyMCE.get(id);
+                            tinyEditor = editor;
+                        }
+                    });
+                });
+            }
+
+
             var clickforword = document.getElementsByClassName('clickforword');
             for (var i = 0; i < clickforword.length; i++) {
                 clickforword[i].addEventListener('click', function(e) {
                     e.preventDefault(); // To prevent the default behaviour of a tag.
-                    module.insertAtCaret("{" + this.getAttribute('data-text') + "}");
+
+                    var content = "{" + this.getAttribute('data-text') + "}";
+                    if (tinyEditor) {
+                        tinyEditor.selection.setContent(content);
+                    } else {
+                        module.insertAtCaret(content);
+                    }
                 });
             }
 
@@ -80,6 +129,10 @@ define([], function() {
         },
 
         insertCaretActive: function(EditorInput) {
+            if (EditorInput === null) {
+                return;
+            }
+            tinyEditor = false;
             var caret = document.getElementsByClassName("insertatcaretactive");
             for (var j = 0; j < caret.length; j++) {
                 caret[j].classList.remove("insertatcaretactive");

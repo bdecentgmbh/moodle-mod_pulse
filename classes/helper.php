@@ -51,8 +51,22 @@ class helper {
     public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
         global $DB, $CFG;
         require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+
+        // Load user profile field data.
+        $newuser = (object) ['id' => $user->id];
+        profile_load_data($newuser);
+        // Make the profile custom field data to separate element of the user object.
+        $newuserkeys = array_map(function($value) {
+            return str_replace('profile_field_', '', $value);
+        }, array_keys((array) $newuser));
+        $user->profilefield = (object) array_combine($newuserkeys, (array) $newuser);
+
+        // Load course custom profuile fields.
+        $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
+
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
         $amethods = pulse_email_vars::vars(); // List of available placeholders.
+        // print_object($mod);exit;
         $vars = new pulse_email_vars($user, $course, $sender, $mod);
 
         foreach ($amethods as $funcname) {

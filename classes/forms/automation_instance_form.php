@@ -21,6 +21,8 @@ class automation_instance_form extends automation_template_form {
 
         $mform =& $this->_form;
 
+        $mform->updateAttributes(['id' => 'pulse-automation-template' ]);
+
         $course = $this->_customdata['courseid'] ?? '';
         $mform->addElement('hidden', 'courseid', $course);
         $mform->setType('courseid', PARAM_INT);
@@ -33,9 +35,12 @@ class automation_instance_form extends automation_template_form {
         $mform->addElement('hidden', 'instanceid', $templateid);
         $mform->setType('instanceid', PARAM_INT);
 
+        $mform->removeElement('visible');
+        $mform->removeElement('categories');
 
         // Get the list of elments add in this form. create override button for all elements expect the hidden elements.
         $elements = $mform->_elements;
+        // print_object($elements);exit;
 
         if (!empty($elements)) {
             // List of element type don't need to add the override option.
@@ -44,10 +49,14 @@ class automation_instance_form extends automation_template_form {
                 // $nextelement = next($elements);
 
                 if (!in_array($element->getType(), $dontoverride) && $element->getName() !== 'buttonar') {
+                    // $lock = $lockelements
                     $this->add_override_element($element);
                 }
             }
         }
+
+        // Return to the required element tab on submit.
+        // $PAGE->requires->js_call_amd('mod_pulse/automation', 'init');
 
     }
 
@@ -56,6 +65,7 @@ class automation_instance_form extends automation_template_form {
 
         $elementname = $element->getName();
         $orgelementname = $elementname;
+
 
         /* // Rename the editor elements.
         if (str_ends_with($elementname, '_editor')) {
@@ -68,8 +78,13 @@ class automation_instance_form extends automation_template_form {
         } else {
             $name = 'override[' . $elementname .']';
         }
+        // Override element already exists, no need to create new one.
+        if (isset($mform->_elementIndex[$name])) {
+            return;
+        }
 
-        $overrideelement = $mform->createElement('advcheckbox', $name, '', 'Override', array('group' => 1, 'class' => 'wrap'), array(0, 1));
+        // $html = html_writer::tag('span', '', ['class' => 'custom-control-label']);
+        $overrideelement = $mform->createElement('advcheckbox', $name, '', '', array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
 
         // Insert the override checkbox before the element.
         if (isset($mform->_elementIndex[$orgelementname]) && $mform->_elementIndex[$orgelementname]) {
@@ -94,7 +109,7 @@ class automation_instance_form extends automation_template_form {
 
         $mform->addElement('html', '<div class="tab-pane fade" id="pulse-condition-tab"> ');
 
-        $mform->addElement('html', '<h3>'.get_string('general').'</h3>');
+        $mform->addElement('header', 'generalconditions', '<h3>'.get_string('general').'</h3>');
 
         // Operator element.
         $operators = [
@@ -102,14 +117,20 @@ class automation_instance_form extends automation_template_form {
             \mod_pulse\automation\action_base::OPERATOR_ANY => get_string('any', 'pulse'),
         ];
         $mform->addElement('select', 'triggeroperator', get_string('triggeroperator', 'pulse'), $operators);
+        $mform->addHelpButton('triggeroperator', 'triggeroperator', 'pulse');
 
         $conditionplugins = new \mod_pulse\plugininfo\pulsecondition();
         $plugins = $conditionplugins->get_plugins_base();
 
         $option = [];
         foreach ($plugins as $name => $plugin) {
+            $header = $mform->addElement('header', $name, get_string('pluginname', 'pulsecondition_'.$name));
+
             $plugin->load_instance_form($mform, $this);
+            $plugin->upcoming_element($mform);
+            $mform->setExpanded($name);
         }
+        $mform->addElement('html', '</fieldset>'); // E.o of actions triggere tab.
 
         $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
 
@@ -126,21 +147,37 @@ class automation_instance_form extends automation_template_form {
 
         // $mform->addElement('html', '<div class="tab-pane fade" id="pulse-action-tab"> ');
 
+        // $mform->addElement('html', '</fieldset>'); // E.o of actions triggere tab.
 
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
         $plugins = $actionplugins->get_plugins_base();
 
         $option = [];
         foreach ($plugins as $name => $plugin) {
+            // Define the form elements inside the definition function.
+            $mform->addElement('html', '<div class="tab-pane fcontainer fade" id="pulse-action-'.$name.'"> ');
+            $mform->addElement('html', '<h4>'.get_string('pluginname', 'pulseaction_'.$name).'</h4>');
+            // Load the instance elements for this action.
             $plugin->load_instance_form($mform, $this);
+
+            // $mform->setExpanded($name);
+            $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
         }
 
-        // $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
 
     }
 
-    public function get_customdata($key) {
-        return $this->_customdata[$key] ?? '';
+
+
+    public function get_default_values($key) {
+        return $this->_form->_defaultValues[$key] ?? [];
+    }
+
+    public function definition_after_data() {
+        $plugins = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
+        foreach ($plugins as $name => $plugin) {
+            $plugin->definition_after_data($this->_form, $this);
+        }
     }
 
     public function validation($data, $files) {

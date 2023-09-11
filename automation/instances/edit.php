@@ -65,11 +65,10 @@ if ($templateid) {
     $url->params(['templateid' => $templateid]);
 }
 
-
-// TODO: Capability checks.
-
 // Page values.
 $context = \context_course::instance($course->id);
+// Verify the user capability.
+require_capability('mod/pulse:addtemplateinstance', $context);
 
 // Setup page values.
 $PAGE->set_url($url);
@@ -77,17 +76,18 @@ $PAGE->set_context($context);
 
 // Edit automation templates form.
 $templatesform = new \mod_pulse\forms\automation_instance_form(null, ['templateid' => $templateid, 'courseid' => $course->id, 'instanceid' => $instanceid]);
-// $instancedata = $template//
 
+// Instance list page url for this course.
 $overviewurl = new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id, 'sesskey' => sesskey()]);
 
+// Instance form submitted, handel the submitted data.
 if ($formdata = $templatesform->get_data()) {
-
     $result = mod_pulse\automation\instances::manage_instance($formdata);
-    // Redirect to menus list.
+    // Redirect to instances list.
     redirect($overviewurl);
 
 } else if ($templatesform->is_cancelled()) {
+    // Form cancelled redirect to list page.
     redirect($overviewurl);
 }
 
@@ -95,6 +95,7 @@ if ($formdata = $templatesform->get_data()) {
 if ($instanceid !== null && $instanceid > 0) {
 
     if ($record = mod_pulse\automation\instances::create($instanceid)->get_instance_formdata()) {
+        // print_object($record); exit;
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
     } else {
@@ -112,24 +113,25 @@ if ($instanceid !== null && $instanceid > 0) {
     if ($record = mod_pulse\automation\templates::create($templateid)->get_template()) {
         // Attach the course id to the templates.
         $record->courseid = $courseid;
-        // $record->templateid = $record->id;
+        // Convert the trigger conditions to separate element.
         $conditions = $record->triggerconditions;
         foreach ($conditions as $condition) {
-            $record->{'condition_'.$condition} = condition_base::ALL;
+            $record->{'condition['.$condition.'][status]'} = condition_base::ALL;
         }
 
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
+        // exit;
     } else {
-        // Direct the user to list page with error message, when the requested menu is not available.
+        // Direct the user to list page with error message, when the requested template instance is not available.
         \core\notification::error(get_string('templatesrecordmissing', 'pulse'));
         redirect($overviewurl);
     }
 
 }
-
+// Template edit page heading.
 $PAGE->set_heading(format_string($course->fullname));
-
+// PAGE breadcrumbs.
 $PAGE->navbar->add(get_string('mycourses', 'core'), new moodle_url('/course/index.php'));
 $PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', array('id' => $course->id)));
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id]));
@@ -138,12 +140,10 @@ $PAGE->navbar->add(get_string('autoinstances', 'pulse'));
 // Page content display started.
 echo $OUTPUT->header();
 
-// Smart menu heading.
+// Template heading.
 echo $OUTPUT->heading(get_string('editinstance', 'pulse'));
 
-// echo mod_pulse\automation\helper::get_instance_formtabs();
-
-// Display the smart menu form for create or edit.
+// Display the template form for create or edit.
 echo $templatesform->display();
 
 // Footer.

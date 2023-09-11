@@ -41,6 +41,8 @@ $context = \context_system::instance();
 
 admin_externalpage_setup('pulseautomation');
 
+// Verify the user capability.
+require_capability('mod/pulse:addtemplate', $context);
 
 // Prepare the page.
 $PAGE->set_context($context);
@@ -108,21 +110,19 @@ $table->define_baseurl($PAGE->url);
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('autotemplates', 'pulse'));
 
-// Show smart menus description.
+// Show templates description.
 echo get_string('autotemplates_desc', 'pulse');
 
-// Prepare 'Create smart menu' button. // TODO Review.
+// Prepare 'Create template' button.
 $createbutton = $OUTPUT->box_start();
 $createbutton .= mod_pulse\automation\helper::template_buttons();
 $createbutton .= $OUTPUT->box_end();
 
-// echo $createbutton;
-
-// If there aren't any smart menus yet.
+// If there aren't any templates yet.
 $countmenus = $DB->count_records('pulse_autotemplates');
 if ($countmenus < 1) {
     // Show the table, which, since it is empty, falls back to the
-    // "There aren't any smart menus created yet. Please create your first smart menu to get things going." notice.
+    // "There aren't any templates created yet. Please create your first template to get things going." notice.
     $table->out(0, true);
 
     // And then show the button.
@@ -158,11 +158,12 @@ $PAGE->requires->js_amd_inline("require(['jquery', 'core/modal_factory', 'core/m
             saveBtn.innerHTML = {{#str}} Update Instances {{/str}} */
 
             ModalFactory.create({
+                title: Str.get_string('updatetemplate', 'pulse'),
                 type: ModalFactory.types.SAVE_CANCEL,
                 body: Str.get_string('templatestatusudpate', 'pulse')
             }).then(function(modal) {
-                modal.setButtonText('save', 'Update Template & Instance');
-                modal.setButtonText('cancel', 'Update Template');
+                modal.setButtonText('save', Str.get_string('updateinstance', 'pulse') );
+                modal.setButtonText('cancel', Str.get_string('updatetemplate', 'pulse'));
                 modal.show();
 
                 modal.getRoot().on(ModalEvents.save, (e) => {

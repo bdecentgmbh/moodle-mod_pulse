@@ -24,6 +24,7 @@
 
 namespace pulseaction_notification\task;
 
+use pulseaction_notification\schedule;
 use pulseaction_notification\notification;
 use tool_dataprivacy\form\context_instance;
 
@@ -51,9 +52,7 @@ class notify_users extends \core\task\scheduled_task {
      * @return void
      */
     public function execute() {
-        global $CFG;
-
-        notification::send_scheduled_notification();
+        schedule::instance()->send_scheduled_notification();
     }
 
     /**
@@ -80,20 +79,38 @@ class notify_users extends \core\task\scheduled_task {
 
         // Get all the notification instance configures the suppress with this activity.
         $notifications = self::get_suppress_notifications($cmid);
+        
+
+        self::is_suppress_reached($notifications, $userid, $course, $completion);
+        
+    }
+
+    public static function is_suppress_reached($notifications, $userid, $course, $completion=null) {
+        global $DB;
+
+        $completion = $completion ?: new \completion_info($course);
+
         foreach ($notifications as $notification) {
             // Get the notification suppres module ids.
             $suppress = $notification->suppress ? json_decode($notification->suppress) : '';
+            // print_r($suppress);
             if (!empty($suppress)) {
                 $result = [];
                 // Find the completion status for all this suppress modules.
                 foreach ($suppress as $cmid) {
-                    $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
+                    if (method_exists($completion, 'get_completion_data')) {
+                        $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
+                    } else {
+                        $cminfo = get_coursemodule_from_id('', $cmid);
+                        $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);                        
+                    }
                     if ($modulecompletion['completionstate'] == COMPLETION_COMPLETE) {
                         $result[] = true;
                     }
                 }
+               
                 // If suppress operator set as all, check all the configures modules are completed.
-                if ($notification->suppressopertor == \mod_pulse\automation\action_base::OPERATOR_ALL) {
+                if ($notification->suppressoperator == \mod_pulse\automation\action_base::OPERATOR_ALL) {
                     // Remove the schedule only if all the activites are completed.
                     if (count($result) == count($suppress)) {
                         $remove = true;
@@ -105,15 +122,28 @@ class notify_users extends \core\task\scheduled_task {
                         $remove = true;
                     }
                 }
+                
                 // Update the flag to user schedules as suppress reached, it prevents the update of the schedule on notification.
                 if (isset($remove) && $remove) {
-                    $remove = false; // Reset for the next notification test.
-                    $list = ['instanceid' => $notification->instanceid, 'userid' => $userid];
-                    $DB->set_field('puselaction_notification_sch', 'suppressreached', '1', $list);
+                    $remove = false; // Reset for the next notification test.                   
+                    
+                    $sql = "SELECT * FROM {pulseaction_notification_sch}
+                            WHERE instanceid = :instanceid AND userid = :userid AND (status = :disabledstatus  OR status = :queued)";
+
+                    $params = [
+                        'instanceid' => $notification->instanceid, 'userid' => $userid, 'disabledstatus' => notification::STATUS_DISABLED,
+                        'queued' => notification::STATUS_QUEUED
+                    ];
+
+                    if ($record = $DB->get_record_sql($sql, $params)) {
+                        $DB->set_field('pulseaction_notification_sch', 'suppressreached', notification::SUPPRESSREACHED, ['id' => $record->id]);
+                    }
+
+                    $suppressreached[$notification->id] = notification::SUPPRESSREACHED;
                 }
             }
 
-            return true;
+            return $suppressreached ?? false;
         }
     }
 

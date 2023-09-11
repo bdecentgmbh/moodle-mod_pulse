@@ -1,5 +1,6 @@
 .path-mod-pulse .fcontainer .emailvars span,
-#page-admin-setting-local_pulsepro_settings .emailvars span {
+#page-admin-setting-local_pulsepro_settings .emailvars span,
+.path-admin-mod-pulse .emailvars span {
     color: #000;
     background: #ffbf46;
     padding: 3px 7px;
@@ -10,14 +11,16 @@
 }
 
 .path-mod-pulse .emailvars,
-#page-admin-setting-local_pulsepro_settings .emailvars {
+#page-admin-setting-local_pulsepro_settings .emailvars,
+.path-admin-mod-pulse .emailvars {
     position: relative;
     font-size: smaller;
 }
 
 @media (max-width: 767px) {
     .path-mod-pulse .fcontainer .emailvars,
-    #page-admin-setting-local_pulsepro_settings .emailvars {
+    #page-admin-setting-local_pulsepro_settings .emailvars,
+    .path-admin-mod-pulse .emailvars {
         width: 100%;
     }
 }
@@ -145,6 +148,33 @@
 }
 
 /* Automation templates table */
+.mod-pulse-automation-table .template-add-form .form-group {
+    margin: 0;
+    display: inline-block;
+    vertical-align: top;
+}
+.mod-pulse-automation-table .template-add-form .form-group .col-md-3 {
+    width: 0;
+    max-width: none;
+    flex: 0;
+    padding: 0;
+    margin: 0;
+}
+.mod-pulse-automation-table .template-add-form .form-group .col-md-9 {
+    max-width: none;
+    padding-left: 0;
+}
+/* .mod-pulse-automation-table .template-add-form {
+    display: flex;
+    align-items: center;
+} */
+.mod-pulse-automation-table .template-add-form > * {
+    display: inline-block;
+    vertical-align: top;
+}
+.mod-pulse-automation-table .template-add-form > a.btn {
+    margin-bottom: 1rem;
+}
 .mod-pulse-automation-table table.generaltable {
     border-spacing: 0 10px;
     border-collapse: separate;
@@ -203,4 +233,47 @@
     color: #000;
     display: inline-block;
     margin-right: 10px;
+}
+form.mform .tab-content .tab-pane .form-group .form-inline span.override-count-element {
+    font-size: 14px;
+    color: #000;
+    display: inline-block;
+    margin-left: 10px;
+    background-color: #ced4da;
+    cursor: pointer;
+}
+
+/* Templates Instance style */
+form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch {
+    width: 4rem;
+    padding-left: 20px;
+    margin-top: 8px;
+    display: inline-block;
+    vertical-align: top;
+}
+form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch .form-check {
+    align-items: normal;
+}
+form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch .checkboxgroupautomation {
+    width: 2.5rem;
+    margin: 0;
+    z-index: 1;
+}
+.reportbuilder-report table tbody td a.pulse-automation-info-block i {
+    width: 18px;
+    height: 18px;
+    font-size: 13px;
+    color: #fff;
+    line-height: 18px;
+    text-align: center;
+    margin-left: 5px;
+    background: #0f6cbf;
+    border-radius: 50%;
+}
+.generalbox .sort-autotemplates {
+    float: right;
+}
+.generalbox .sort-autotemplates i {
+    margin-right: 5px;
+    vertical-align: middle;
 }

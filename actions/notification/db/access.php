@@ -36,14 +36,12 @@ $capabilities = array(
     ),
 
     'pulseaction/notification:sender' => array(
-        'riskbitmask' => RISK_XSS,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSE,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
         'archetypes' => array(
-            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'teacher' => CAP_PREVENT
+            'teacher' => CAP_ALLOW
         ),
-        'clonepermissionsfrom' => 'mod/pulse:addinstance'
     ),
+
 );

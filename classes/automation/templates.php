@@ -78,16 +78,14 @@ class templates {
             }
         }
 
+        // Merge the override data intop of template data.
         $data = (object) \mod_pulse\automation\helper::merge_instance_overrides($autotemplateins, $autotemplate);
 
         // Convert the json values to array.
         $data->tenants = json_decode($data->tenants);
         $data->categories = json_decode($data->categories);
         $data->triggerconditions = json_decode($data->triggerconditions);
-
-        // Get the tags for the template.
-        $tagoptions = self::get_tag_options();
-        $data->tags = core_tag_tag::get_item_tags_array($tagoptions['component'], $tagoptions['itemtype'], $data->id);
+        $data->tags = json_decode($data->tags);
 
         $data->templateid = $autotemplate->id;
         unset($data->id); // Remove the template id.
@@ -125,6 +123,36 @@ class templates {
         $sql .= " WHERE te.id=:templateid";
 
        return $DB->get_record_sql($sql, ['templateid' => $this->templateid]);
+    }
+
+    /**
+     * List of instanced created using this template
+     *
+     * @return void
+     */
+    public function get_instances() {
+        global $DB;
+
+        $instances = $DB->get_records('pulse_autoinstances', ['templateid' => $this->templateid]);
+        $overrides = [];
+        $overinstances = [];
+        if (!empty($instances)) {
+            foreach ($instances as $instanceid => $instance) {
+                $insobj = new \mod_pulse\automation\instances($instance->id);
+                $formdata = (object) $insobj->get_instance_formdata();
+                foreach ($formdata->override as $key => $value) {
+                    if (isset($overrides[$key])) {
+                        $overrides[$key] += 1;
+                        $overinstances[$key][] = ['id' => $instance->id, 'name' => $formdata->title];
+                    } else {
+                        $overrides[$key] = 1;
+                        $overinstances[$key] = [['id' => $instance->id, 'name' => $formdata->title]];
+                    }
+                }
+            }
+        }
+
+        return [$overrides, $overinstances];
     }
 
     /**
@@ -221,7 +249,7 @@ class templates {
     public static function get_tag_options() {
 
         return [
-            'itemtype' => 'automation_templates',
+            'itemtype' => 'pulse_autotemplates',
             'component' => 'mod_pulse'
         ];
     }
@@ -229,9 +257,13 @@ class templates {
     public static function get_tag_instance_options() {
 
         return [
-            'itemtype' => 'automation_instances',
+            'itemtype' => 'pulse_autotemplates_ins',
             'component' => 'mod_pulse'
         ];
+    }
+
+    public function get_template_option_override($count=true) {
+
     }
 
     /**
@@ -249,18 +281,15 @@ class templates {
         $record = clone $formdata;
 
         // Encode the multiple value elements into json to store.
-        $record->tenants = json_encode($formdata->tenants);
-        $record->categories = json_encode($formdata->categories);
-
-        array_walk($record, function(&$value) {
+        foreach ($record as $key => $value) {
             if (is_array($value)) {
-                $value = json_encode($value);
+                $record->$key = json_encode($value);
             }
-        });
+        }
 
-        // print_object($record);exit;
         $transaction = $DB->start_delegated_transaction();
 
+        // Create template record.
         if (isset($formdata->id) && $DB->record_exists('pulse_autotemplates', ['id' => $formdata->id])) {
             $templateid = $formdata->id;
             // Update the template.
@@ -269,22 +298,25 @@ class templates {
             // Show the edited success notification.
             \core\notification::success(get_string('templateupdatesuccess', 'pulse'));
         } else {
+            // print_object($record);exit;
             $templateid = $DB->insert_record('pulse_autotemplates', $record);
             // Show the inserted success notification.
             \core\notification::success(get_string('templateinsertsuccess', 'pulse'));
         }
 
+        // Update template tags.
         $tagoptions = self::get_tag_options();
         $context = context_system::instance();
+
         if (!empty($formdata->tags)) {
             \core_tag_tag::set_item_tags($tagoptions['component'], $tagoptions['itemtype'], $templateid, $context, $formdata->tags);
         }
 
+        // Store actions data.
         // Send the data to action plugins for perform the data store.
         // Find list of actions.
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
         $plugins = $actionplugins->get_plugins_base();
-
 
         foreach ($plugins as $component => $pluginbase) {
             $formdata->templateid = $templateid;
@@ -296,6 +328,13 @@ class templates {
         return $templateid;
     }
 
+    /**
+     * Update instance data.
+     *
+     * @param [type] $instanceid
+     * @param [type] $options
+     * @return void
+     */
     public static function update_instance_data($instanceid, $options) {
         global $DB;
 
@@ -318,7 +357,7 @@ class templates {
         return false;
     }
 
-    public static function merge_instance_data($templates) {
+    public static function get_templates_record($templates) {
         global $DB;
 
         if (empty($templates)) {
@@ -326,34 +365,13 @@ class templates {
         }
 
         list($insql, $inparams) = $DB->get_in_or_equal($templates, SQL_PARAMS_NAMED, 'ins');
-        $actions = \mod_pulse\plugininfo\pulseaction::get_list();
-
-        $i=0;
-        $select = ['te.id as templateid'];
-        /* foreach ($actions as $action) {
-            $i++;
-            $tablename = $action->get_tablename();
-            if (!$tablename) {
-                continue;
-            }
-            $sht = 'ac'.$i;
-            $join[] = " JOIN $tablename AS $sht ON $sht.templateid=te.id ";
-            $select[] = "$sht.id as $sht, $sht.*";
-        } */
-        $select[] = 'te.*';
-        $select = implode(', ', $select);
-        // $join = implode(' ', $join);
-
-        $sql = "SELECT $select FROM {pulse_autotemplates} te";
-        // $sql .= $join;
-        $sql .= " WHERE te.id $insql";
+        $sql = "SELECT * FROM {pulse_autotemplates} te WHERE te.id $insql";
 
         $tempoverride = $DB->get_records_sql($sql, $inparams);
 
         return $tempoverride;
         /* foreach ($rawdata as $key => $data) {
             $templateid = $data->templateid;
-
         } */
     }
 

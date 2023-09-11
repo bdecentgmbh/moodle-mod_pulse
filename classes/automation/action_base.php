@@ -6,9 +6,9 @@ use moodle_exception;
 
 abstract class action_base {
 
-    const OPERATOR_ANY = '1';
+    const OPERATOR_ANY = 1;
 
-    const OPERATOR_ALL = '2';
+    const OPERATOR_ALL = 2;
 
     protected $component;
 
@@ -47,9 +47,15 @@ abstract class action_base {
         return $DB->get_prefix().'pulseaction_'.$this->component;
     }
 
+    public function definition_after_data(&$mform, $forminstance) {
+    }
 
     public function prepare_editor_fileareas(&$data, \context $context) {
         return false;
+    }
+
+    public function trigger_action_event($instancedata, $method, $eventdata) {
+        return true;
     }
 
     // Load instance form.
@@ -71,7 +77,7 @@ abstract class action_base {
     }
 
 
-    protected function filter_action_data($record) {
+    public function filter_action_data($record) {
 
         $shortname = $this->config_shortname();
 
@@ -90,7 +96,6 @@ abstract class action_base {
 
         // In moodle, the main table should be the name of the component.
         // Therefore, generate the table name based on the component name.
-
         $actiondata = $this->get_data_fortemplate($data->templateid);
 
         if (empty($actiondata)) {
@@ -119,7 +124,7 @@ abstract class action_base {
      * @param [type] $instance
      * @return void
      */
-    public function include_data_forinstance(&$instance) {
+    public function include_data_forinstance(&$instance, $addprefix=true) {
 
         $actiondata = $this->get_data_fortemplate($instance->templateid);
 
@@ -141,11 +146,14 @@ abstract class action_base {
             }
         }
 
+        /* print_object($instance);
+        exit; */
         $actiondata = \mod_pulse\automation\helper::merge_instance_overrides($actioninstancedata, $actiondata);
+
 
         $this->update_encode_data($actiondata);
 
-        if (!empty($actiondata)) {
+        if (!empty($actiondata) && $addprefix) {
 
             $notificationkeys = array_keys($actiondata);
 
@@ -153,10 +161,14 @@ abstract class action_base {
                 $value = $prefix.'_'.$value;
             });
 
+
+            // Update the keys with prefix;
             $instance = (object) array_merge((array) $instance, array_combine($notificationkeys, array_values($actiondata)));
             // TODO: Include overrides.
             return $instance;
         }
+
+        // Return data without prefix.
         return $actiondata;
     }
 

@@ -23,21 +23,19 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $course = get_course($courseid);
 
         $completion = ($completion !== null) ? $completion : new \completion_info($course);
-        return $completion->is_course_complete($course);
+        return $completion->is_course_complete($userid);
     }
 
     public function include_action(&$option) {
-        $option['coursecompletion'] = get_string('coursecompletion', 'pulsecondition_course');
+        $option['course'] = get_string('coursecompletion', 'pulsecondition_course');
     }
 
     public function load_instance_form(&$mform, $forminstance) {
 
-        $mform->addElement('html', '<h3>'.get_string('coursecompletion', 'pulsecondition_course').'</h3>');
-
         $completionstr = get_string('coursecompletion', 'pulsecondition_course');
 
-
-        $mform->addElement('select', 'condition[course]', $completionstr, $this->get_options());
+        $mform->addElement('select', 'condition[course][status]', $completionstr, $this->get_options());
+        $mform->addHelpButton('condition[course][status]', 'coursecompletion', 'pulsecondition_course');
     }
 
     public static function course_completed($eventdata) {

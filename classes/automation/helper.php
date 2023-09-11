@@ -10,10 +10,20 @@ use single_button;
 class helper {
 
 
-    public static function get_templates_forinstance() {
+    public static function get_templates_forinstance($courseid=null) {
         global $DB;
-        $templates = $DB->get_records_menu('pulse_autotemplates', ['status' => 1, 'visible' => 1]);
-        return $templates;
+
+        $course = get_course($courseid);
+
+        // $templates = $DB->get_records_menu('pulse_autotemplates', ['status' => 1, 'visible' => 1]);
+
+        $like = $DB->sql_like('categories', ':value');
+        $sql = "SELECT * FROM {pulse_autotemplates} WHERE (categories = '[]' OR categories = '' OR $like)";
+        $params = ['value' => '%"'.$course->category.'"%'];
+
+        $records = $DB->get_records_sql_menu($sql, $params);
+
+        return $records;
     }
 
     public static function merge_instance_overrides($overridedata, $templatedata) {
@@ -69,6 +79,14 @@ class helper {
         }
     }
 
+    public static function get_course_instances($courseid) {
+        global $DB;
+
+        $list = $DB->get_records('pulse_autoinstances', ['courseid' => $courseid]);
+
+        return $list;
+    }
+
     /**
      * Insert the additional module fields data to the table.
      *
@@ -109,7 +127,7 @@ class helper {
      * @return string The HTML contents to display the create templates button.
      */
     public static function template_buttons() {
-        global $OUTPUT;
+        global $OUTPUT, $DB;
 
         // Setup create template button on page.
         $caption = get_string('templatecreatenew', 'pulse');
@@ -120,6 +138,19 @@ class helper {
         $button = new single_button($editurl, $caption, 'get', $primary);
         $button = $OUTPUT->render($button);
 
+        $tdir = optional_param('tdir', null, PARAM_INT);
+        $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
+        $dirimage = ($tdir == SORT_ASC) ? '<i class="fa fa-sort-amount-up"></i>' : $OUTPUT->pix_icon('t/sort_by', 'Sortby');
+
+        $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php', [
+            'tsort' => 'reference', 'tdir' => $tdir
+        ]);
+        $tempcount = $DB->count_records('pulse_autotemplates');
+        if (!empty($tempcount)) {
+            $button .= \html_writer::link($manageurl->out(false), $dirimage.get_string('sort'), [
+                'class' => 'sort-autotemplates btn btn-primary ml-2'
+            ]);
+        }
         return $button;
     }
 
@@ -132,19 +163,32 @@ class helper {
     public static function get_addtemplate_instance($courseid) {
         global $OUTPUT, $CFG;
 
-        require_once($CFG->dirroot. '/mod/pulse/automation/autmationlib.php');
+        require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
 
         // Form to add automation template as instance for the course.
         $url = (new moodle_url('/mod/pulse/automation/instances/edit.php', ['course' => $courseid]))->out(false);
         $form = new \template_addinstance_form($url, ['courseid' => $courseid], 'get');
 
         $html = \html_writer::start_tag('div', ['class' => 'template-add-form']);
-        $html .= $form->render();
+        $templates = \mod_pulse\automation\helper::get_templates_forinstance($courseid);
+        if (!empty($templates)) {
+            $html .= $form->render();
+        }
 
         // Button to access the manage the automation templates list.
         $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php');
         $html .= \html_writer::link($manageurl->out(true), get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary']);
 
+        $tdir = optional_param('tdir', null, PARAM_INT);
+        $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
+        $dirimage = ($tdir == SORT_ASC) ? '<i class="fa fa-sort-amount-up"></i>' : $OUTPUT->pix_icon('t/sort_by', 'Sortby');
+
+        $manageurl = new moodle_url('/mod/pulse/automation/instances/list.php', [
+            'courseid' => $courseid, 'tsort' => 'idnumber', 'tdir' => $tdir
+        ]);
+        if (!empty($templates)) {
+            $html .= \html_writer::link($manageurl->out(false), $dirimage.get_string('sort'), ['class' => 'sort-autotemplates btn btn-primary ml-2']);
+        }
         $html .= \html_writer::end_tag('div');
 
         return $html;

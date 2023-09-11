@@ -259,7 +259,13 @@ $string['enrolmentemptyenddate'] = '-';
  * Strings for the pulse automation templates.
  */
 
- // ...Templates list string.
+// ...Template capabilities.
+$string['pulse:addtemplate'] = 'Add a new automation template';
+$string['pulse:viewtemplateslist'] = 'View the automation templates list';
+$string['pulse:addtemplateinstance'] = 'Add a new template instance';
+$string['mod/pulse:sender'] = 'Notification sender user';
+
+// ...Templates list string.
 $string['autotemplates'] = 'Automation templates';
 $string['autotemplates_desc'] = 'Automation templates define the kind of automations you can use on this moodle site. Depending on the configuration of an automation template, they either work as "default" and will be applied to new courses can be forced onto every course or can be used to create and automation instance from within a course.';
 // ...create new template btn.
@@ -276,11 +282,11 @@ $string['status'] = 'Status';
 $string['tags'] = 'Tags';
 $string['availablefortenants'] = 'Available for tenants';
 $string['availableincoursecategories'] = 'Available in course categories';
-$string['deletetemplate'] = 'Delete template';
+$string['deleteinstance'] = 'Are you sure! do you want to delete the instance';
 // ...Auto templates user notifications strings.
 $string['templateupdatesuccess'] = 'Template updated successfully';
 $string['templateinsertsuccess'] = 'Template inserted successfully';
-$string['templatedeleted'] = 'Automation template "{$a}" deleted successfully.';
+$string['templatedeleted'] = 'Automation template instance deleted successfully.';
 // ...Admin settings.
 $string['generalsettings'] = 'General settings';
 $string['conditiontrigger'] = 'Triggers';
@@ -298,3 +304,43 @@ $string['autoinstances'] = 'Auto instances';
 $string['editinstance'] = 'Edit instance';
 // ...Update status modal
 $string['templatestatusudpate'] = 'Are your sure! Update the status of template to all of instance or only for upcoming instance';
+$string['instancecopy'] = 'Duplicate Instance';
+
+$string['instancereport'] = 'Instance automation schedules';
+$string['automationreportname'] = 'Automation schedule instances';
+$string['overrides'] = 'Overrides';
+$string['updateinstance'] = 'Update Template & Instance';
+$string['updatetemplate'] = 'Update Template';
+
+
+$string['instancename'] = 'Instance Name';
+$string['view'] = 'View';
+// ... Instance override modal title.
+$string['instanceoverrides'] = 'Overridden instances';
+
+// Help Texts.
+// Title.
+$string['title_help'] = 'Enter a <b>Title</b> for this automation template. This title is for administrative purposes and helps identify the template.';
+// Reference.
+$string['reference_help'] = 'Provide a <b>Reference</b> for this automation template. This identifier is also for administrative purposes and helps uniquely identify the template.';
+// Visibility.
+$string['visibility_help'] = 'Choose whether you want this template to be visible or hidden.
+<b>Note:</b> If hidden, users won\'t be able to create new instances based on this template, but existing instances will still be available.';
+// Internal notes.
+$string['internalnotes_help'] = 'Add any internal notes or information related to this automation template.';
+// Status.
+$string['status_help'] = 'Select the status for this automation template:<b>Enabled:</b> Allows instances of this template to be created. Enabling the template may also prompt the user to decide whether to enable all existing instances based on the template.<b>Disabled:</b> Turns off the automation template and its instances. Users can still enable instances individually if needed. Disabling the template may prompt the user to decide whether to disable all existing instances based on the template.';
+// Tags.
+$string['tags_help'] = 'Add <b>Tags</b> to this template for administrative purposes. Tags can help categorize and organize templates.';
+// Available for tenants.
+$string['availablefortenants_help'] = 'Specify for which Moodle Workplace <b>Tenants</b> this template should be available. Select one or more tenants to make the template accessible to specific groups.';
+// Available in course categories.
+$string['availableincoursecategories_help'] = 'Choose the <b>Course categories</b> where this template should be available. Select one or more categories to determine where users can create instances based on this template.';
+// Trigger operator.
+$string['triggeroperator_help'] = 'Choose the operator that determines how the selected triggers are evaluated:<br><b>Any</b>: At least one of the selected triggers must occur to activate the automation.<br><b>All</b>: All of the selected triggers must occur simultaneously to activate the automation.';
+// Condition trigger.
+$string['conditiontrigger_help'] = 'Choose the trigger events that will activate this automation. You can select one or more of the following trigger options:<br><b>Activity Completion</b>: This automation will be triggered when an activity within the course is marked as completed. You will need to specify the activity within the automation instance.<br><b>Course Completion</b>: This automation will be triggered when the entire course is marked as completed, where this instance is used.<br><b>Enrolments</b>: This automation will be triggered when a user is enrolled in the course where this instance is located.<br><b>Session</b>: This automation will be triggered when a session is booked within the course. This trigger is only available within the course and should be selected within the automation instance.<br><b>Cohort Membership</b>: This automation will be triggered if the user is a member of one of the selected cohorts.';
+
+// Number of schedules notification.
+$string['schedulecount'] = 'Number of schedule count';
+$string['schedulecountdesc'] = 'This setting allows you to control how many scheduled task notifications are sent during each cron run. By specifying a numerical value, you can regulate the rate at which system administrators receive notifications regarding the completion or status of scheduled tasks.';
