@@ -5,7 +5,7 @@ namespace pulseaction_notification;
 use mod_pulse\automation\helper;
 use mod_pulse\automation\instances;
 use mod_pulse\helper as pulsehelper;
-
+use stdClass;
 
 class schedule {
 
@@ -173,8 +173,8 @@ class schedule {
         $limit = get_config('pulse', 'schedulecount') ?: 100;
 
         // $DB->set_debug(true);
-        $userwhere = ($userid) ? ' AND ns.userid =:userid ' : '';
-        $userparam = ($userid) ? ['userid' => $userid] : [];
+        $userwhere = $userid ? ' AND ns.userid =:userid ' : '';
+        $userparam = $userid ? ['userid' => $userid] : [];
 
         // Fetch the schedule which is status as 1 and nextrun not empty and not greater than now.
         $sql = "SELECT $select FROM {pulseaction_notification_sch} ns
@@ -299,8 +299,13 @@ class schedule {
             $sender = $this->notification->get_tenantrole_sender($this->schedulerecord);
         } else {
             // Get user groups is sender is configured as group teacher.
-            $groupids = $this->notificationdata->sender == notification::SENDERGROUPTEACHER ? groups_get_user_groups($this->course->id, $this->schedule->userid) : 0;
+            $groups = $this->notificationdata->sender == notification::SENDERGROUPTEACHER ? groups_get_user_groups($this->course->id, $this->schedule->userid) : 0;
 
+            $groupids = 0;
+            if (!empty($groups)) {
+                $firstgroup = current($groups);
+                $groupids = current($firstgroup);
+            }
             // Get the course teacher if group teacher not available it will fallback to course teacher automatically.
             $sender = (object) $this->get_sender_users($groupids);
 
@@ -314,7 +319,7 @@ class schedule {
         return $sender;
     }
 
-        /**
+    /**
      * Undocumented function
      *
      * @param [type] $coursecontext
@@ -322,6 +327,8 @@ class schedule {
      * @return stdclass
      */
     protected function get_sender_users($groupid) {
+
+        $groupid = is_array($groupid) ? current($groupid) : $groupid;
 
         $withcapability = 'pulseaction/notification:sender';
         $sender = get_enrolled_users(
@@ -356,20 +363,20 @@ class schedule {
 
             $modules = json_decode($this->schedulerecord->con_additional)->modules;
             $sessions = \pulsecondition_session\conditionform::get_session_data($modules, $this->user->id);
-            /* if (empty($sessions)) {
+            if (empty($sessions)) {
+                $mod->session = new stdClass();
+            }
 
-            } */
+            $finalsessiondata = new \stdclass();
+            $session = current($sessions);
+            $finalsessiondata->discountcode = $session->discountcode;
+            $finalsessiondata->details = format_text($session->details);
+            $finalsessiondata->capacity = $session->capacity;
+            $finalsessiondata->normalcost = format_cost($session->normalcost);
+            $finalsessiondata->discountcost = format_cost($session->discountcost);
 
-                $finalsessiondata = new \stdclass();
-                $session = current($sessions);
-                $finalsessiondata->discountcode = $session->discountcode;
-                $finalsessiondata->details = format_text($session->details);
-                $finalsessiondata->capacity = $session->capacity;
-                $finalsessiondata->normalcost = format_cost($session->normalcost);
-                $finalsessiondata->discountcost = format_cost($session->discountcost);
-
-                $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
-                $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
+            $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
+            $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
 
 
             $customfields = facetoface_get_session_customfields();

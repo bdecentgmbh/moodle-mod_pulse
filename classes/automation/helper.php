@@ -18,7 +18,7 @@ class helper {
         // $templates = $DB->get_records_menu('pulse_autotemplates', ['status' => 1, 'visible' => 1]);
 
         $like = $DB->sql_like('categories', ':value');
-        $sql = "SELECT * FROM {pulse_autotemplates} WHERE (categories = '[]' OR categories = '' OR $like)";
+        $sql = "SELECT * FROM {pulse_autotemplates} WHERE (categories = '[]' OR categories = '' OR $like) AND status = 1 AND visible = 1";
         $params = ['value' => '%"'.$course->category.'"%'];
 
         $records = $DB->get_records_sql_menu($sql, $params);

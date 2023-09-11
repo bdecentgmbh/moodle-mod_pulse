@@ -9,6 +9,8 @@ use DateTime;
 use DatePeriod;
 use mod_pulse\automation\helper;
 use pulseaction_notification\notification;
+use pulseaction_notification\schedule;
+
 
 class actionform extends \mod_pulse\automation\action_base {
 
@@ -345,6 +347,9 @@ class actionform extends \mod_pulse\automation\action_base {
 
         $suppress = $mform->createElement('autocomplete', 'pulsenotification_suppress', 
             get_string('suppressmodule', 'pulseaction_notification'), $activities, array('multiple' => 'multiple'));
+        
+        $mform->addElement('hidden', "override[pulsenotification_suppress]", 1);
+        $mform->setType("override[pulsenotification_suppress]", PARAM_BOOL);
         
         $mform->insertElementBefore($suppress, 'pulsenotification_notifylimit');
         $mform->addHelpButton('pulsenotification_suppress', 'suppressmodule', 'pulseaction_notification');
