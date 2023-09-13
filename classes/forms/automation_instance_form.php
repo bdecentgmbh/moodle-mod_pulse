@@ -160,6 +160,8 @@ class automation_instance_form extends automation_template_form {
             // Load the instance elements for this action.
             $plugin->load_instance_form($mform, $this);
 
+            $elements = $plugin->default_override_elements();
+            $this->load_default_override_elements($elements);
             // $mform->setExpanded($name);
             $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
         }
@@ -167,6 +169,27 @@ class automation_instance_form extends automation_template_form {
 
     }
 
+    /**
+     * Load the default override elements for instances.
+     *
+     * @param array $elements Config names list to create override by default.
+     *
+     * @return void
+     */
+    protected function load_default_override_elements($elements) {
+
+        if (empty($elements)) {
+            return false;
+        }
+
+        $mform =& $this->_form;
+
+        foreach ($elements as $element) {
+            $overridename = "override[$element]";
+            $mform->addElement('hidden', $overridename, 1);
+            $mform->setType($overridename, PARAM_BOOL);
+        }
+    }
 
 
     public function get_default_values($key) {

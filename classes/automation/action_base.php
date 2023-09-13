@@ -54,6 +54,10 @@ abstract class action_base {
         return false;
     }
 
+    public function default_override_elements() {
+        return [];
+    }
+
     public function trigger_action_event($instancedata, $method, $eventdata) {
         return true;
     }

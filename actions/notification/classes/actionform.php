@@ -173,7 +173,7 @@ class actionform extends \mod_pulse\automation\action_base {
         }
 
         $notification->create_schedule_foruser($userid, '', null, $runtime ?? null, $newuser);
-        
+
         schedule::instance()->send_scheduled_notification($userid);
     }
 
@@ -243,6 +243,13 @@ class actionform extends \mod_pulse\automation\action_base {
         });
     }
 
+    /**
+     * Save the template config.
+     *
+     * @param stdclass $record
+     * @param string $component
+     * @return void
+     */
     public function process_save($record, $component) {
         global $DB;
 
@@ -324,8 +331,30 @@ class actionform extends \mod_pulse\automation\action_base {
         return true;
     }
 
+    /**
+     * Default override elements.
+     *
+     * @return array
+     */
+    public function default_override_elements() {
+        // List of pulse notification elements those are available in only instances.
+        return [
+            'pulsenotification_suppress',
+            'pulsenotification_suppressoperator',
+            'pulsenotification_dynamiccontent',
+            'pulsenotification_contenttype',
+            'pulsenotification_chapterid',
+            'pulsenotification_contentlength',
+        ];
+    }
 
-
+    /**
+     * Load the instance elements for the form.
+     *
+     * @param moodle_form $mform
+     * @param actionform $forminstance
+     * @return void
+     */
     public function load_instance_form(&$mform, $forminstance) {
         global $CFG, $PAGE;
 
@@ -345,12 +374,9 @@ class actionform extends \mod_pulse\automation\action_base {
             $value = $value->name;
         });
 
-        $suppress = $mform->createElement('autocomplete', 'pulsenotification_suppress', 
+        $suppress = $mform->createElement('autocomplete', 'pulsenotification_suppress',
             get_string('suppressmodule', 'pulseaction_notification'), $activities, array('multiple' => 'multiple'));
-        
-        $mform->addElement('hidden', "override[pulsenotification_suppress]", 1);
-        $mform->setType("override[pulsenotification_suppress]", PARAM_BOOL);
-        
+
         $mform->insertElementBefore($suppress, 'pulsenotification_notifylimit');
         $mform->addHelpButton('pulsenotification_suppress', 'suppressmodule', 'pulseaction_notification');
 
@@ -364,10 +390,6 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->insertElementBefore($suppressopertor, 'pulsenotification_notifylimit');
         $mform->addHelpButton('pulsenotification_suppressoperator', 'suppressoperator', 'pulseaction_notification');
 
-        $mform->addElement('hidden', "override[pulsenotification_suppressoperator]", 1);
-        $mform->setType("override[pulsenotification_suppressoperator]", PARAM_BOOL);
-
-
         $modules = [0 => get_string('none')];
         $books = $modinfo->get_instances_of('book');
         $pages = $modinfo->get_instances_of('page');
@@ -376,7 +398,6 @@ class actionform extends \mod_pulse\automation\action_base {
             $modules[$page->id] = $page->get_formatted_name();
         }
 
-        // array_unshift($modules, get_string('none'));
         $dynamic = $mform->createElement('select', 'pulsenotification_dynamiccontent', get_string('dynamiccontent', 'pulseaction_notification'), $modules);
         $mform->insertElementBefore($dynamic, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_dynamiccontent', 'dynamiccontent', 'pulseaction_notification');
@@ -418,9 +439,7 @@ class actionform extends \mod_pulse\automation\action_base {
 
         asort($mform->_elementIndex);
 
-        // TODO: Merge both.
         $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'updateChapter', ['contextid' => $PAGE->context->id]);
-        // $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'previewNotification', ['contextid' => $PAGE->context->id]);
     }
 
     /**
@@ -444,8 +463,8 @@ class actionform extends \mod_pulse\automation\action_base {
         );
         $mform->addElement('select', 'pulsenotification_sender', get_string('sender', 'pulseaction_notification'), $sender_options);
         $mform->addHelpButton('pulsenotification_sender', 'sender', 'pulseaction_notification');
-        // Add additional settings for the 'custom' option, if selected.
 
+        // Add additional settings for the 'custom' option, if selected.
         $mform->addElement('text', 'pulsenotification_senderemail', get_string('senderemail', 'pulseaction_notification'));
         $mform->setType('pulsenotification_senderemail', PARAM_EMAIL);
         $mform->hideIf('pulsenotification_senderemail', 'pulsenotification_sender', 'neq', notification::SENDERCUSTOM);
@@ -459,8 +478,8 @@ class actionform extends \mod_pulse\automation\action_base {
             notification::INTERVALMONTHLY => get_string('monthly', 'pulseaction_notification'),
         );
         $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[interval]', get_string('interval', 'pulseaction_notification'), $intervaloptions);
-        // Add additional settings based on the selected interval.
 
+        // Add additional settings based on the selected interval.
         $dayweeks = array(
             'monday' => get_string('monday', 'pulseaction_notification'),
             'tuesday' => get_string('tuesday', 'pulseaction_notification'),
@@ -470,6 +489,7 @@ class actionform extends \mod_pulse\automation\action_base {
             'saturday' => get_string('saturday', 'pulseaction_notification'),
             'sunday' => get_string('sunday', 'pulseaction_notification'),
         );
+
         // Add 'day_of_week' element if 'weekly' is selected in the 'interval' element.
         $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[weekday]', get_string('interval', 'pulseaction_notification'), $dayweeks);
         $mform->hideIf('pulsenotification_notifyinterval[weekday]', 'pulsenotification_notifyinterval[interval]', 'neq', notification::INTERVALWEEKLY);
@@ -510,12 +530,11 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->setType('pulsenotification_notifylimit', PARAM_INT);
         $mform->addHelpButton('pulsenotification_notifylimit', 'limit', 'pulseaction_notification');
 
-        // Recipients Group
+        // Recipients Group.
         // Add 'recipients' element with all roles that can receive notifications.
         $roles = get_roles_with_capability('pulseaction/notification:receivenotification');
         $rolenames = role_fix_names($roles);
         $roleoptions = array_combine(array_column($rolenames, 'id'), array_column($rolenames, 'localname'));
-
         $mform->addElement('autocomplete', 'pulsenotification_recipients', get_string('recipients', 'pulseaction_notification'), $roleoptions, array('multiple' => 'multiple'));
         $mform->addHelpButton('pulsenotification_recipients', 'recipients', 'pulseaction_notification');
 
@@ -540,51 +559,49 @@ class actionform extends \mod_pulse\automation\action_base {
             $mform->addHelpButton('pulsenotification_headercontent_editor', 'headercontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
 
+        // Statecontent editor.
         $mform->addElement('editor', 'pulsenotification_staticcontent_editor', get_string('staticcontent', 'pulseaction_notification'),
             ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
         $mform->addHelpButton('pulsenotification_staticcontent_editor', 'staticcontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
-        // Dynamic content goes here.
 
-        // Footer Content
+        // Footer Content.
         $mform->addElement('editor', 'pulsenotification_footercontent_editor', get_string('footercontent', 'pulseaction_notification'),
             ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
         $mform->addHelpButton('pulsenotification_footercontent_editor', 'footercontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
 
-        // Preview Button
+        // Preview Button.
         $mform->addElement('button', 'pulsenotification_preview', get_string('preview', 'pulseaction_notification'));
         $mform->addHelpButton('pulsenotification_preview', 'preview', 'pulseaction_notification');
 
-        // $mform->addElement('html', html_writer::end_div()); // E.O of actions triggere tab.
-
-         // Email tempalte placholders.
+        // Email tempalte placholders.
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
         $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'previewNotification', ['contextid' => $PAGE->context->id]);
     }
 
+    /**
+     * Get list of options in 30 mins timeinterval for 24 hrs.
+     *
+     * @return array
+     */
     public function get_times() {
 
-        $starttime = new DateTime('00:00'); // Set the start time to midnight
-        $endtime = new DateTime('23:59');   // Set the end time to just before midnight of the next day
+        $starttime = new DateTime('00:00'); // Set the start time to midnight.
+        $endtime = new DateTime('23:59');   // Set the end time to just before midnight of the next day.
 
-        // Create an interval of 30 minutes
-        $interval = new \DateInterval('PT30M'); // PT30M represents 30 minutes
+        // Create an interval of 30 minutes.
+        $interval = new \DateInterval('PT30M'); // PT30M represents 30 minutes.
 
-        // Create a DatePeriod to iterate through the day with the specified interval
+        // Create a DatePeriod to iterate through the day with the specified interval.
         $timeperiod = new DatePeriod($starttime, $interval, $endtime);
 
-
-        // Loop through the DatePeriod and add each timestamp to the array
+        // Loop through the DatePeriod and add each timestamp to the array.
         $timelist = array();
         foreach ($timeperiod as $time) {
-            $timelist[$time->format('H:i')] = $time->format('H:i'); // Format the timestamp as HH:MM
+            $timelist[$time->format('H:i')] = $time->format('H:i'); // Format the timestamp as HH:MM.
         }
 
         return $timelist;
     }
-
-
 }
-
-

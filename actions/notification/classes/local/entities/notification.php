@@ -1,5 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Pulse notification entities for report builder
+ *
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 namespace pulseaction_notification\local\entities;
 
 use core_reportbuilder\local\entities\base;
@@ -10,6 +31,9 @@ use html_writer;
 use pulseaction_notification\notification as pulsenotification;
 use lang_string;
 
+/**
+ * Pulse notification entity base for report source.
+ */
 class notification extends base {
 
     /**
@@ -62,7 +86,11 @@ class notification extends base {
         return $this;
     }
 
-
+    /**
+     * List of columns available for this notfication datasource.
+     *
+     * @return array
+     */
     protected function get_all_columns(): array {
 
         $notificationschalias = $this->get_table_alias('pulseaction_notification_sch');
@@ -112,7 +140,8 @@ class notification extends base {
             $this->get_entity_name()
         ))
         ->set_is_sortable(true)
-        ->add_field("IF ({$notificationinsalias}.subject <> '', {$notificationinsalias}.subject, {$notificationalias}.subject)", "subject")
+        ->add_field("IF ({$notificationinsalias}.subject <> '',
+            {$notificationinsalias}.subject, {$notificationalias}.subject)", "subject")
         ->add_field("{$templatesinsalias}.instanceid")
         ->add_field("{$notificationschalias}.userid")
         ->add_callback(static function($value, $row): string {
@@ -266,8 +295,11 @@ class notification extends base {
         return "
             JOIN {pulse_autoinstances} AS {$autoinstancesalias} ON {$autoinstancesalias}.id = {$notificationschalias}.instanceid
             JOIN {pulse_autotemplates} AS {$autotemplatesalias} ON {$autotemplatesalias}.id = {$autoinstancesalias}.templateid
-            JOIN {pulse_autotemplates_ins} AS {$autotemplatesinsalias} ON {$autotemplatesinsalias}.instanceid = {$autoinstancesalias}.id
-            JOIN {pulseaction_notification_ins} AS {$notificationinsalias} ON {$notificationinsalias}.instanceid = {$notificationschalias}.instanceid
-            JOIN {pulseaction_notification} AS  {$notificationalias} ON {$notificationalias}.templateid = {$autoinstancesalias}.templateid";
+            JOIN {pulse_autotemplates_ins} AS {$autotemplatesinsalias}
+                ON {$autotemplatesinsalias}.instanceid = {$autoinstancesalias}.id
+            JOIN {pulseaction_notification_ins} AS {$notificationinsalias}
+                ON {$notificationinsalias}.instanceid = {$notificationschalias}.instanceid
+            JOIN {pulseaction_notification} AS  {$notificationalias}
+                ON {$notificationalias}.templateid = {$autoinstancesalias}.templateid";
     }
 }

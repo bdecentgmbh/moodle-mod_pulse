@@ -18,7 +18,7 @@
  * Scheduled cron task to send pulse.
  *
  * @package   pulseaction_notification
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -79,12 +79,21 @@ class notify_users extends \core\task\scheduled_task {
 
         // Get all the notification instance configures the suppress with this activity.
         $notifications = self::get_suppress_notifications($cmid);
-        
+
 
         self::is_suppress_reached($notifications, $userid, $course, $completion);
-        
+
     }
 
+    /**
+     * Find the scheduled notification instance supress conditions are reached for the user.
+     *
+     * @param array $notifications List of notification to verify the suppress.
+     * @param int $userid User ID to verify for.
+     * @param stdclass $course Instance Course record.
+     * @param \completion_info $completion Instance course completion info.
+     * @return bool True if the user is reached the suppress conditions for the instance. Otherwise False.
+     */
     public static function is_suppress_reached($notifications, $userid, $course, $completion=null) {
         global $DB;
 
@@ -93,7 +102,7 @@ class notify_users extends \core\task\scheduled_task {
         foreach ($notifications as $notification) {
             // Get the notification suppres module ids.
             $suppress = $notification->suppress ? json_decode($notification->suppress) : '';
-            // print_r($suppress);
+
             if (!empty($suppress)) {
                 $result = [];
                 // Find the completion status for all this suppress modules.
@@ -102,13 +111,13 @@ class notify_users extends \core\task\scheduled_task {
                         $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
                     } else {
                         $cminfo = get_coursemodule_from_id('', $cmid);
-                        $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);                        
+                        $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);
                     }
                     if ($modulecompletion['completionstate'] == COMPLETION_COMPLETE) {
                         $result[] = true;
                     }
                 }
-               
+
                 // If suppress operator set as all, check all the configures modules are completed.
                 if ($notification->suppressoperator == \mod_pulse\automation\action_base::OPERATOR_ALL) {
                     // Remove the schedule only if all the activites are completed.
@@ -122,21 +131,24 @@ class notify_users extends \core\task\scheduled_task {
                         $remove = true;
                     }
                 }
-                
+
                 // Update the flag to user schedules as suppress reached, it prevents the update of the schedule on notification.
                 if (isset($remove) && $remove) {
-                    $remove = false; // Reset for the next notification test.                   
-                    
+                    $remove = false; // Reset for the next notification test.
+
                     $sql = "SELECT * FROM {pulseaction_notification_sch}
-                            WHERE instanceid = :instanceid AND userid = :userid AND (status = :disabledstatus  OR status = :queued)";
+                            WHERE instanceid = :instanceid AND userid = :userid
+                            AND (status = :disabledstatus  OR status = :queued)";
 
                     $params = [
-                        'instanceid' => $notification->instanceid, 'userid' => $userid, 'disabledstatus' => notification::STATUS_DISABLED,
-                        'queued' => notification::STATUS_QUEUED
+                        'instanceid' => $notification->instanceid, 'userid' => $userid,
+                        'disabledstatus' => notification::STATUS_DISABLED, 'queued' => notification::STATUS_QUEUED
                     ];
 
                     if ($record = $DB->get_record_sql($sql, $params)) {
-                        $DB->set_field('pulseaction_notification_sch', 'suppressreached', notification::SUPPRESSREACHED, ['id' => $record->id]);
+                        $DB->set_field('pulseaction_notification_sch', 'suppressreached', notification::SUPPRESSREACHED,
+                            ['id' => $record->id]
+                        );
                     }
 
                     $suppressreached[$notification->id] = notification::SUPPRESSREACHED;
