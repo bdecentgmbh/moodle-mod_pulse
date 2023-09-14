@@ -459,7 +459,7 @@ class notification {
      * @param [type] $context
      * @return void
      */
-    public function build_notification_content($cm=null, $context=null, $overrides=[]) {
+    public function build_notification_content(?stdClass $cm=null, $context=null, $overrides=[]) {
         global $CFG, $DB;
 
         $syscontext = \context_system::instance();
@@ -474,8 +474,10 @@ class notification {
             $content = $$editor;
 
             $field = 'pulsenotification_'.$editor;
-            $prefix = (isset($overrides[$field]) || isset($overrides[$field.'_editor'])) ? '_instance' : '';
-            $id = (isset($overrides[$field]) || isset($overrides[$field.'_editor'])) ? $this->notificationdata->instanceid : $this->instancedata->templateid;
+            $prefix = (isset($overrides[$editor]) || isset($overrides[$field]) || isset($overrides[$field.'_editor']))
+                ? '_instance' : '';
+            $id = (isset($overrides[$editor]) || isset($overrides[$field]) || isset($overrides[$field.'_editor']))
+                ? $this->notificationdata->instanceid : $this->instancedata->templateid;
 
             $$editor = file_rewrite_pluginfile_urls(
                 $content, 'pluginfile.php', $syscontext->id,
@@ -501,7 +503,7 @@ class notification {
             $staticcontent .= self::generate_dynamic_content(
                 $this->notificationdata->contenttype,
                 $this->notificationdata->contentlength,
-                $this->notificationdata->chapterid,
+                $this->notificationdata->chapterid ?? 0,
                 $modcontext,
                 $cm
             ); // Concat the dynamic content after static content.
@@ -594,7 +596,7 @@ class notification {
         });
 
         $result = [
-            'recipient' => (object) $user,
+            'recepient' => (object) $user,
             'cc'        => implode(',', array_column($ccusers, 'email')),
             'bcc'       => implode(',', array_column($bccusers, 'email')),
             'subject'   => format_string($this->notificationdata->subject),
@@ -666,7 +668,7 @@ class notification {
         }
     }
 
-    protected static function get_modules_data($modules) {
+    public static function get_modules_data($modules) {
         global $DB, $CFG;
 
         if (file_exists($CFG->dirroot.'/local/metadata/lib.php')) {

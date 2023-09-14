@@ -143,10 +143,10 @@ class templates {
                 foreach ($formdata->override as $key => $value) {
                     if (isset($overrides[$key])) {
                         $overrides[$key] += 1;
-                        $overinstances[$key][] = ['id' => $instance->id, 'name' => $formdata->title];
+                        $overinstances[$key][] = ['id' => $instance->id, 'name' => format_string($formdata->title)];
                     } else {
                         $overrides[$key] = 1;
-                        $overinstances[$key] = [['id' => $instance->id, 'name' => $formdata->title]];
+                        $overinstances[$key] = [['id' => $instance->id, 'name' => format_string($formdata->title)]];
                     }
                 }
             }
@@ -290,6 +290,7 @@ class templates {
         $transaction = $DB->start_delegated_transaction();
 
         // Create template record.
+        $record->reference = shorten_text(strip_tags($record->reference), 30);
         if (isset($formdata->id) && $DB->record_exists('pulse_autotemplates', ['id' => $formdata->id])) {
             $templateid = $formdata->id;
             // Update the template.
@@ -337,6 +338,10 @@ class templates {
      */
     public static function update_instance_data($instanceid, $options) {
         global $DB;
+
+        if (isset($options['reference'])) {
+            $options['reference'] = shorten_text(strip_tags($options['reference']), 30);
+        }
 
         if ($record = $DB->get_record('pulse_autotemplates_ins', ['instanceid' => $instanceid])) {
 

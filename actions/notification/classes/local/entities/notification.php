@@ -131,7 +131,8 @@ class notification extends base {
             $this->get_entity_name()
         ))
         ->set_is_sortable(true)
-        ->add_field("IF ({$templatesalias}.title <> '', {$templatesalias}.title, {$templatesinsalias}.title)", 'title');
+        ->add_field("IF ({$templatesalias}.title <> '', {$templatesalias}.title, {$templatesinsalias}.title)", 'title')
+        ->add_callback(fn($val, $row) => format_string($val));
 
         // Subject field.
         $columns[] = (new column(

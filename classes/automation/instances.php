@@ -367,6 +367,7 @@ class instances extends templates {
             $enrolmenttime = current($enrolments)->timecreated;
             return $enrolmenttime;
         }
+
         return false;
     }
 
@@ -433,6 +434,7 @@ class instances extends templates {
         ];
 
         // Check the isntance is already created. if created update the record otherwise create new instance.
+
         if (isset($formdata->instanceid) && $DB->record_exists('pulse_autoinstances', ['id' => $formdata->instanceid])) {
 
             $instancedata->id = $formdata->instanceid;

@@ -28,10 +28,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $value = $value->name;
         });
 
-        $modules = $mform->addElement('autocomplete', 'condition[activity][modules]', get_string('suppressmodule', 'pulseaction_notification'), $activities);
+        $modules = $mform->addElement('autocomplete', 'condition[activity][modules]', get_string('selectactivity', 'pulsecondition_activity'), $activities);
         $modules->setMultiple(true);
         $mform->disabledIf('condition[activity][modules]', 'condition[activity][status]', 'eq', self::DISABLED);
-        $mform->addHelpButton('condition[activity][modules]', 'suppressmodule', 'pulseaction_notification');
+        $mform->addHelpButton('condition[activity][modules]', 'selectactivity', 'pulsecondition_activity');
 
         // Enable the override by default to prevent adding overdide checkbox.
         $mform->addElement('hidden', 'override[condition_activity_modules]', 1);
@@ -51,12 +51,12 @@ class conditionform extends \mod_pulse\automation\condition_base {
             }
             // Find the completion status for all this suppress modules.
             foreach ($modules as $cmid) {
-                
+
                 if (method_exists($completion, 'get_completion_data')) {
                     $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
                 } else {
                     $cminfo = get_coursemodule_from_id('', $cmid);
-                    $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);                        
+                    $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);
                 }
 
                 if (isset($modulecompletion['completionstate']) && $modulecompletion['completionstate'] == COMPLETION_COMPLETE) {

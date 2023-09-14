@@ -119,7 +119,7 @@ class auto_instances extends table_sql {
 
         $collapseicon = html_writer::tag('span', $OUTPUT->pix_icon('t/collapsed', 'collapsenotes', 'moodle') , [
             'data-target' => 'notes-collapse',
-            'data-notes' => $row->notes,
+            'data-notes' => format_string($row->notes),
             'data-collapse' => 1,
             'data-instance' => $row->id
         ]);
@@ -129,7 +129,7 @@ class auto_instances extends table_sql {
 
 
     public function col_idnumber($row) {
-        $title = html_writer::tag('h5', $row->reference, ['class' => 'template-reference']);
+        $title = html_writer::tag('h5', format_string($row->reference), ['class' => 'template-reference']);
         return $title;
     }
 

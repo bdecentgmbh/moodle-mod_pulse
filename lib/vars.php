@@ -370,8 +370,15 @@ class pulse_email_vars {
                 $value = 'User_'.$value;
             });
 
-
             $fields = array_values($fields);
+
+            $removefields = [
+                'User_confirmed', 'User_policyagreed', 'User_deleted', 'User_suspended', 'User_mnethostid', 'User_password',
+                'User_emailstop', 'User_descriptionformat', 'User_mailformat', 'User_maildigest', 'User_maildisplay',
+                'User_autosubscribe', 'User_trackforums', 'User_timemodified', 'User_trustbitmask', 'User_imagealt',
+                'User_moodlenetprofile'
+            ];
+            $fields = array_filter($fields, fn($field) => !in_array($field, $removefields));
         }
 
         return $fields;
@@ -391,14 +398,18 @@ class pulse_email_vars {
         if ($fields === null) {
             $fields = [];
 
-            $coursefields = $DB->get_columns('course');
+            $coursefields = [
+                'id', 'category', 'fullname', 'shortname', 'idnumber', 'summary', 'format', 'startdate', 'enddate', 'visible',
+                'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
+                'timemodified', 'enablecompletion'
+            ];
             $records = $DB->get_records('customfield_field', [], '', 'shortname');
 
             $customfields = array_map(function($value) {
                 return 'customfield_'.$value;
             }, array_keys($records));
 
-            $fields = array_merge(array_keys($coursefields), array_values($customfields));
+            $fields = array_merge($coursefields, array_values($customfields));
 
             array_walk($fields, function(&$value) {
                 $value = 'Course_'.$value;

@@ -66,7 +66,7 @@ $string['interval_help'] = 'Choose the interval for sending notifications:<br><b
 // Delay.
 $string['delay'] = 'Delay';
 $string['delay_help'] = 'Choose the delay option for sending notifications:
-<br><b>None:</b> Send notifications immediately upon the condition being met, considering the schedule limitations (e.g., weekday or time of day).<br><b>Before X Days/Hours:</b> Send the notification a specified number of days/hours before the condition is met. Note that this is only possible for timed events, e.g., appointment sessions.<br><b>After X Days/Hours:</b> Send the notification a specified number of days/hours after the condition is met. This is possible for all conditions.';
+<br><b>None:</b> Send notifications immediately upon the condition being met, considering the schedule limitations (e.g., weekday or time of day).<br><b>Before:</b> Send the notification a specified number of days/hours before the condition is met. Note that this is only possible for timed events, e.g., appointment sessions.<br><b>After:</b> Send the notification a specified number of days/hours after the condition is met. This is possible for all conditions.';
 // Delay duration.
 $string['delayduraion'] = 'Delay duraion';
 $string['delayduraion_help'] = 'Please enter the duration time for the delay in sending the notification. This duration should be specified in terms of days or hours, depending on the selected delay option.';

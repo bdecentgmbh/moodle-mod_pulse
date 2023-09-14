@@ -165,19 +165,24 @@ class actionform extends \mod_pulse\automation\action_base {
         $notification = notification::instance($instancedata->pulsenotification_id);
         $notificationinstance = helper::filter_record_byprefix($instancedata, $this->config_shortname());
 
+        // print_object($instancedata);exit;
         $notification->set_notification_data($notificationinstance, $instancedata);
 
-        if ($expectedtime) {
-            $runtime = new \DateTime();
-            $runtime->setTimestamp($expectedtime);
-        }
-
+        // Create a schedule for user. This method verify the user activity completion before creating schedules.
         $notification->create_schedule_foruser($userid, '', null, $runtime ?? null, $newuser);
 
+        // Send the scheduled notifications for this user.
         schedule::instance()->send_scheduled_notification($userid);
     }
 
-
+    /**
+     * Observe the events, triggered from the main pulse.
+     *
+     * @param [type] $instancedata
+     * @param [type] $method
+     * @param [type] $eventdata
+     * @return void
+     */
     public function trigger_action_event($instancedata, $method, $eventdata) {
 
         if ($method == 'user_enrolment_deleted') {
@@ -356,7 +361,7 @@ class actionform extends \mod_pulse\automation\action_base {
      * @return void
      */
     public function load_instance_form(&$mform, $forminstance) {
-        global $CFG, $PAGE;
+        global $CFG, $PAGE, $DB;
 
         require_once($CFG->dirroot.'/lib/modinfolib.php');
 
@@ -413,7 +418,8 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->addHelpButton('pulsenotification_contenttype', 'contenttype', 'pulseaction_notification');
 
         // Load Chapters for selected book.
-        $cmid = $forminstance->get_default_values('pulsenotification_dynamiccontent') ?? '';
+        $instanceid = $forminstance->get_customdata('instanceid');
+        $cmid = $instanceid ? $DB->get_field('pulseaction_notification_ins', 'dynamiccontent', ['instanceid' => $instanceid]) : '';
         if (!empty($cmid)) {
             $sql = 'SELECT bc.id, bc.title FROM {course_modules} cm
             JOIN {book_chapters} as bc ON bc.bookid = cm.instance

@@ -23,6 +23,10 @@ class helper {
 
         $records = $DB->get_records_sql_menu($sql, $params);
 
+        array_walk($records, function(&$val) {
+            $val = format_string($val);
+        });
+
         return $records;
     }
 

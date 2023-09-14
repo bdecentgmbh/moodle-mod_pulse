@@ -72,7 +72,7 @@ class schedule {
                 continue; // Limit reached break this continue to next user.
             }
 
-            $cmdata = [
+            $cmdata = (object) [
                 'modname' => $schedule->md_name, // Module name Book or page.
                 'instance' => $schedule->cm_instance,
                 'id' => $schedule->cm_id
@@ -82,6 +82,20 @@ class schedule {
 
             $sender = $this->find_sender_user();
 
+            if (is_string($sender)) {
+                $replyto = $sender;
+                $sender = (object) [
+                    'from' => $replyto,
+                    'firstname' => '',
+                    'lastname' => '',
+                    'firstnamephonetic' => '',
+                    'lastnamephonetic' => '',
+                    'middlename' => '',
+                    'alternatename' => '',
+                    'firstname' => '',
+                    'lastname' => '',
+                ];
+            }
             // Add bcc and CC to sender user custom headers.
             $sender->customheaders = [
                 "Bcc: $detail->bcc\r\n",
@@ -105,9 +119,10 @@ class schedule {
                 $detail->recipient, $subject, $messageplain, $messagehtml, $pulse, $sender
             ); */
 
-            $messagesend = email_to_user($detail->recipient, $sender, $subject, $messageplain, $messagehtml);
+            $messagesend = email_to_user($detail->recepient, $sender, $subject, $messageplain, $messagehtml, '', '', true, $replyto ?? '');
 
-            // if ($messagesend) {
+
+            if ($messagesend) {
                 // Update the current time as lastrun.
                 // Update the lastrun and increase the limit.
                 $notifiedtime = time();
@@ -121,17 +136,17 @@ class schedule {
                 ];
 
                 // Generate a next runtime. Only if user has limit to receive notifications. otherwise made the nextrun null.
-                
+
                 // Update the schedule.
                 $DB->update_record('pulseaction_notification_sch', $update);
-                
+
 
                 if ($notifycount < $this->notificationdata->notifylimit
                     && $this->notificationdata->notifyinterval['interval'] != notification::INTERVALONCE) {
                     $newschedule = true;
                     $this->notification->create_schedule_foruser($this->schedule->userid, $notifiedtime, $notifycount, null, null, $newschedule);
                 }
-            // }
+            }
         }
     }
 
@@ -228,7 +243,7 @@ class schedule {
             $dynamicmodules[$schedule->md_name][] = $schedule->cm_instance;
         }
 
-        return $dynamicmodules;
+        return notification::get_modules_data($dynamicmodules);;
     }
 
     protected function build_schedule_values($schedule) {
@@ -294,7 +309,7 @@ class schedule {
         // Find the sender for this schedule.
         if ($this->notificationdata->sender == notification::SENDERCUSTOM) {
             // Use the custom sender email as the support user email.
-            $sender = (object) ['firstname' => '', 'lastname' => '', 'email' => $this->notificationdata->senderemail];
+            $sender = $this->notificationdata->senderemail;
         } else if ($this->notificationdata->sender == notification::SENDERTENANTROLE) {
             $sender = $this->notification->get_tenantrole_sender($this->schedulerecord);
         } else {
@@ -348,8 +363,10 @@ class schedule {
 
     protected function prepare_moduledata_placeholders($modules, $cmdata) {
         global $CFG;
+
         // Prepare the module data to use as placeholders.
         $mod = new \stdclass;
+
         // Find the module data if dynamic content is configured.
         if ($this->notificationdata->dynamiccontent) {
             $mod = (object) $modules[$cmdata->modname][$cmdata->instance] ?? [];
@@ -358,35 +375,37 @@ class schedule {
         // Check the session condition are set for this notification. if its added then load the session data for placeholders.
         $sessionincondition = in_array('session', (array) $this->instancedata->template->triggerconditions);
         $sessionincondition = $this->schedulerecord->con_isoverridden == 1 ? $this->schedulerecord->con_status : $sessionincondition;
+
         if ($sessionincondition) {
+
             require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
             $modules = json_decode($this->schedulerecord->con_additional)->modules;
             $sessions = \pulsecondition_session\conditionform::get_session_data($modules, $this->user->id);
             if (empty($sessions)) {
                 $mod->session = new stdClass();
+            } else {
+                $finalsessiondata = new \stdclass();
+                $session = current($sessions);
+                $finalsessiondata->discountcode = $session->discountcode;
+                $finalsessiondata->details = format_text($session->details);
+                $finalsessiondata->capacity = $session->capacity;
+                $finalsessiondata->normalcost = format_cost($session->normalcost);
+                $finalsessiondata->discountcost = format_cost($session->discountcost);
+
+                $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
+                $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
+
+
+                $customfields = facetoface_get_session_customfields();
+                $finalsessiondata->customfield = new \stdclass();
+                foreach ($customfields as $field) {
+                    // $fieldname = "custom_$field->shortname";
+                    $finalsessiondata->customfield->{$field->shortname} = facetoface_get_customfield_value($field, $session->sessionid, 'session');
+                }
+
+                $mod->session = $finalsessiondata;
             }
-
-            $finalsessiondata = new \stdclass();
-            $session = current($sessions);
-            $finalsessiondata->discountcode = $session->discountcode;
-            $finalsessiondata->details = format_text($session->details);
-            $finalsessiondata->capacity = $session->capacity;
-            $finalsessiondata->normalcost = format_cost($session->normalcost);
-            $finalsessiondata->discountcost = format_cost($session->discountcost);
-
-            $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
-            $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
-
-
-            $customfields = facetoface_get_session_customfields();
-            $finalsessiondata->customfield = new \stdclass();
-            foreach ($customfields as $field) {
-                // $fieldname = "custom_$field->shortname";
-                $finalsessiondata->customfield->{$field->shortname} = facetoface_get_customfield_value($field, $session->sessionid, 'session');
-            }
-
-            $mod->session = $finalsessiondata;
         }
 
         return $mod;

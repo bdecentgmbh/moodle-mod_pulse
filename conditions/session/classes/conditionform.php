@@ -2,6 +2,7 @@
 
 
 namespace pulsecondition_session;
+require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
 use mod_pulse\automation\condition_base;
 

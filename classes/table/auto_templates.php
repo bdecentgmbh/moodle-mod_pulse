@@ -94,7 +94,7 @@ class auto_templates extends table_sql {
     }
 
     public function col_reference($row) {
-        $title = html_writer::tag('h5', $row->reference, ['class' => 'template-reference']);
+        $title = html_writer::tag('h5', format_string($row->reference), ['class' => 'template-reference']);
         return $title;
     }
 

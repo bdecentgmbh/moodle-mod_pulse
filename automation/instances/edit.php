@@ -73,6 +73,7 @@ require_capability('mod/pulse:addtemplateinstance', $context);
 // Setup page values.
 $PAGE->set_url($url);
 $PAGE->set_context($context);
+$PAGE->set_course(get_course($course->id));
 
 // Edit automation templates form.
 $templatesform = new \mod_pulse\forms\automation_instance_form(null, ['templateid' => $templateid, 'courseid' => $course->id, 'instanceid' => $instanceid]);
@@ -118,7 +119,6 @@ if ($instanceid !== null && $instanceid > 0) {
         foreach ($conditions as $condition) {
             $record->{'condition['.$condition.'][status]'} = condition_base::ALL;
         }
-
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
         // exit;
