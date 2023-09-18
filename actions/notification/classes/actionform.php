@@ -430,8 +430,9 @@ class actionform extends \mod_pulse\automation\action_base {
         $chapter = $mform->createElement('autocomplete', 'pulsenotification_chapterid', get_string('chapters', 'pulseaction_notification'), $chapters ?? [], $options);
         $mform->insertElementBefore($chapter, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_chapterid', 'chapters', 'pulseaction_notification');
+        $mform->hideIf('pulsenotification_chapterid', 'pulsenotification_dynamiccontent', 'eq', 0);
 
-        // Content Length Group
+        // Content Length Group.
         $content_length_options = array(
             notification::LENGTH_TEASER => get_string('teaser', 'pulseaction_notification'),
             notification::LENGTH_LINKED => get_string('full_linked', 'pulseaction_notification'),
@@ -535,6 +536,7 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->addElement('text', 'pulsenotification_notifylimit', get_string('limit', 'pulseaction_notification'));
         $mform->setType('pulsenotification_notifylimit', PARAM_INT);
         $mform->addHelpButton('pulsenotification_notifylimit', 'limit', 'pulseaction_notification');
+        $mform->hideIf('pulsenotification_notifylimit', 'pulsenotification_notifyinterval[interval]', 'eq', notification::INTERVALONCE);
 
         // Recipients Group.
         // Add 'recipients' element with all roles that can receive notifications.

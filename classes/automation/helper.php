@@ -181,7 +181,7 @@ class helper {
 
         // Button to access the manage the automation templates list.
         $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php');
-        $html .= \html_writer::link($manageurl->out(true), get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary']);
+        $html .= \html_writer::link($manageurl->out(true), get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary', 'target' => '_blank']);
 
         $tdir = optional_param('tdir', null, PARAM_INT);
         $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
@@ -196,6 +196,84 @@ class helper {
         $html .= \html_writer::end_tag('div');
 
         return $html;
+    }
+
+    /**
+     * Templates table helps content.
+     *
+     * @return string
+     */
+    public static function get_templates_tablehelps() {
+        global $OUTPUT;
+
+        $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
+        array_walk($actions, function(&$value) {
+            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon']);
+            $value = $result;
+        });
+
+        $templatehelp = [
+            'help1' => implode(',', array_column($actions, 'icon')),
+            'help2' => '<b> Welcom message </b>',
+            'help3' => implode(',', array_column($actions, 'badge')),
+            'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
+            'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
+            'help6' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
+            'help7' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
+                <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]),
+            'help8' => \html_writer::tag('label', "33 (1)", ['class' => 'overrides badge badge-secondary pl-10']),
+        ];
+
+        $table = new \html_table();
+        $table->id = 'plugins-control-panel';
+        $table->head = array('', '');
+
+        foreach ($templatehelp as $help => $result) {
+            $row = new \html_table_row(array($result, get_string('automationtemplate_'.$help, 'pulse')));
+            $table->data[] = $row;
+        }
+
+        $html = \html_writer::tag('h3', get_string('instruction', 'pulse'));
+        $html .= \html_writer::table($table);
+        return \html_writer::tag('div', $html, ['class' => 'automation-instruction']);
+    }
+
+
+    public static function get_instance_tablehelps() {
+        global $OUTPUT;
+
+        $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
+        array_walk($actions, function(&$value) {
+            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon']);
+            $value = $result;
+        });
+
+        $templatehelp = [
+            'help1' => implode(',', array_column($actions, 'icon')),
+            'help2' => '<b> Welcom message </b>',
+            'help3' => implode(',', array_column($actions, 'badge')),
+            'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
+            'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
+            'help6' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
+            'help7' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
+                <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]),
+            'help8' => \html_writer::tag('label', "33 (1)", ['class' => 'overrides badge badge-secondary pl-10']),
+        ];
+
+        $table = new \html_table();
+        $table->id = 'plugins-control-panel';
+        $table->head = array('', '');
+
+        foreach ($templatehelp as $help => $result) {
+            $row = new \html_table_row(array($result, get_string('automationtemplate_'.$help, 'pulse')));
+            $table->data[] = $row;
+        }
+
+        $html = \html_writer::tag('h3', get_string('instruction', 'pulse'));
+        $html .= \html_writer::table($table);
+        return \html_writer::tag('div', $html, ['class' => 'automation-instruction']);
     }
 
     /**

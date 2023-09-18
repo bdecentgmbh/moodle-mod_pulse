@@ -207,7 +207,6 @@
     border-bottom-left-radius: 5px;
 }
 .mod-pulse-automation-table table.generaltable tbody td:last-child {
-    text-align: center;
     border-right: 1px solid #eee;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;

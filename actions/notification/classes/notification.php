@@ -41,7 +41,7 @@ class notification {
     const STATUS_FAILED = 0;
     const STATUS_DISABLED = 1;
     const STATUS_QUEUED = 2;
-    const STATUS_SEND = 3;
+    const STATUS_SENT = 3;
 
     const SUPPRESSREACHED = 1;
 
@@ -150,7 +150,7 @@ class notification {
         // Dont create new schedule for already notified users until is not new schedule.
         // It prevents creating new record for user during the update of instance interval.
         if (!$newschedule && $DB->record_exists('pulseaction_notification_sch', [
-            'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'status' => self::STATUS_SEND
+            'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'status' => self::STATUS_SENT
         ])) {
             return false;
         }
@@ -209,7 +209,7 @@ class notification {
         $id = $this->notificationdata->instanceid;
 
         // Get last notified schedule for this instance to the user.
-        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND);
+        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT);
         $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
 
         return !empty($records) ? current($records)->notifiedtime : '';
@@ -222,7 +222,7 @@ class notification {
         $id = $this->notificationdata->instanceid;
 
         // Get last notified schedule for this instance to the user.
-        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND);
+        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT);
         $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
 
         return !empty($records) ? current($records)->notifycount : '';
@@ -240,7 +240,7 @@ class notification {
         global $DB;
 
         $id = $this->notificationdata->instanceid;
-        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SEND])) {
+        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT])) {
             return $record->notifiedtime != null ? true : false;
         }
         return false;
@@ -254,7 +254,7 @@ class notification {
     protected function remove_schedules() {
         global $DB;
 
-        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id, 'status' => self::STATUS_SEND]);
+        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id, 'status' => self::STATUS_SENT]);
     }
 
 
@@ -661,8 +661,8 @@ class notification {
             return get_string('onhold', 'pulseaction_notification');
         } else if ($value == self::STATUS_QUEUED) {
             return get_string('queued', 'pulseaction_notification');
-        } else if ($value == self::STATUS_SEND) {
-            return get_string('send', 'pulseaction_notification');
+        } else if ($value == self::STATUS_SENT) {
+            return get_string('sent', 'pulseaction_notification');
         } else {
             return get_string('failed', 'pulseaction_notification');
         }

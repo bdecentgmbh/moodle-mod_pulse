@@ -51,7 +51,10 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
                     e.preventDefault();
                 });
             });
-            document.querySelectorAll('.preset-config-params [data-fieldtype="submit"] input')[0].click();
+
+            if (document.querySelectorAll('.preset-config-params [data-fieldtype="submit"] input').length != 0) {
+                document.querySelectorAll('.preset-config-params [data-fieldtype="submit"] input')[0].click();
+            }
 
             var approveEvent = $.Event(PresetEvents.save);
             this.getRoot().trigger(approveEvent, this);

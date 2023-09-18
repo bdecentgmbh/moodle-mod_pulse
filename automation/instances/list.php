@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_pulse\automation\helper;
+
 // Require config.
 require(__DIR__.'/../../../../config.php');
 
@@ -122,12 +124,18 @@ $PAGE->navbar->add(format_string($course->shortname), new moodle_url('/admin/cat
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/instances/list.php'));
 
 // Build automation templates table.
+$filterset = new mod_pulse\table\automation_filterset;
+/* $filterset->add_filter(
+    new \core_table\local\filter\integer_filter('categorid', \core_table\local\filter\filter::JOINTYPE_DEFAULT, [(int) $course->id])
+); */
+
 $table = new mod_pulse\table\auto_instances($context->id);
 $table->define_baseurl($PAGE->url);
+$table->set_filterset($filterset);
 
 // Start page output.
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('autotemplates', 'pulse'));
+echo $OUTPUT->heading(get_string('automation', 'pulse'));
 
 // Show smart menus description.
 echo get_string('autotemplates_desc', 'pulse');
@@ -155,6 +163,8 @@ if ($countmenus < 1) {
     // And then show the table.
     $table->out(10, true);
 
+    echo helper::get_instance_tablehelps();
+
     $PAGE->requires->js_amd_inline('require(["jquery"], function($) {
         var notes = document.querySelectorAll("[data-target=notes-collapse]");
 
@@ -166,6 +176,10 @@ if ($countmenus < 1) {
                     var target = e.target.closest("[data-target=notes-collapse]");
                     var collapse = target.dataset.collapse;
                     var tbody = target.parentNode.parentNode.parentNode;
+                    if (target.dataset.notes == "") {
+                       return true;
+                    }
+
                     if (collapse == "1") {
                         // target.classList.add("show");
                         var trNode = document.createElement("tr");

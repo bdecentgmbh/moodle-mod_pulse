@@ -47,7 +47,7 @@ $string['subject'] = 'Subject';
 $string['messagetype'] = 'Message type';
 // ...Status of the schedule.
 $string['queued'] = 'Queued';
-$string['send'] = 'Send';
+$string['sent'] = 'sent';
 $string['failed'] = 'Failed';
 $string['onhold'] = 'On hold';
 $string['schedulecreatedtime'] = 'Schedule created time';

@@ -31,7 +31,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         // TODO: double check all the config names and help icons.
         $cohorts = $mform->addElement('autocomplete', 'condition[cohort][cohorts]', get_string('cohorts', 'pulsecondition_cohort'), $cohorts);
         $cohorts->setMultiple(true);
-        $mform->disabledIf('condition[cohort][cohorts]', 'condition[cohort][status]', 'eq', self::DISABLED);
+        $mform->hideIf('condition[cohort][cohorts]', 'condition[cohort][status]', 'eq', self::DISABLED);
         $mform->addHelpButton('condition[cohort][cohorts]', 'cohorts', 'pulsecondition_cohort');
 
         $mform->addElement('hidden', 'override[condition_cohort_cohorts]', 1);

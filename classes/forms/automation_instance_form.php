@@ -40,7 +40,10 @@ class automation_instance_form extends automation_template_form {
 
         // Get the list of elments add in this form. create override button for all elements expect the hidden elements.
         $elements = $mform->_elements;
+
         // print_object($elements);exit;
+        // $referenceprefix = $mform->createElement('html', html_writer::span());
+        // $mform->insertElementBefore($referenceprefix, 'reference');
 
         if (!empty($elements)) {
             // List of element type don't need to add the override option.
@@ -124,7 +127,7 @@ class automation_instance_form extends automation_template_form {
 
         $option = [];
         foreach ($plugins as $name => $plugin) {
-            $header = $mform->addElement('header', $name, get_string('pluginname', 'pulsecondition_'.$name));
+            $mform->addElement('header', $name, get_string('pluginname', 'pulsecondition_'.$name));
 
             $plugin->load_instance_form($mform, $this);
             $plugin->upcoming_element($mform);

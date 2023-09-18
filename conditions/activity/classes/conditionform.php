@@ -30,7 +30,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         $modules = $mform->addElement('autocomplete', 'condition[activity][modules]', get_string('selectactivity', 'pulsecondition_activity'), $activities);
         $modules->setMultiple(true);
-        $mform->disabledIf('condition[activity][modules]', 'condition[activity][status]', 'eq', self::DISABLED);
+        $mform->hideIf('condition[activity][modules]', 'condition[activity][status]', 'eq', self::DISABLED);
         $mform->addHelpButton('condition[activity][modules]', 'selectactivity', 'pulsecondition_activity');
 
         // Enable the override by default to prevent adding overdide checkbox.

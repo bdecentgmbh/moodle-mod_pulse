@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_pulse\automation\helper;
+
 // Require config.
 require(__DIR__.'/../../../../config.php');
 
@@ -135,43 +137,45 @@ if ($countmenus < 1) {
 
     // And then show the table.
     $table->out(10, true);
+
+    echo helper::get_templates_tablehelps();
 }
 
 
-$PAGE->requires->js_amd_inline("require(['jquery', 'core/modal_factory', 'core/modal_events', 'core/str'], function($, ModalFactory, ModalEvents, Str) {
+$PAGE->requires->js_amd_inline("require(['jquery', 'core/modal_factory', 'core/str', 'mod_pulse/modal_preset', 'mod_pulse/events'], function($, ModalFactory, Str, ModalPreset, PresetEvents) {
     var form = document.querySelectorAll('.updatestatus-switch-form');
     form.forEach((switche) => {
-        switche.querySelector('input[type=checkbox]').addEventListener('change', function(e) {
+        switche.querySelector('.custom-switch').addEventListener('click', function(e) {
+            e.preventDefault();
+
             var statusElem = e.target.parentNode.querySelector('input[name=action]');
             var instanceElem = e.target.parentNode.querySelector('input[name=instance]');
+
             var form = e.target.closest('form');
-            if (e.target.checked) {
+            var checkbox = e.target.closest('.custom-control-input');
+
+            if (checkbox.checked) {
                 statusElem.value = 'enable';
             } else {
                 statusElem.value = 'disable';
             }
-            // e.target.closest('form').submit();
-
-            /* var saveBtn = document.creatElement('button');
-            saveBtn.setAttribute('type', 'button');
-            saveBtn.setAttribute('class' , 'btn btn-primary');
-            saveBtn.innerHTML = {{#str}} Update Instances {{/str}} */
 
             ModalFactory.create({
+                type: ModalPreset.TYPE,
                 title: Str.get_string('updatetemplate', 'pulse'),
-                type: ModalFactory.types.SAVE_CANCEL,
-                body: Str.get_string('templatestatusudpate', 'pulse')
+                body: Str.get_string('templatestatusudpate', 'pulse'),
+                large: true
             }).then(function(modal) {
-                modal.setButtonText('save', Str.get_string('updateinstance', 'pulse') );
-                modal.setButtonText('cancel', Str.get_string('updatetemplate', 'pulse'));
+                modal.setButtonText('customize', Str.get_string('updateinstance', 'pulse') );
+                modal.setButtonText('save', Str.get_string('updatetemplate', 'pulse'));
                 modal.show();
 
-                modal.getRoot().on(ModalEvents.save, (e) => {
+                modal.getRoot().on(PresetEvents.customize, (e) => {
                     instanceElem.value = true;
                     form.submit();
                 });
 
-                modal.getRoot().on(ModalEvents.cancel, (e) => {
+                modal.getRoot().on(PresetEvents.save, (e) => {
                     instanceElem.value = false;
                     form.submit();
                 });

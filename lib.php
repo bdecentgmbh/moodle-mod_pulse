@@ -650,7 +650,7 @@ function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClas
             'courseid' => $id,
         ]);
 
-        $node = $navigation->create(get_string('autotemplates','pulse'), $url, navigation_node::TYPE_SETTING, null, null);
+        $node = $navigation->create(get_string('automation','pulse'), $url, navigation_node::TYPE_SETTING, null, null);
         $node->add_class('automation-templates');
         $node->set_force_into_more_menu(false);
         $node->set_show_in_secondary_navigation(true);
@@ -659,6 +659,4 @@ function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClas
 
         $PAGE->requires->js_call_amd('mod_pulse/automation', 'instanceMenuLink', []);
     }
-
-    // ...
 }

@@ -267,6 +267,7 @@ $string['mod/pulse:sender'] = 'Notification sender user';
 
 // ...Templates list string.
 $string['autotemplates'] = 'Automation templates';
+$string['automation'] = 'Automation';
 $string['autotemplates_desc'] = 'Automation templates define the kind of automations you can use on this moodle site. Depending on the configuration of an automation template, they either work as "default" and will be applied to new courses can be forced onto every course or can be used to create and automation instance from within a course.';
 // ...create new template btn.
 $string['templatecreatenew'] = 'Create new template';
@@ -303,7 +304,10 @@ $string['tabcondition'] = 'Condition';
 $string['autoinstances'] = 'Auto instances';
 $string['editinstance'] = 'Edit instance';
 // ...Update status modal
-$string['templatestatusudpate'] = 'Are your sure! Update the status of template to all of instance or only for upcoming instance';
+$string['templatestatusudpate'] = 'Are you sure that you want to change the status of the template?
+<ul class="mt-3">
+<li> Choose <b> Update Template </b> if you only want to update the status of the template, but leave the instances untouched </li>.
+<li> Choose <b> Update Template & Instances</b> if you want to update the status of the template and also all of its instances. </li> </ul>';
 $string['instancecopy'] = 'Duplicate Instance';
 
 $string['instancereport'] = 'Instance automation schedules';
@@ -344,3 +348,14 @@ $string['conditiontrigger_help'] = 'Choose the trigger events that will activate
 // Number of schedules notification.
 $string['schedulecount'] = 'Number of schedule count';
 $string['schedulecountdesc'] = 'This setting allows you to control how many scheduled task notifications are sent during each cron run. By specifying a numerical value, you can regulate the rate at which system administrators receive notifications regarding the completion or status of scheduled tasks.';
+
+// ...Automation templates table instruction help texts.
+$string['instruction'] = 'Instructions';
+$string['automationtemplate_help1'] = 'The icon represents the enabled action(s) in the automation (template). the following actions are available: "Notification", "Assignment". "Membership", "Skills",';
+$string['automationtemplate_help2'] = 'The title of the automation template. this should be a generic explanation about what the template is for. it can be changed inline by clicking on the pencil icon.';
+$string['automationtemplate_help3'] = 'The pills provide additional improtant information about the automation template. In this case, it explains that it\'s a notification.';
+$string['automationtemplate_help4'] = 'This is the reference of the template, and is providing a unique identifier for the template. it will be part of the unique identifier of the automation instance.';
+$string['automationtemplate_help5'] = 'Click on this icon to edit the template.';
+$string['automationtemplate_help6'] = 'Click on this icon to toggle the visibility of a template. A template which is not visible is hidden in courses. Existing automation instances will still be available, but new ones cannot be added anymore.';
+$string['automationtemplate_help7'] = 'Use this toggle to turn on or off a template. A template which is turned off also disabled all automation instances, unless they are locally enabled using an override';
+$string['automationtemplate_help8'] = 'How manu automation instances are using template. The number is brackets indicates the numder of disabled instances.';

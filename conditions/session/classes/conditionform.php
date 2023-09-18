@@ -11,15 +11,15 @@ class conditionform extends \mod_pulse\automation\condition_base {
     const MODNAME = 'facetoface';
 
     public function include_action(&$option) {
-        $option['session'] = get_string('sessioncompletion', 'pulsecondition_session');
+        $option['session'] = get_string('sessionbooking', 'pulsecondition_session');
     }
 
     public function load_instance_form(&$mform, $forminstance) {
 
-        $completionstr = get_string('sessioncompletion', 'pulsecondition_session');
+        $completionstr = get_string('sessionbooking', 'pulsecondition_session');
 
         $mform->addElement('select', 'condition[session][status]', $completionstr, $this->get_options());
-        $mform->addHelpButton('condition[session][status]', 'sessioncompletion', 'pulsecondition_session');
+        $mform->addHelpButton('condition[session][status]', 'sessionbooking', 'pulsecondition_session');
 
         $courseid = $forminstance->get_customdata('courseid') ?? '';
 
@@ -34,7 +34,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         }, $activities);
 
         $mform->addElement('autocomplete', 'condition[session][modules]', get_string('sessionmodule', 'pulsecondition_session'), $list);
-        $mform->disabledIf('condition[session][modules]', 'condition[session][status]', 'eq', self::DISABLED);
+        $mform->hideIf('condition[session][modules]', 'condition[session][status]', 'eq', self::DISABLED);
         $mform->addHelpButton('condition[session][modules]', 'sessionmodule', 'pulsecondition_session');
 
         // TODO: add this revention of override checkbox to dynamic instead of specific in each plugin.

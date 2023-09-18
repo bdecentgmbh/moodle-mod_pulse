@@ -225,7 +225,7 @@ class notification extends base {
         ))->set_options([
             1 => get_string('onhold', 'pulseaction_notification'),
             2 => get_string('queued', 'pulseaction_notification'),
-            3 => get_string('send', 'pulseaction_notification'),
+            3 => get_string('sent', 'pulseaction_notification'),
             0 => get_string('failed', 'pulseaction_notification')
         ]);
 

@@ -81,8 +81,9 @@ class auto_templates extends table_sql {
 
         $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         array_walk($actions, function(&$value) {
-            $result['badge'] = html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
-            $result['icon'] = html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon']);
+            $classname = 'pulseaction_'.$value->get_component();
+            $result['badge'] = html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary '.$classname]);
+            $result['icon'] = html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon '.$classname]);
             $value = $result;
         });
 
