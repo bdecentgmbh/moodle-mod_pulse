@@ -29,8 +29,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
 
     const previewModalBody = function(contextID, userid=null) {
 
-        if (window.tinyMCE !== null) {
-            editorPlugin = window.tinyMCE;
+        if (window.tinyMCE !== undefined) {
+            // editorPlugin = window.tinyMCE;
             var params = {
                 contentheader: window.tinyMCE.get('id_pulsenotification_headercontent_editor').getContent(),
                 contentstatic: window.tinyMCE.get('id_pulsenotification_staticcontent_editor').getContent(),
@@ -38,15 +38,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
                 userid: userid
             };
         } else {
-            editorPlugin = document;
+            // editorPlugin = document;
             var params = {
-                contentheader: document.querySelector('id_pulsenotification_headercontent_editoreditable').html(),
-                contentstatic: document.querySelector('id_pulsenotification_staticcontent_editoreditable').html(),
-                contentfooter: document.querySelector('id_pulsenotification_footercontent_editoreditable').html(),
+                contentheader: document.querySelector('#id_pulsenotification_headercontent_editoreditable').innerHTML,
+                contentstatic: document.querySelector('#id_pulsenotification_staticcontent_editoreditable').innerHTML,
+                contentfooter: document.querySelector('#id_pulsenotification_footercontent_editoreditable').innerHTML,
                 userid: userid
             };
-        }   
-       
+        }
 
         var dynamicparams = {};
         if (document.querySelector('[name=pulsenotification_dynamiccontent]') !== null) {

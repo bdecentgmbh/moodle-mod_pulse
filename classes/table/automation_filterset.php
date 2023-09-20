@@ -64,7 +64,7 @@ class automation_filterset extends filterset {
     public function get_optional_filters(): array {
 
         return [
-            'category' => string_filter::class,
+            'category' => integer_filter::class,
         ];
     }
 }

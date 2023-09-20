@@ -7,9 +7,9 @@ $string['notification:receivenotification'] = 'Recevie notifications from pulse'
 $string['notification:sender'] = 'Sender of the automation notification';
 
 
-$string['courseteacher'] = 'Courseteacher';
-$string['groupteacher'] = 'Groupteacher';
-$string['tenantrole'] = 'Tenantrole';
+$string['courseteacher'] = 'Course teacher';
+$string['groupteacher'] = 'Group teacher';
+$string['tenantrole'] = 'Tenant role';
 $string['custom'] = 'Custom';
 $string['senderemail'] = 'Sender email';
 $string['once'] = 'Once';

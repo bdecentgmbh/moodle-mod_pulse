@@ -121,7 +121,6 @@ class schedule {
 
             $messagesend = email_to_user($detail->recepient, $sender, $subject, $messageplain, $messagehtml, '', '', true, $replyto ?? '');
 
-
             if ($messagesend) {
                 // Update the current time as lastrun.
                 // Update the lastrun and increase the limit.
@@ -131,15 +130,13 @@ class schedule {
                 $update = [
                     'id' => $this->schedule->id,
                     'notifycount' => $notifycount,
-                    'status' => notification::STATUS_SEND,
+                    'status' => notification::STATUS_SENT,
                     'notifiedtime' => $notifiedtime,
                 ];
 
                 // Generate a next runtime. Only if user has limit to receive notifications. otherwise made the nextrun null.
-
                 // Update the schedule.
                 $DB->update_record('pulseaction_notification_sch', $update);
-
 
                 if ($notifycount < $this->notificationdata->notifylimit
                     && $this->notificationdata->notifyinterval['interval'] != notification::INTERVALONCE) {

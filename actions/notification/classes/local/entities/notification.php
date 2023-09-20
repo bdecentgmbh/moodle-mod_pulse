@@ -145,15 +145,9 @@ class notification extends base {
             {$notificationinsalias}.subject, {$notificationalias}.subject)", "subject")
         ->add_field("{$templatesinsalias}.instanceid")
         ->add_field("{$notificationschalias}.userid")
-        ->add_callback(static function($value, $row): string {
+        ->add_callback([pulsenotification::class, 'get_schedule_subject']);
 
-            return $value . html_writer::link('javascript:void(0);', '<i class="fa fa-info"></i>', [
-                'class' => 'pulse-automation-info-block',
-                'data-target' => 'view-content',
-                'data-instanceid' => $row->instanceid,
-                'data-userid' => $row->userid
-            ]);
-        });
+
 
         // Status of the schedule.
         $columns[] = (new column(

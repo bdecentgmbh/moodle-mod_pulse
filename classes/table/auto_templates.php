@@ -56,10 +56,38 @@ class auto_templates extends table_sql {
      * @return void
      */
     public function query_db($pagesize, $useinitialsbar = true) {
+        global $DB;
         // Fetch all avialable records from smart menu table.
-        $this->set_sql('*', '{pulse_autotemplates}', '1=1');
+
+        // $this->set_sql('*', '{pulse_autotemplates}', '1=1');
+
+        $condition = '1=1';
+        $params = [];
+        if ($this->filterset->has_filter('category')) {
+
+            $values = $this->filterset->get_filter('category')->get_filter_values();
+            $category = isset($values[0]) ? current($values) : '';
+            $condition = $DB->sql_like('categories', ':value');
+            $params += ['value' => '%"'.$category.'"%'];
+        }
+        $this->set_sql('*', '{pulse_autotemplates}', $condition, $params);
 
         parent::query_db($pagesize, $useinitialsbar);
+
+        // Category based filter.
+        /* if ($this->filterset->has_filter('category')) {
+
+            $values = $this->filterset->get_filter('category')->get_filter_values();
+            $category = isset($values[0]) ? current($values) : '';
+
+            // $rawdata
+            array_filter($rawdata, function($value) use ($category) {
+                if ($value->categories) {
+                    $categories = json_decode($value->category, true);
+                    return in_array($category, $categories);
+                }
+            });
+        } */
     }
 
     /**
@@ -108,7 +136,6 @@ class auto_templates extends table_sql {
         ]);
         $actions = array();
 
-
         // Edit.
         $actions[] = array(
             'url' => $baseurl,
@@ -116,12 +143,6 @@ class auto_templates extends table_sql {
             'attributes' => array('class' => 'action-edit')
         );
 
-        // Make the menu duplicate.
-       /*  $actions[] = array(
-            'url' => new \moodle_url($baseurl, ['action' => 'copy']),
-            'icon' => new \pix_icon('t/copy', \get_string('smartmenuscopymenu', 'theme_boost_union')),
-            'attributes' => array('class' => 'action-copy')
-        ); */
         list($totalcount, $disabledcount) = $this->get_instance_count($row);
         $actions[] = html_writer::tag('label', $totalcount . "(" . $disabledcount . ")", ['class' => 'overrides badge badge-secondary pl-10']);
 
@@ -145,28 +166,8 @@ class auto_templates extends table_sql {
         }
 
         // List of items.
-        // $itemsurl = new \moodle_url('/mod/pulse/automation/templates/edit.php', ['menu' => $row->id]);
+
         $actions[] = $this->edit_switch($row);
-
-        // Delete.
-        /* $actions[] = array(
-            'url' => new \moodle_url($baseurl, array('action' => 'delete')),
-            'icon' => new \pix_icon('t/delete', \get_string('delete')),
-            'attributes' => array('class' => 'action-delete'),
-            'action' => new \confirm_action(get_string('deletetemplate', 'pulse'))
-        ); */
-
-        /* // Move up/down.
-        $actions[] = array(
-            'url' => new \moodle_url($baseurl, array('action' => 'moveup')),
-            'icon' => new \pix_icon('t/up', \get_string('moveup')),
-            'attributes' => array('data-action' => 'moveup', 'class' => 'action-moveup')
-        );
-        $actions[] = array(
-            'url' => new \moodle_url($baseurl, array('action' => 'movedown')),
-            'icon' => new \pix_icon('t/down', \get_string('movedown')),
-            'attributes' => array('data-action' => 'movedown', 'class' => 'action-movedown')
-        ); */
 
         $actionshtml = array();
         foreach ($actions as $action) {

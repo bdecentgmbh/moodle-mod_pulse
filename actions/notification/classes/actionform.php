@@ -165,7 +165,6 @@ class actionform extends \mod_pulse\automation\action_base {
         $notification = notification::instance($instancedata->pulsenotification_id);
         $notificationinstance = helper::filter_record_byprefix($instancedata, $this->config_shortname());
 
-        // print_object($instancedata);exit;
         $notification->set_notification_data($notificationinstance, $instancedata);
 
         // Create a schedule for user. This method verify the user activity completion before creating schedules.
@@ -324,6 +323,8 @@ class actionform extends \mod_pulse\automation\action_base {
                     $DB->update_record($tablename, $actiondata);
                 } else {
                     // Create new instance for this tempalte.
+                    /* print_object($actiondata);
+                    exit; */
                     $notificationinstance = $DB->insert_record($tablename, $actiondata);
                 }
                 // TODO: Create a schedules based on receipents role.
@@ -401,6 +402,7 @@ class actionform extends \mod_pulse\automation\action_base {
         $list = array_merge($books, $pages);
         foreach ($list as $page) {
             $modules[$page->id] = $page->get_formatted_name();
+
         }
 
         $dynamic = $mform->createElement('select', 'pulsenotification_dynamiccontent', get_string('dynamiccontent', 'pulseaction_notification'), $modules);
@@ -431,6 +433,9 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->insertElementBefore($chapter, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_chapterid', 'chapters', 'pulseaction_notification');
         $mform->hideIf('pulsenotification_chapterid', 'pulsenotification_dynamiccontent', 'eq', 0);
+        foreach ($pages as $page) {
+            $mform->hideIf('pulsenotification_chapterid', 'pulsenotification_dynamiccontent', 'eq', $page->id);
+        }
 
         // Content Length Group.
         $content_length_options = array(

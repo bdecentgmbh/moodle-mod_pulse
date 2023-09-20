@@ -41,9 +41,7 @@ if ($courseid) {
     $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 } else {
     $instanceid = required_param('instanceid', PARAM_INT);
-    if ($instance = $DB->get_record('pulse_autoinstances', ['id' => $instanceid], '*', MUST_EXIST)) {
-        $course = $DB->get_record('course', ['id' => $instance->courseid], '*', MUST_EXIST);
-    }
+
 }
 
 // Extend the features of admin settings.
@@ -54,7 +52,12 @@ $url = new moodle_url('/mod/pulse/automation/instances/edit.php', ['sesskey' => 
 
 // Include the instance id to the page url params.
 if ($instanceid) {
+    if ($instance = $DB->get_record('pulse_autoinstances', ['id' => $instanceid], '*', MUST_EXIST)) {
+        $course = $DB->get_record('course', ['id' => $instance->courseid], '*', MUST_EXIST);
+        $templateid = $instance->templateid;
+    }
     $url->param('instanceid', $instanceid);
+
 }
 // Include the course id to the page url params if exists.
 if (isset($course->id)) {
@@ -63,6 +66,7 @@ if (isset($course->id)) {
 
 if ($templateid) {
     $url->params(['templateid' => $templateid]);
+    $templatereference = mod_pulse\automation\templates::create($templateid)->get_formdata()->reference;
 }
 
 // Page values.
@@ -75,8 +79,14 @@ $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_course(get_course($course->id));
 
+
 // Edit automation templates form.
-$templatesform = new \mod_pulse\forms\automation_instance_form(null, ['templateid' => $templateid, 'courseid' => $course->id, 'instanceid' => $instanceid]);
+$templatesform = new \mod_pulse\forms\automation_instance_form(null, [
+    'templateid' => $templateid,
+    'courseid' => $course->id,
+    'instanceid' => $instanceid,
+    'templatereference' => $templatereference ?? ''
+]);
 
 // Instance list page url for this course.
 $overviewurl = new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id, 'sesskey' => sesskey()]);
@@ -86,7 +96,6 @@ if ($formdata = $templatesform->get_data()) {
     $result = mod_pulse\automation\instances::manage_instance($formdata);
     // Redirect to instances list.
     redirect($overviewurl);
-
 } else if ($templatesform->is_cancelled()) {
     // Form cancelled redirect to list page.
     redirect($overviewurl);

@@ -130,8 +130,11 @@ class helper {
      *
      * @return string The HTML contents to display the create templates button.
      */
-    public static function template_buttons() {
-        global $OUTPUT, $DB;
+    public static function template_buttons($filtered=false) {
+        global $OUTPUT, $DB, $CFG;
+
+        require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
+
 
         // Setup create template button on page.
         $caption = get_string('templatecreatenew', 'pulse');
@@ -142,6 +145,17 @@ class helper {
         $button = new single_button($editurl, $caption, 'get', $primary);
         $button = $OUTPUT->render($button);
 
+        // Filter form.
+        $button .= \html_writer::start_div('filter-form-container');
+        $button .= \html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('i/filter', 'Filter'), [
+            'id' => 'pulse-automation-filter',
+            'class' => 'sort-autotemplates btn btn-primary ml-2 ' . ($filtered ? 'filtered' : '')
+        ]);
+        $filter = new \template_table_filter();
+        $button .= \html_writer::tag('div', $filter->render(), ['id' => 'pulse-automation-filterform', 'class' => 'hide']);
+        $button .= \html_writer::end_div();
+
+        // Sort button for the table. Sort y the reference.
         $tdir = optional_param('tdir', null, PARAM_INT);
         $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
         $dirimage = ($tdir == SORT_ASC) ? '<i class="fa fa-sort-amount-up"></i>' : $OUTPUT->pix_icon('t/sort_by', 'Sortby');
@@ -155,6 +169,9 @@ class helper {
                 'class' => 'sort-autotemplates btn btn-primary ml-2'
             ]);
         }
+
+
+
         return $button;
     }
 
@@ -239,7 +256,11 @@ class helper {
         return \html_writer::tag('div', $html, ['class' => 'automation-instruction']);
     }
 
-
+    /**
+     * Get instance table instructions helps.
+     *
+     * @return void
+     */
     public static function get_instance_tablehelps() {
         global $OUTPUT;
 

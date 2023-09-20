@@ -34,6 +34,7 @@ function pulseaction_notification_output_fragment_preview_instance_content($args
 
     $context = $args['context'];
     if (isset($args['instanceid'])) {
+
         $insobj = new \mod_pulse\automation\instances($args['instanceid']);
         $formdata = (object) $insobj->get_instance_data();
 
@@ -41,7 +42,6 @@ function pulseaction_notification_output_fragment_preview_instance_content($args
         $notificationobj = pulseaction_notification\notification::instance($notificationid);
 
         $notificationobj->set_notification_data($formdata->actions['notification'], $formdata);
-
         $content = $notificationobj->build_notification_content(null, null, $formdata->override);
 
         $sender = core_user::get_support_user();

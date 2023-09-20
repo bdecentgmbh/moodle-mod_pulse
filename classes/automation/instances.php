@@ -9,6 +9,9 @@ use core_reportbuilder\local\helpers\report as reporthelper;
 use course_enrolment_manager;
 use moodle_exception;
 
+/**
+ * Instances.
+ */
 class instances extends templates {
 
     protected $instanceid;
@@ -29,6 +32,11 @@ class instances extends templates {
         return $instance;
     }
 
+    /**
+     * Get instance data.
+     *
+     * @return stdclass
+     */
     public function get_instance_data() {
         global $DB;
 
@@ -482,7 +490,7 @@ class instances extends templates {
 
             // ...Store the templates overrides.
             // Fetch the auto templates fields.
-            $templatefields = $DB->get_columns('pulse_autotemplates');
+            $templatefields = $DB->get_columns('pulse_autotemplates_ins');
             $fields = array_keys($templatefields);
             $preventfields = ['id', 'triggerconditions', 'timemodified'];
 

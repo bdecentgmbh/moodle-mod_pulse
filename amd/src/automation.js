@@ -6,11 +6,13 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
             return;
         }
 
-        var menu = navMenu.querySelector('a.automation-templates').parentNode;
+        var menu = navMenu.querySelector('a.automation-templates');
 
         if (menu === null) {
             return;
         }
+
+        menu = menu.parentNode;
         menu.dataset.forceintomoremenu = false,
         menu.querySelector('a').classList.remove('dropdown-item');
         menu.querySelector('a').classList.add('nav-link');
@@ -110,6 +112,14 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
      * @returns {void}
      */
     const overrideModal = function() {
+
+        // Add the template reference as prefix of the instance reference.
+        var templateReference = document.querySelector('#pulse-template-reference');
+        var instanceReference = document.querySelector('#fitem_id_insreference .felement');
+        if (templateReference && instanceReference) {
+            templateReference.classList.remove('hide');
+            instanceReference.prepend(templateReference);
+        }
 
         const trigger = document.querySelectorAll('[data-target="overridemodal"]');
 

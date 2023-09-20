@@ -60,11 +60,11 @@ class auto_instances extends table_sql {
 
         $courseid = $PAGE->course->id;
         // Fetch all avialable records from smart menu table.
-        $reference = "IF (ati.reference <> '', ati.reference, pat.reference)";
+        // $reference = "IF (ati.reference <> '', ati.reference, pat.reference)";
         // $title = "IF (ati.title <> '', ati.title, pat.title)";
 
         $this->set_sql(
-            "ai.*, ati.*, ai.id as id, $reference as idnumber",
+            "ai.*, ati.*, ai.id as id, ati.insreference as idnumber",
             '{pulse_autoinstances} ai
             JOIN {pulse_autotemplates_ins} AS ati ON ati.instanceid=ai.id
             JOIN {pulse_autotemplates} AS pat ON pat.id=ai.templateid',
@@ -80,16 +80,19 @@ class auto_instances extends table_sql {
         // Fetch the templates data with its actions for all the instances.
         $templatedata = \mod_pulse\automation\templates::get_templates_record($templates);
         // Merge each instances with its templatedata, it will assign the template data for non overridden fields for instance.
+
+        /* print_object($rawdata);
+        exit; */
         foreach ($rawdata as $key => $data) {
             $templateid = $data->templateid;
             if (isset($templatedata[$templateid])) {
                 // Merge the override instance data with its related template data.
-                // print_object($data);exit;
                 $this->rawdata[$key] = \mod_pulse\automation\helper::merge_instance_overrides($data, $templatedata[$templateid]);
             }
         }
 
         $this->rawdata = array_filter($this->rawdata);
+
     }
 
     /**
@@ -118,19 +121,20 @@ class auto_instances extends table_sql {
             $value = $result;
         });
 
-        $collapseicon = html_writer::tag('span', $OUTPUT->pix_icon('t/collapsed', 'collapsenotes', 'moodle') , [
+
+        $collapseicon = ($row->notes) ? html_writer::tag('span', $OUTPUT->pix_icon('t/collapsed', 'collapsenotes', 'moodle') , [
             'data-target' => 'notes-collapse',
             'data-notes' => format_string($row->notes),
             'data-collapse' => 1,
             'data-instance' => $row->id
-        ]);
+        ]) : '';
 
         return $collapseicon . implode(' ', array_column($actions, 'icon')) . $OUTPUT->render($title) . implode(' ', array_column($actions, 'badge'));
     }
 
 
     public function col_idnumber($row) {
-        $title = html_writer::tag('h5', format_string($row->reference), ['class' => 'template-reference']);
+        $title = html_writer::tag('h5', format_string($row->reference . ($row->idnumber ?? '')), ['class' => 'template-reference']);
         return $title;
     }
 

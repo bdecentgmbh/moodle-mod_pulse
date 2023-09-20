@@ -105,8 +105,19 @@ $PAGE->add_body_class('mod-pulse-automation-table');
 $PAGE->set_heading(get_string('autotemplates', 'pulse'));
 
 // Build automation templates table.
+$filterset = new mod_pulse\table\automation_filterset;
+
+if ($categoryid = optional_param('category', null, PARAM_INT)) {
+    $category = new \core_table\local\filter\integer_filter('category');
+    $category->add_filter_value($categoryid);
+    $filterset->add_filter($category);
+    $filtered = true;
+}
+
+// Build automation templates table.
 $table = new mod_pulse\table\auto_templates($context->id);
 $table->define_baseurl($PAGE->url);
+$table->set_filterset($filterset);
 
 // Start page output.
 echo $OUTPUT->header();
@@ -117,7 +128,7 @@ echo get_string('autotemplates_desc', 'pulse');
 
 // Prepare 'Create template' button.
 $createbutton = $OUTPUT->box_start();
-$createbutton .= mod_pulse\automation\helper::template_buttons();
+$createbutton .= mod_pulse\automation\helper::template_buttons($filtered ?? false);
 $createbutton .= $OUTPUT->box_end();
 
 // If there aren't any templates yet.
@@ -166,7 +177,7 @@ $PAGE->requires->js_amd_inline("require(['jquery', 'core/modal_factory', 'core/s
                 body: Str.get_string('templatestatusudpate', 'pulse'),
                 large: true
             }).then(function(modal) {
-                modal.setButtonText('customize', Str.get_string('updateinstance', 'pulse') );
+                modal.setButtonText('customize', Str.get_string('updateinstance', 'pulse'));
                 modal.setButtonText('save', Str.get_string('updatetemplate', 'pulse'));
                 modal.show();
 
@@ -182,6 +193,11 @@ $PAGE->requires->js_amd_inline("require(['jquery', 'core/modal_factory', 'core/s
             })
         })
     });
+
+    // Filter form display.
+    var filterIcon = document.querySelector('#pulse-automation-filter');
+    var filterForm = document.querySelector('#pulse-automation-filterform');
+    filterIcon.onclick = (e) => filterForm.classList.toggle('hide');
 
 })");
 

@@ -438,7 +438,7 @@ class notification {
         list($insql, $inparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'rle');
 
         // TODO: Define user fields, never get entire fields.
-        $rolesql = "SELECT DISTINCT u.*, ra.roleid FROM {role_assignments} ra
+        $rolesql = "SELECT DISTINCT u.id, u.*, ra.roleid FROM {role_assignments} ra
         JOIN {user} u ON u.id = ra.userid
         JOIN {role} r ON ra.roleid = r.id
         LEFT JOIN {role_names} rn ON (rn.contextid = :ctxid AND rn.roleid = r.id)
@@ -666,6 +666,24 @@ class notification {
         } else {
             return get_string('failed', 'pulseaction_notification');
         }
+    }
+
+    public static function get_schedule_subject($value, $row) {
+        global $DB;
+
+        $sender = \core_user::get_support_user();
+        $courseid = $DB->get_field('pulse_autoinstances', 'courseid', ['id' => $row->instanceid]);
+        $user =  (object) \core_user::get_user($row->userid);
+        $course = get_course($courseid ?? SITEID);
+
+        list($subject, $messagehtml) = \mod_pulse\helper::update_emailvars('', $value, $course, $user, null, $sender);
+
+        return $subject . html_writer::link('javascript:void(0);', '<i class="fa fa-info"></i>', [
+            'class' => 'pulse-automation-info-block',
+            'data-target' => 'view-content',
+            'data-instanceid' => $row->instanceid,
+            'data-userid' => $row->userid
+        ]);
     }
 
     public static function get_modules_data($modules) {

@@ -117,10 +117,10 @@ function xmldb_pulse_upgrade($oldversion) {
         // Define table pulse_autoinstances to be created.
         $table = new xmldb_table('pulse_autoinstances');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
-        $table->add_field('templateid', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, null, 'id');
-        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, null, 'templateid');
-        $table->add_field('status', XMLDB_TYPE_INTEGER, '9', null, null, null, null, '1', 'courseid');
-        $table->add_field('timemodified', XMLDB_TYPE_DATETIME, null, null, null, null, null, 'status');
+        $table->add_field('templateid', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, 'templateid');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '9', null, null, null, '1', 'courseid');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'status');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
 
         // Conditionally launch create table for pulse_autoinstaces.
@@ -133,15 +133,15 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
         $table->add_field('title', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'id');
         $table->add_field('reference', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null, 'title');
-        $table->add_field('visible', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, '1', 'reference');
+        $table->add_field('visible', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, '1', 'reference');
         $table->add_field('notes', XMLDB_TYPE_TEXT, null, null, null, null, null, 'visible');
-        $table->add_field('status', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, '1', 'notes');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, '1', 'notes');
         $table->add_field('tags', XMLDB_TYPE_TEXT, null, null, null, null, null, 'status');
         $table->add_field('tenants', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tags');
         $table->add_field('categories', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tenants');
         $table->add_field('triggerconditions', XMLDB_TYPE_TEXT, null, null, null, null, null, 'categories');
-        $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '9', null, null, null, null, '1', 'triggerconditions');
-        $table->add_field('timemodified', XMLDB_TYPE_DATETIME, null, null, null, null, 'triggeroperator');
+        $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '9', null, null, null, '1', 'triggerconditions');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'triggeroperator');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
 
         // Conditionally launch create table for pulse_autotemplates.
@@ -152,17 +152,17 @@ function xmldb_pulse_upgrade($oldversion) {
         // Define table pulse_autotemplates_ins to be created.
         $table = new xmldb_table('pulse_autotemplates_ins');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
-        $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', XMLDB_NOTNULL, null, null, null, 'id');
+        $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, null, null, 'id');
         $table->add_field('title', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'instanceid');
-        $table->add_field('reference', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'title');
-        $table->add_field('visible', XMLDB_TYPE_INTEGER, '9', null, null, null, null, 'reference');
+        $table->add_field('insreference', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'title');
+        $table->add_field('visible', XMLDB_TYPE_INTEGER, '9', null, null, null, null, 'insreference');
         $table->add_field('notes', XMLDB_TYPE_TEXT, null, null, null, null, null, 'visible');
         $table->add_field('tags', XMLDB_TYPE_TEXT, null, null, null, null, null, 'notes');
         $table->add_field('tenants', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tags');
         $table->add_field('categories', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tenants');
         $table->add_field('triggerconditions', XMLDB_TYPE_TEXT, null, null, null, null, null, 'categories');
-        $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '2', null, null, null, null, null, 'triggerconditions');
-        $table->add_field('timemodified', XMLDB_TYPE_DATETIME, null, null, null, null, 'triggeroperator');
+        $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'triggerconditions');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'triggeroperator');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('unique', XMLDB_KEY_UNIQUE, array('instanceid'));
 
@@ -173,12 +173,12 @@ function xmldb_pulse_upgrade($oldversion) {
 
         // Define table pulse_condition_overrides to be created.
         $table = new xmldb_table('pulse_condition_overrides');
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
-        $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', XMLDB_NOTNULL, null, null, null, 'id');
-        $table->add_field('triggercondition', XMLDB_TYPE_CHAR, '200', XMLDB_NOTNULL, null, null, null, 'instanceid');
-        $table->add_field('status', XMLDB_TYPE_INTEGER, '2', null, null, null, null, '0', 'triggercondition');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('triggercondition', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null, 'instanceid');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'triggercondition');
         $table->add_field('additional', XMLDB_TYPE_TEXT, null, null, null, null, null, 'status');
-        $table->add_field('isoverriden', XMLDB_TYPE_INTEGER, '2', null, null, null, null, '1', 'additional');
+        $table->add_field('isoverriden', XMLDB_TYPE_INTEGER, '2', null, null, null, '1', 'additional');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('unique', XMLDB_KEY_UNIQUE, array('instanceid', 'triggercondition'));
 
@@ -191,5 +191,19 @@ function xmldb_pulse_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023051800, 'pulse');
 
     }
+
+    if ($oldversion < 2023051825) {
+        // Auto templates instance.
+        $instable = new xmldb_table('pulse_autotemplates_ins');
+        $reference = new xmldb_field('reference', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        // Verify field exists.
+        if ($dbman->field_exists($instable, $reference)) {
+            // Rename the field.
+            $dbman->rename_field($instable, $reference, 'insreference');
+        }
+
+        upgrade_mod_savepoint(true, 2023051825, 'pulse');
+    }
+
     return true;
 }

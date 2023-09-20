@@ -8,15 +8,17 @@ use core_external\external_value;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 
-class external extends external_api {
+require_once($CFG->libdir.'/externallib.php');
+
+class external extends \external_api {
 
      /**
      * Get list of chapters for the book module function parameters.
      * @return object type of the badge type.
      */
     public static function get_chapters_parameters() {
-        return new external_function_parameters(
-            array('mod' => new external_value(PARAM_INT, 'Book module cmid ', VALUE_OPTIONAL))
+        return new \external_function_parameters(
+            array('mod' => new \external_value(PARAM_INT, 'Book module cmid ', VALUE_OPTIONAL))
         );
     }
 
@@ -46,11 +48,11 @@ class external extends external_api {
      * @return array list of chapaters.
      */
     public static function get_chapters_returns() {
-        return new external_multiple_structure(
-            new external_single_structure(
+        return new \external_multiple_structure(
+            new \external_single_structure(
                 array(
-                    'value' => new external_value(PARAM_INT, 'Chapter ID', VALUE_OPTIONAL),
-                    'label' => new external_value(PARAM_TEXT, 'Chapter title', VALUE_OPTIONAL),
+                    'value' => new \external_value(PARAM_INT, 'Chapter ID', VALUE_OPTIONAL),
+                    'label' => new \external_value(PARAM_TEXT, 'Chapter title', VALUE_OPTIONAL),
                 )
             ), '', VALUE_OPTIONAL
         );

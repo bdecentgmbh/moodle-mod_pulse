@@ -58,7 +58,18 @@ define(['core_editor/events'], function(events) {
                 });
             }
 
-                // console.log(window.tinyMCE.get());
+            var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
+            if (templatevars) {
+                templatevars.forEach((elem) => {
+                    elem.addEventListener('click', function(e) {
+                        var target = e.currentTarget;
+                        var EditorInput  = target.querySelector('[id*="_editoreditable"]');
+                        module.insertCaretActive(EditorInput);
+                    });
+                })
+            }
+
+            // console.log(window.tinyMCE.get());
             var targetNode = document.querySelector('textarea[id$=_editor]');
             if (targetNode !== null) {
                 var observer = new MutationObserver(function() {
@@ -70,6 +81,7 @@ define(['core_editor/events'], function(events) {
             }
 
             const initIframeListeners = () => {
+
                 var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
                 if (iframes === null || !iframes.length) {
                     return false;

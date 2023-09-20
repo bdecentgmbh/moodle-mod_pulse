@@ -42,17 +42,20 @@ class automation_instance_form extends automation_template_form {
         $elements = $mform->_elements;
 
         // print_object($elements);exit;
-        // $referenceprefix = $mform->createElement('html', html_writer::span());
-        // $mform->insertElementBefore($referenceprefix, 'reference');
+        $templatereference = $this->get_customdata('templatereference');
+        $input = html_writer::empty_tag('input', ['class' => 'form-control', 'type' => 'text', 'value' => $templatereference, 'disabled' => 'disabled']);
+        $referenceprefix = $mform->createElement('html', html_writer::div($input, 'hide', ['id' => 'pulse-template-reference']));
+        $mform->insertElementBefore($referenceprefix, 'insreference');
+
+        $this->load_default_override_elements(['insreference', 'title']);
 
         if (!empty($elements)) {
             // List of element type don't need to add the override option.
             $dontoverride = ['html', 'header', 'hidden', 'button'];
+
             foreach ($elements as $element) {
-                // $nextelement = next($elements);
 
                 if (!in_array($element->getType(), $dontoverride) && $element->getName() !== 'buttonar') {
-                    // $lock = $lockelements
                     $this->add_override_element($element);
                 }
             }
@@ -69,24 +72,18 @@ class automation_instance_form extends automation_template_form {
         $elementname = $element->getName();
         $orgelementname = $elementname;
 
-
-        /* // Rename the editor elements.
-        if (str_ends_with($elementname, '_editor')) {
-            $elementname = str_replace('_editor','', $elementname);
-        } */
-
         if (stripos($elementname, "[") !== false) {
             $name = str_replace("]", "", str_replace("[", "_", $elementname));
             $name = 'override[' . $name .']';
         } else {
             $name = 'override[' . $elementname .']';
         }
+
         // Override element already exists, no need to create new one.
         if (isset($mform->_elementIndex[$name])) {
             return;
         }
 
-        // $html = html_writer::tag('span', '', ['class' => 'custom-control-label']);
         $overrideelement = $mform->createElement('advcheckbox', $name, '', '', array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
 
         // Insert the override checkbox before the element.
