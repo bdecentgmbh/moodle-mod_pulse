@@ -225,14 +225,14 @@ class helper {
 
         $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         array_walk($actions, function(&$value) {
-            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
-            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon']);
+            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary pulseaction_notification']);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon pulseaction_notification']);
             $value = $result;
         });
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => '<b> Welcom message </b>',
+            'help2' => '<b> Welcome message </b>',
             'help3' => implode(',', array_column($actions, 'badge')),
             'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
@@ -267,20 +267,19 @@ class helper {
         $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         array_walk($actions, function(&$value) {
             $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
-            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon']);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon pulseaction_notification']);
             $value = $result;
         });
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => '<b> Welcom message </b>',
+            'help2' => '<b> Welcome message </b>',
             'help3' => implode(',', array_column($actions, 'badge')),
             'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
-            'help6' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
-            'help7' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
-                <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]),
-            'help8' => \html_writer::tag('label', "33 (1)", ['class' => 'overrides badge badge-secondary pl-10']),
+            'help6' => $OUTPUT->pix_icon('t/copy', \get_string('copy')),
+            'help7' => $OUTPUT->pix_icon('i/calendar', \get_string('copy')),
+            'help8' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
         ];
 
         $table = new \html_table();
@@ -288,7 +287,7 @@ class helper {
         $table->head = array('', '');
 
         foreach ($templatehelp as $help => $result) {
-            $row = new \html_table_row(array($result, get_string('automationtemplate_'.$help, 'pulse')));
+            $row = new \html_table_row(array($result, get_string('automationinstance_'.$help, 'pulse')));
             $table->data[] = $row;
         }
 

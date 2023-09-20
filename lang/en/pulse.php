@@ -352,10 +352,20 @@ $string['schedulecountdesc'] = 'This setting allows you to control how many sche
 // ...Automation templates table instruction help texts.
 $string['instruction'] = 'Instructions';
 $string['automationtemplate_help1'] = 'The icon represents the enabled action(s) in the automation (template). the following actions are available: "Notification", "Assignment". "Membership", "Skills",';
-$string['automationtemplate_help2'] = 'The title of the automation template. this should be a generic explanation about what the template is for. it can be changed inline by clicking on the pencil icon.';
+$string['automationtemplate_help2'] = 'The title of the automation <b>template</b>. This should be a generic explanation about what the template is for. It can be changed inline by clicking on the pencil icon.';
 $string['automationtemplate_help3'] = 'The pills provide additional improtant information about the automation template. In this case, it explains that it\'s a notification.';
 $string['automationtemplate_help4'] = 'This is the reference of the template, and is providing a unique identifier for the template. it will be part of the unique identifier of the automation instance.';
 $string['automationtemplate_help5'] = 'Click on this icon to edit the template.';
 $string['automationtemplate_help6'] = 'Click on this icon to toggle the visibility of a template. A template which is not visible is hidden in courses. Existing automation instances will still be available, but new ones cannot be added anymore.';
 $string['automationtemplate_help7'] = 'Use this toggle to turn on or off a template. A template which is turned off also disabled all automation instances, unless they are locally enabled using an override';
 $string['automationtemplate_help8'] = 'How manu automation instances are using template. The number is brackets indicates the numder of disabled instances.';
+ 
+// ...Automation instance table instruction help texts.
+$string['automationinstance_help1'] = 'The icon represents the enabled action(s) in the automation (template). the following actions are available: "Notification", "Assignment". "Membership", "Skills",';
+$string['automationinstance_help2'] = 'The title of the automation <b>instance</b>. This should be a generic explanation about what the template is for. It can be changed inline by clicking on the pencil icon.';
+$string['automationinstance_help3'] = 'The pills provide additional improtant information about the automation instance. In this case, it explains that it\'s a notification.';
+$string['automationinstance_help4'] = 'This is the reference of the instance, and acts as a unique identifier. It is (Usually) a combination of the template\'s reference combined with the course.';
+$string['automationinstance_help5'] = 'Click on this icon to edit the automation.';
+$string['automationinstance_help6'] = 'Duplicate the automation';
+$string['automationinstance_help7'] = 'Open the automation queue (in the report builder), which provides information about all the automations that ran.';
+$string['automationinstance_help8'] = 'Use this toggle to turn on or off the automation instance locally. This will override the status of the template, i.e. even if the template is turned off, it can be enabled.';

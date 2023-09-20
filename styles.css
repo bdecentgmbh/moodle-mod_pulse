@@ -207,13 +207,22 @@
     border-bottom-left-radius: 5px;
 }
 .mod-pulse-automation-table table.generaltable tbody td:last-child {
+    text-align: right;
     border-right: 1px solid #eee;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 .mod-pulse-automation-table table.generaltable tbody td .action-icon i {
+    width: 40px;
+    height: 40px;
     font-size: 18px;
-    line-height: 30px;
+    line-height: 40px;
+    border-radius: 50%;
+    color: #fff;
+}
+.mod-pulse-automation-table table.generaltable tbody td .action-icon.pulseaction_notification i,
+.mod-pulse-automation-table .badge.pulseaction_notification {
+    background-color: #7b61ff;
 }
 .mod-pulse-automation-table table.generaltable tbody td span.inplaceeditable {
     font-size: 16px;
@@ -294,12 +303,18 @@ form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch .check
     vertical-align: middle;
 }
 
-/* Automation template table filter form */
-div#pulse-automation-filterform {
-    position: absolute;
-    /* width: 100%; */
-    z-index: 1;
+.path-admin-mod-pulse-automation-templates .box.generalbox {
+    position: relative;
+}
+.path-admin-mod-pulse-automation-templates .box.generalbox .filter-form-container {
+    float: right;
+}
+.path-admin-mod-pulse-automation-templates .box.generalbox .filter-form-container #pulse-automation-filterform {
     background-color: #fff;
     border: 1px solid #ccc;
     box-shadow: 0px 0 0px 0.1px;
+    position: absolute;
+    top: 80%;
+    right: 0;
+    z-index: 2;
 }
