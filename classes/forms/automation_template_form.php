@@ -101,10 +101,10 @@ class automation_template_form extends moodleform {
         $mform->addHelpButton('title', 'title', 'pulse');
 
         // Add the Reference element.
-        $mform->addElement('text', 'insreference', get_string('reference', 'pulse'), ['size' => '50']);
-        $mform->addRule('insreference', null, 'required', null, 'client');
-        $mform->setType('insreference', PARAM_ALPHANUMEXT);
-        $mform->addHelpButton('insreference', 'reference', 'pulse');
+        $mform->addElement('text', 'reference', get_string('reference', 'pulse'), ['size' => '50']);
+        $mform->addRule('reference', null, 'required', null, 'client');
+        $mform->setType('reference', PARAM_ALPHANUMEXT);
+        $mform->addHelpButton('reference', 'reference', 'pulse');
 
         // Add the Visibility element.
         $visibility_options = [

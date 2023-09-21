@@ -42,12 +42,21 @@ class automation_instance_form extends automation_template_form {
         $elements = $mform->_elements;
 
         // print_object($elements);exit;
+        // Add the Reference element.
+        $reference = $mform->createElement('text', 'insreference', get_string('reference', 'pulse'), ['size' => '50']);
+        $mform->insertElementBefore($reference, 'reference');
+        $mform->setType('insreference', PARAM_ALPHANUMEXT);
+        /* $mform->addRule('insreference', null, 'required', null, 'client');
+        $mform->addHelpButton('insreference', 'reference', 'pulse'); */
+
+        $mform->removeElement('reference');
+
         $templatereference = $this->get_customdata('templatereference');
         $input = html_writer::empty_tag('input', ['class' => 'form-control', 'type' => 'text', 'value' => $templatereference, 'disabled' => 'disabled']);
         $referenceprefix = $mform->createElement('html', html_writer::div($input, 'hide', ['id' => 'pulse-template-reference']));
         $mform->insertElementBefore($referenceprefix, 'insreference');
 
-        $this->load_default_override_elements(['insreference', 'title']);
+        $this->load_default_override_elements(['insreference']);
 
         if (!empty($elements)) {
             // List of element type don't need to add the override option.
@@ -92,9 +101,12 @@ class automation_instance_form extends automation_template_form {
         }
 
         // Disable the form fields by default, only enable whens its enabled for overriddden.
-        if (!isset($mform->_rules[$element->getName()]) || empty($mform->_rules[$element->getName()])) {
+        // if (!isset($mform->_rules[$element->getName()]) || empty($mform->_rules[$element->getName()])) {
             $mform->disabledIf($orgelementname, $name, 'notchecked');
-        }
+     /*   // }  else {
+            $element = $mform->getElement($orgelementname);
+            $element->updateAttributes(["readonly" => 'readonly']);
+        } */
     }
 
     /**

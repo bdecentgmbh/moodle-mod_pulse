@@ -153,12 +153,20 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
         })
     };
 
+    const enableTitleOnSubmit = function() {
+        if (document.forms['pulse-automation-template'] === null) {
+            return;
+        }
+        document.forms['pulse-automation-template'].onsubmit = (e) => document.querySelector('[name="title"]').removeAttribute("disabled");
+    }
+
     return {
 
         init: function() {
             returnToFailedTab();
             overrideModal();
             moveOverRidePosition();
+            enableTitleOnSubmit();
         },
 
         instanceMenuLink: function() {
