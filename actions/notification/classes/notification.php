@@ -500,6 +500,27 @@ class notification {
     }
 
     /**
+     * Verfiy the current instance configured any conditions.
+     *
+     * @return bool if configured any conditions return true otherwise returns flase.
+     */
+    protected function verfiy_instance_contains_condition() {
+
+        if (!isset($this->instancedata->condition)) {
+            return false;
+        }
+
+        // Verify the instance contains any enabled conditions.
+        foreach ($this->instancedata->condition as $condition => $values) {
+            if ($values['status']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Create schedule for the user.
      *
      * @param int $userid
@@ -517,8 +538,9 @@ class notification {
             $this->create_instance_data();
         }
 
+        // Instance should be configured with any of conditions. Otherwise stop creating instance (PLS-637).
         // Verify the user passed the instance condition.
-        if (!instances::create($this->notificationdata->instanceid)
+        if (!$this->verfiy_instance_contains_condition() || !instances::create($this->notificationdata->instanceid)
             ->find_user_completion_conditions($this->instancedata->condition, $this->instancedata, $userid, $isnewuser)) {
             // Remove the user condition.
             $this->disable_user_schedule($userid);
