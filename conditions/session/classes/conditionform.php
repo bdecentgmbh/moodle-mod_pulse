@@ -1,19 +1,61 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
+/**
+ * Conditions - Pulse condition class for the "Session Completion".
+ *
+ * @package   pulsecondition_session
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 namespace pulsecondition_session;
+
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
 use mod_pulse\automation\condition_base;
 
+/**
+ * Pulse automation session condition form and basic details.
+ */
 class conditionform extends \mod_pulse\automation\condition_base {
 
+    /**
+     * Name of the session module.
+     * @var string
+     */
     const MODNAME = 'facetoface';
 
-    public function include_action(&$option) {
+    /**
+     * Include data to action.
+     *
+     * @param array $option
+     * @return void
+     */
+    public function include_condition(&$option) {
         $option['session'] = get_string('sessionbooking', 'pulsecondition_session');
     }
 
+    /**
+     * Loads the form elements for session condition.
+     *
+     * @param MoodleQuickForm $mform The form object.
+     * @param object $forminstance The form instance.
+     */
     public function load_instance_form(&$mform, $forminstance) {
 
         $completionstr = get_string('sessionbooking', 'pulsecondition_session');
@@ -24,16 +66,14 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $courseid = $forminstance->get_customdata('courseid') ?? '';
 
         // Include the suppress session settings for the instance.
-        // $modinfo = \course_modinfo::instance($courseid);
         $list = [];
-        $activities = get_all_instances_in_courses(STATIC::MODNAME, [$courseid => $courseid]);
-        // foreach ($activities)
-        // facetoface_get_sessions
+        $activities = get_all_instances_in_courses(static::MODNAME, [$courseid => $courseid]);
         array_map(function($value) use (&$list) {
             $list[$value->id] = $value->name;
         }, $activities);
 
-        $mform->addElement('autocomplete', 'condition[session][modules]', get_string('sessionmodule', 'pulsecondition_session'), $list);
+        $mform->addElement('autocomplete', 'condition[session][modules]',
+                get_string('sessionmodule', 'pulsecondition_session'), $list);
         $mform->hideIf('condition[session][modules]', 'condition[session][status]', 'eq', self::DISABLED);
         $mform->addHelpButton('condition[session][modules]', 'sessionmodule', 'pulsecondition_session');
 
@@ -45,10 +85,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
     /**
      * Find the users is booked the session.
      *
-     * @param [type] $instancedata
-     * @param [type] $userid
-     * @param \completion_info|null $completion
-     * @return boolean
+     * @param stdclass $instancedata
+     * @param int $userid
+     * @param \completion_info $completion
+     * @return bool
      */
     public function is_user_completed($instancedata, $userid, \completion_info $completion=null) {
         global $DB;
@@ -64,7 +104,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
             WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid";
 
             $existingsignup = $DB->count_records_sql($sql, array('f2fid' => $modules, 'userid' => $userid));
-
             return ($existingsignup) ? true : false;
         }
         // Not configured any session modules.
@@ -72,20 +111,16 @@ class conditionform extends \mod_pulse\automation\condition_base {
     }
 
     /**
-     * Module completed.
+     * Event observer to trigger actions when the user is signup to the session.
      *
-     * @param [type] $eventdata
-     * @return void
+     * @param stdclass $eventdata
+     * @return bool
      */
     public static function signup_success($eventdata) {
         global $DB;
 
         // Event data.
         $data = $eventdata->get_data();
-/*
-        print_object($data);
-        exit; */
-
         $cmid = $data['contextinstanceid'];
         $userid = $data['userid'];
         $sessionid = $data['objectid'];
@@ -99,7 +134,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         // Get all the notification instance configures the suppress with this session.
         $notifications = self::get_acitivty_notifications($cm->instance);
-        // print_object($cm->instance);exit;
+
         foreach ($notifications as $notification) {
             // Get the notification suppres module ids.
             $additional = $notification->additional ? json_decode($notification->additional, true) : '';
@@ -109,13 +144,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
                 $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
                 // Trigger all the instance for notifications.
                 $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
-
             }
-
             return true;
         }
     }
-
 
     /**
      * Fetch the list of menus which is used the triggered ID in the access rules for the given method.
@@ -123,7 +155,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
      * Find the menus which contains the given ID in the access rule (Role or cohorts).
      *
      * @param int $id ID of the triggered method, Role or cohort id.
-     * @param string $method Field to find, Role or Cohort.
      * @return array
      */
     public static function get_acitivty_notifications($id) {
@@ -133,25 +164,35 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $sessionlike = $DB->sql_like('triggercondition', ':session');
         $sql = "SELECT * FROM {pulse_condition_overrides} WHERE status >= 1 AND $sessionlike AND $like";
         $params = ['session' => 'session', 'value' => '%"'.$id.'"%'];
-
         $records = $DB->get_records_sql($sql, $params);
-
         return $records;
     }
 
+    /**
+     * Gets the session time for the notification.
+     *
+     * @param object $notification The notification data.
+     * @param object $instancedata The instance data.
+     * @return mixed The session start time or false if not found.
+     */
     public static function get_session_time($notification, $instancedata) {
         global $DB;
 
         if (isset($instancedata->condition['session']) && $instancedata->condition['session']['status']) {
             $module = $instancedata->condition['session']['modules'];
-
             $existingsignup = self::get_session_data($module, $notification->userid);
-
             return !empty($existingsignup) ? current($existingsignup)->timestart : '';
         }
         return false;
     }
 
+    /**
+     * Get session data for a specific face-to-face ID and user ID.
+     *
+     * @param int $face2faceid The face-to-face ID.
+     * @param int $userid The user ID.
+     * @return array|null An array of session data or null if not found.
+     */
     public static function get_session_data($face2faceid, $userid) {
         global $DB;
 
@@ -166,9 +207,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
             'f2fid' => $face2faceid, 'userid' => $userid, 'timestart' => time(), 'code' => MDL_F2F_STATUS_REQUESTED,
             'statuscode' => MDL_F2F_STATUS_NO_SHOW
         ), 0, 1);
-
         return $existingsignup;
     }
-
 }
-

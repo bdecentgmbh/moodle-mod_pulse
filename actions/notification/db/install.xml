@@ -30,7 +30,7 @@
         <FIELD NAME="contenttype" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="footercontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="footercontentformat" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="datetime" NOTNULL="false" DEFAULT="current_timestamp()" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="templateid" TYPE="unique" FIELDS="templateid"/>
@@ -63,7 +63,7 @@
         <FIELD NAME="contenttype" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="chapterid" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="footercontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="datetime" NOTNULL="false" DEFAULT="current_timestamp()" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>

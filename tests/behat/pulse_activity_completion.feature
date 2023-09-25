@@ -48,7 +48,7 @@ Feature: View activity completion information in the pulse activity
     When I log in as "student1"
     And I am on "Course 1" course homepage
     And I should see "Test pulse 1"
-    Then the "Restriction Met" "auto" completion condition of "Test pulse 1" is displayed as "done"
+    Then the "Restriction met" "auto" completion condition of "Test pulse 1" is displayed as "done"
 
   @javascript
   Scenario: Use manual mark as complete completion
@@ -90,7 +90,7 @@ Feature: View activity completion information in the pulse activity
     And I click on "Approve users" "link" in the ".pulse-completion-btn" "css_element"
     And I should see "Student User 1" in the "participants" "table"
     When I click on "Approve" "link" in the "Student User 1" "table_row"
-    And I should see "User approved successfully" in the ".notifications" "css_element"
+    And I should see "Approval successful" in the ".notifications" "css_element"
     And I should see "Approved" in the "Student User 1" "table_row"
     And I log out
     # Student view

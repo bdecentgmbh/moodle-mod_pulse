@@ -102,13 +102,13 @@ class eventobserver {
     }
 
     /**
-     * User enrolment trigger actions.
+     * Trigger an action event for all instances in a course.
      *
-     * @param [type] $event
-     * @return void
+     * @param string $method The method to trigger.
+     * @param stdClass $event The event object.
      */
     public static function trigger_action_event($method, $event) {
-        // $userid = $event->relateduserid; // Unenrolled user id.
+
         $courseid = $event->courseid;
 
         $list = \mod_pulse\automation\helper::get_course_instances($courseid);

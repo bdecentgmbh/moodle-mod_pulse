@@ -1,4 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Notification pulse action - Language strings defined.
+ *
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 $string['pluginname'] = 'Pulse notifications';
 
@@ -115,3 +137,8 @@ $string['contentlength_help'] = ' Choose the content length to include in the no
 // Chapters.
 $string['chapters'] = 'Chapters';
 $string['chapters_help'] = 'Provides support to select specific chapters from a Book activity.';
+// ...Course instance warning messages.
+$string['coursehidden'] = 'Course is hidden from the students. <span> Please enable the visibility of the course to send notifications.</span>';
+$string['noactiveusers'] = 'Course doesn\'t contain any active enrolments. <span> Please enroll users in the course.</span>';
+$string['coursenotstarted'] = 'Course has not started. <span> Please set the course start date to a date in the past.</span>';
+$string['courseenddatereached'] = 'Course has ended. <span> Please set the course end date to a date in the future or remove the end date.</span>';

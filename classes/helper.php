@@ -30,6 +30,7 @@ use pulse_email_vars;
 use context_module;
 use moodle_url;
 use cm_info;
+use core_course_category;
 use stdclass;
 
 /**
@@ -50,7 +51,10 @@ class helper {
      */
     public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
         global $DB, $CFG;
+
+        // Include placholders handler and user profile library.
         require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+        require_once($CFG->dirroot.'/user/profile/lib.php');
 
         // Load user profile field data.
         $newuser = (object) ['id' => $user->id];
@@ -61,12 +65,20 @@ class helper {
         }, array_keys((array) $newuser));
         $user->profilefield = (object) array_combine($newuserkeys, (array) $newuser);
 
+        $course = clone $course;
         // Load course custom profuile fields.
         $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
 
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
         $amethods = pulse_email_vars::vars(); // List of available placeholders.
-        // print_object($mod);exit;
+        // Get formatted name of the category.
+        $course->category = is_number($course->category)
+            ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
+        // Convert the placeholders timeformat to user readable.
+        self::convert_varstime_format($course);
+        self::convert_varstime_format($user);
+        self::convert_varstime_format($mod);
+
         $vars = new pulse_email_vars($user, $course, $sender, $mod);
 
         foreach ($amethods as $funcname) {
@@ -75,15 +87,43 @@ class helper {
             if (stripos($templatetext, $replacement) !== false) {
                 $val = $vars->$funcname;
                 // Placeholder found on the text, then replace with data.
-                $templatetext = str_replace($replacement, $val, $templatetext);
+                $templatetext = str_ireplace($replacement, $val, $templatetext);
             }
             // Replace message subject placeholder.
             if (stripos($subject, $replacement) !== false) {
                 $val = $vars->$funcname;
-                $subject = str_replace($replacement, $val, $subject);
+                $subject = str_ireplace($replacement, $val, $subject);
             }
         }
         return [$subject, $templatetext];
+    }
+
+    /**
+     * Converts specific timestamp values in an array to user-readable time format.
+     *
+     * @param array $var The array containing timestamp values to be converted.
+     */
+    public static function convert_varstime_format(&$var) {
+        if (empty($var)) {
+            return;
+        }
+        // Update the timestamp to user readable time.
+        array_walk($var, function(&$value, $key) {
+            if (in_array(strtolower($key), ['timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
+                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime'])) {
+                $value = $value ? userdate($value) : '';
+            }
+            // Update the status to user readable strings.
+            if (in_array(strtolower($key), ['visible', 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'enablecompletion'])) {
+                $value = $value == 1 ? get_string('enabled', 'pulse') : get_string('disabled', 'pulse');
+            }
+
+            if (strtolower($key) == 'lang') {
+                // Get the list of translations.
+                $translations = get_string_manager()->get_list_of_translations();
+                $value = $translations[$value] ?? '';
+            }
+        });
     }
 
     /**

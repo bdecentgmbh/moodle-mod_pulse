@@ -15,21 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local acetools - Sub plugin class.
+ * Module pulse 2.0 - Plugin information for the pulse condition class.
  *
- * @package    local_acetools
- * @copyright  2023 LMSACE Dev Team <lmsace.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_pulse\plugininfo;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\plugininfo\base, part_of_admin_tree, admin_settingpage;
 
 /**
- * Aceaddon subplugin define classes.
+ * Pulse condition class extends base class providing access to the information about a pulse 2.0 plugin.
  */
 class pulsecondition extends base {
 
@@ -60,6 +58,10 @@ class pulsecondition extends base {
 
     /**
      * Loads plugin setting into the settings tree.
+     *
+     * @param \part_of_admin_tree $adminroot
+     * @param string $parentnodename
+     * @param bool $hassiteconfig whether the current user has moodle/site:config capability
      */
     public function load_settings(part_of_admin_tree $adminroot, $parentnodename, $hassiteconfig) {
 
@@ -68,7 +70,7 @@ class pulsecondition extends base {
             return;
         }
 
-        if (!$hassiteconfig or !file_exists($this->full_path('settings.php'))) {
+        if (!$hassiteconfig || !file_exists($this->full_path('settings.php'))) {
             return;
         }
 

@@ -1,5 +1,28 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Notification pulse action - Create and Manage notifications.
+ *
+ * This Controller create a schedule for users, verify their availability based on conditions.
+ *
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace pulseaction_notification;
 
@@ -14,48 +37,162 @@ use html_writer;
 use stdClass;
 use tool_dataprivacy\form\context_instance;
 
+/**
+ * Notification helper, Manage user schedules CRUD.
+ */
 class notification {
 
-    const SENDERCOURSETEACHER = '1';
-    const SENDERGROUPTEACHER = '2';
-    const SENDERTENANTROLE = '3';
-    const SENDERCUSTOM = '4';
-
-    // Values for interval.
-    const INTERVALONCE = '1'; // Once.
-    const INTERVALDAILY = '2'; // Daily.
-    const INTERVALWEEKLY = '3'; // Weekly
-    const INTERVALMONTHLY = '4'; // Montly.
-
-    const DELAYNONE = '0'; // Don't send a notifcation.
-    const DELAYBEFORE = '1';
-    const DELAYAFTER = '2';
-
-    const LENGTH_TEASER = '1';
-    const LENGTH_LINKED = '2';
-    const LENGTH_NOTLINKED = '3';
-
-    const DYNAMIC_DESCRIPTION = '1';
-    const DYNAMIC_CONTENT = '2';
-
-    const STATUS_FAILED = 0;
-    const STATUS_DISABLED = 1;
-    const STATUS_QUEUED = 2;
-    const STATUS_SENT = 3;
-
-    const SUPPRESSREACHED = 1;
-
-    protected $instancedata;
-
-    protected $notificationdata;
-
-    protected $notificationid; //
+    /**
+     * Represents a course teacher as type of notification sender.
+     * @var int
+     */
+    const SENDERCOURSETEACHER = 1;
 
     /**
-     * Undocumented function
+     * Represents a group teacher as type of notification sender.
+     * @var int
+     */
+    const SENDERGROUPTEACHER = 2;
+
+    /**
+     * Represents a tenent role as type of notification sender.
+     * @var int
+     */
+    const SENDERTENANTROLE = 3;
+
+    /**
+     * Represents a custom email as type of notification sender.
+     * @var int
+     */
+    const SENDERCUSTOM = 4;
+
+    /**
+     * Represents a notification interval is once.
+     * @var int
+     */
+    const INTERVALONCE = 1; // Once.
+
+    /**
+     * Represents a notification interval is Daily.
+     * @var int
+     */
+    const INTERVALDAILY = 2; // Daily.
+
+    /**
+     * Represents a notification interval is weekly.
+     * @var int
+     */
+    const INTERVALWEEKLY = 3; // Weekly.
+
+    /**
+     * Represents a notification interval is monthly.
+     * @var int
+     */
+    const INTERVALMONTHLY = 4; // Montly.
+
+    /**
+     * Represents there is no delay to send the notification.
+     * @var int
+     */
+    const DELAYNONE = 0;
+
+    /**
+     * Represents a delay before send the notifications.
+     * @var int
+     */
+    const DELAYBEFORE = 1;
+
+    /**
+     * Represents a delay after some time to send the notifications.
+     * @var int
+     */
+    const DELAYAFTER = 2;
+
+    /**
+     * Represents a length of the dynamic content is teaser.
+     * @var int
+     */
+    const LENGTH_TEASER = 1;
+
+    /**
+     * Represents the dynamic content included the link to access the desired module.
+     * @var int
+     */
+    const LENGTH_LINKED = 2;
+
+    /**
+     * Represents there is not links included with dynamic content.
+     * @var int
+     */
+    const LENGTH_NOTLINKED = 3;
+
+    /**
+     * Represents the description of the dynamic module is included in the notification.
+     * @var int
+     */
+    const DYNAMIC_DESCRIPTION = 1;
+
+    /**
+     * Represents the content of the dynamic module is included in the notification.
+     * @var int
+     */
+    const DYNAMIC_CONTENT = 2;
+
+    /**
+     * Represents the notification schedule status is failed.
+     * @var int
+     */
+    const STATUS_FAILED = 0;
+
+    /**
+     * Represents the notification schedule status is disabled.
+     * @var int
+     */
+    const STATUS_DISABLED = 1;
+
+    /**
+     * Represents the notification schedule status is queued.
+     * @var int
+     */
+    const STATUS_QUEUED = 2;
+
+    /**
+     * Represents the notification schedule status is sent.
+     * @var int
+     */
+    const STATUS_SENT = 3;
+
+    /**
+     * Represents the user completed the suppress module.
+     * @var int
+     */
+    const SUPPRESSREACHED = 1;
+
+    /**
+     * The record of the notification instance with templates and general conditions.
      *
-     * @param [type] $notificationid Notification instance record id NOT autoinstanceid.
-     * @return self
+     * @var stdclass
+     */
+    protected $instancedata;
+
+    /**
+     * The merged notification data based on instance overrides.
+     *
+     * @var stdclass
+     */
+    protected $notificationdata;
+
+    /**
+     * The ID of the action notification table.
+     * @var int
+     */
+    protected $notificationid; // Notification table id.
+
+    /**
+     * Create the instance of the notification controller.
+     *
+     * @param int $notificationid Notification instance record id (pulseaction_notification_ins) NOT autoinstanceid.
+     * @return notification
      */
     public static function instance($notificationid) {
         static $instance;
@@ -67,15 +204,28 @@ class notification {
         return $instance;
     }
 
+    /**
+     * Contructor for this notification controller.
+     *
+     * @param int $notificationid  Notification table id.
+     */
     protected function __construct(int $notificationid) {
         $this->notificationid = $notificationid;
     }
 
+    /**
+     * Create the notification instance and set the data to this class.
+     *
+     * @return void
+     */
     protected function create_instance_data() {
         global $DB;
 
         $notification = $DB->get_record('pulseaction_notification_ins', ['id' => $this->notificationid]);
 
+        if (empty($notification)) {
+            throw new \moodle_exception('notificationinstancenotfound', 'pulse');
+        }
         $instance = instances::create($notification->instanceid);
         $autoinstance = $instance->get_instance_data();
 
@@ -87,10 +237,10 @@ class notification {
     }
 
     /**
-     * Undocumented function
+     * Set the notification data to global. Decode and do other structure updates for the data before setup.
      *
-     * @param [type] $notificationdata Contains notification data.
-     * @param [type] $instancedata Contains other than actions.
+     * @param stdclass $notificationdata Contains notification data.
+     * @param stdclass $instancedata Contains other than actions.
      * @return void
      */
     public function set_notification_data($notificationdata, $instancedata) {
@@ -101,7 +251,12 @@ class notification {
         $this->instancedata = $instancedata;
     }
 
-
+    /**
+     * Decode the encoded json values to array, to further uses.
+     *
+     * @param stdclass $actiondata
+     * @return stdclass $actiondata Updated action data.
+     */
     public function update_data_structure($actiondata) {
 
         $actiondata->recipients = is_array($actiondata->recipients)
@@ -116,8 +271,14 @@ class notification {
         return $actiondata;
     }
 
-
+    /**
+     * Generate the data set for the user to create schedule for this instance.
+     *
+     * @param int $userid ID of the user to create schedule.
+     * @return array $record Record to insert into schdeule.
+     */
     protected function generate_schedule_record(int $userid) {
+
         $record = [
             'instanceid' => $this->notificationdata->instanceid,
             'userid' => $userid,
@@ -129,6 +290,13 @@ class notification {
         return $record;
     }
 
+    /**
+     * Insert the schedule to database, verify if the schedule is already in queue then override the schedule with given record.
+     *
+     * @param stdclass $data
+     * @param bool $newschedule
+     * @return int Inserted schedule ID.
+     */
     protected function insert_schedule($data, $newschedule=false) {
         global $DB;
 
@@ -158,6 +326,12 @@ class notification {
         return $DB->insert_record('pulseaction_notification_sch', $data);
     }
 
+    /**
+     * Disable the queued schdule of the given user.
+     *
+     * @param int $userid
+     * @return void
+     */
     protected function disable_user_schedule($userid) {
         global $DB;
 
@@ -170,11 +344,16 @@ class notification {
         ];
 
         if ($record = $DB->get_record_sql($sql, $params)) {
-            // print_object($record);exit;
             $DB->set_field('pulseaction_notification_sch', 'status', self::STATUS_DISABLED, ['id' => $record->id]);
         }
     }
 
+    /**
+     * Remove the queued and disabled schedules of this user.
+     *
+     * @param int $userid
+     * @return void
+     */
     public function remove_user_schedules($userid) {
         global $DB;
 
@@ -191,6 +370,12 @@ class notification {
         }
     }
 
+    /**
+     * Get the current schedule created for the user related to specific instance.
+     *
+     * @param stdclass $data Data with instance id and user id.
+     * @return stdclass|null Record of the current schedule.
+     */
     protected function get_schedule($data) {
         global $DB;
 
@@ -203,6 +388,12 @@ class notification {
         return false;
     }
 
+    /**
+     * Find the sent time of the last schedule to the user for the specific instance.
+     *
+     * @param int $userid
+     * @return int|null Time of the last schedule notified to the user for the specific instance
+     */
     protected function find_last_notifiedtime($userid) {
         global $DB;
 
@@ -215,7 +406,12 @@ class notification {
         return !empty($records) ? current($records)->notifiedtime : '';
     }
 
-
+    /**
+     * Find a count of the schedules sent to the user for the current notification instance.
+     *
+     * @param int $userid ID of the user to fetch the counts
+     * @return int|null Count of the schedules sent to the user
+     */
     protected function find_notify_count($userid) {
         global $DB;
 
@@ -233,14 +429,15 @@ class notification {
      *
      * Note: Use this method to verify the instance with interval once.
      *
-     * @param integer $userid
-     * @return boolean
+     * @param int $userid
+     * @return bool
      */
     protected function is_user_notified(int $userid) {
         global $DB;
 
         $id = $this->notificationdata->instanceid;
-        if ($record = $DB->get_record('pulseaction_notification_sch', ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT])) {
+        $condition = ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT];
+        if ($record = $DB->get_record('pulseaction_notification_sch', $condition)) {
             return $record->notifiedtime != null ? true : false;
         }
         return false;
@@ -249,17 +446,35 @@ class notification {
     /**
      * Remove the schdeduled notifications for this instance.
      *
+     * @param int $status
      * @return void
      */
-    protected function remove_schedules() {
+    protected function remove_schedules($status=self::STATUS_SENT) {
         global $DB;
 
-        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id, 'status' => self::STATUS_SENT]);
+        $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $this->instancedata->id, 'status' => $status]);
     }
 
+    /**
+     * Removes the current queued schedules and recreate the schedule for all the qualified users.
+     *
+     * @return void
+     */
+    public function recreate_schedule_forinstance() {
+        // Remove the current queued schedules.
+        $this->create_instance_data();
 
+        $this->remove_schedules(self::STATUS_QUEUED);
+        // Create the schedules for all users.
+        $this->create_schedule_forinstance();
+    }
 
-
+    /**
+     * Create schdule for the instance.
+     *
+     * @param bool $newenrolment Is the schedule for new enrolments.
+     * @return void
+     */
     public function create_schedule_forinstance($newenrolment=false) {
         // Generate the notification instance data.
         if (empty($this->instancedata)) {
@@ -288,9 +503,15 @@ class notification {
      * Create schedule for the user.
      *
      * @param int $userid
-     * @return void
+     * @param string $lastrun
+     * @param integer $notifycount
+     * @param int $expectedruntime Timestamp of the time to run.
+     * @param bool $isnewuser
+     * @param bool $newschedule
+     * @return int ID of the created schedule.
      */
-    public function create_schedule_foruser($userid, $lastrun='', $notifycount=0, $expectedruntime=null, $isnewuser=false, $newschedule=false) {
+    public function create_schedule_foruser($userid, $lastrun='', $notifycount=0, $expectedruntime=null,
+        $isnewuser=false, $newschedule=false) {
 
         if (empty($this->instancedata)) {
             $this->create_instance_data();
@@ -305,9 +526,7 @@ class notification {
         }
 
         // TODO: Verify it realy need to verify the suppress reached status.
-        /*if ($suppressreached) {
-            return true;
-        }*/
+
         $notifycount = $notifycount ?: $this->find_notify_count($userid);
         // Verify the Limit is reached, if 0 then its unlimited.
         if ($this->notificationdata->notifylimit > 0 && ($notifycount >= $this->notificationdata->notifylimit)) {
@@ -325,7 +544,7 @@ class notification {
         $data = $this->generate_schedule_record($userid);
 
         $data['notifycount'] = $notifycount;
-        // # Find the next run.
+        // ...# Find the next run.
         $nextrun = $this->generate_the_scheduletime($userid, $lastrun, $expectedruntime);
         // Include the next run to schedule.
         $data['scheduletime'] = $nextrun;
@@ -338,8 +557,9 @@ class notification {
     /**
      * Generate the schedule time for this notification.
      *
-     * @param [type] $userid
-     * @param [type] $schedule
+     * @param int $userid
+     * @param int $lastrun
+     * @param int $expectedruntime
      * @return int
      */
     protected function generate_the_scheduletime($userid, $lastrun=null, $expectedruntime=null) {
@@ -384,7 +604,8 @@ class notification {
                 $monthdate = $data->notifyinterval['monthdate'];
                 if ($monthdate != 31) { // If the date is set as 31 then use the month end.
                     $nextrun->modify('first day of next month');
-                    $date = $data->notifyinterval['monthdate'] ? $data->notifyinterval['monthdate'] - 1 : $data->notifyinterval['monthdate'];
+                    $date = $data->notifyinterval['monthdate']
+                        ? $data->notifyinterval['monthdate'] - 1 : $data->notifyinterval['monthdate'];
                     $nextrun->modify("+$date day");
                 } else {
                     $nextrun->modify('last day of next month');
@@ -426,7 +647,13 @@ class notification {
         return $nextrun->getTimestamp();
     }
 
-
+    /**
+     * Get the users assigned in the roles.
+     *
+     * @param array $roles Role ids to fetch
+     * @param \context $context
+     * @return array List of the users.
+     */
     protected function get_users_withroles(array $roles, $context) {
         global $DB;
 
@@ -454,10 +681,11 @@ class notification {
     /**
      * Build the notification content.
      *
-     * @param [type] $user
-     * @param [type] $data
-     * @param [type] $context
-     * @return void
+     * @param stdClass|null $cm Course module
+     * @param \context $context
+     * @param array $overrides
+     *
+     * @return string Notification content.
      */
     public function build_notification_content(?stdClass $cm=null, $context=null, $overrides=[]) {
         global $CFG, $DB;
@@ -485,10 +713,9 @@ class notification {
             );
         }
 
+        // Include the dynamic contents.
         $dynamiccontent = $this->notificationdata->dynamiccontent;
-
         if ($dynamiccontent) {
-
             if ($cm == null) {
                 $module = get_coursemodule_from_id('', $dynamiccontent);
                 $cm = (object) [
@@ -509,17 +736,19 @@ class notification {
             ); // Concat the dynamic content after static content.
         }
 
-        return format_text($headercontent . $staticcontent . $footercontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
+        $finalcontent = $headercontent . $staticcontent . $footercontent;
+        return format_text($finalcontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
     }
 
     /**
-     * Gernerate the dynamic content.
+     * Gernerate the content based on dynamic module to attach with the notification content.
      *
-     * @param [type] $contenttype
-     * @param [type] $contentlength
-     * @param [type] $chapterid
-     * @param [type] $context
-     * @param [type] $data
+     * @param string $contenttype
+     * @param int $contentlength
+     * @param int $chapterid
+     * @param \context $context
+     * @param stdclass $cm
+     *
      * @return void
      */
     public static function generate_dynamic_content($contenttype, $contentlength, $chapterid, $context, $cm) {
@@ -534,14 +763,16 @@ class notification {
 
             if ($cm->modname == 'book') {
                 $chapter = $DB->get_record('book_chapters', ['id' => $chapterid, 'bookid' => $cm->instance]);
-                $chaptertext = \file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
+                $chaptertext = \file_rewrite_pluginfile_urls(
+                        $chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
 
                 $content = format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true]);
                 $link = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $chapterid]);
             } else {
                 $page = $DB->get_record('page', array('id' => $cm->instance), '*', MUST_EXIST);
 
-                $content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
+                $content = file_rewrite_pluginfile_urls(
+                        $page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
                 $link = new moodle_url('/mod/page/view.php', ['id' => $cm->id]);
             }
 
@@ -571,10 +802,13 @@ class notification {
     }
 
     /**
-     * Generate the details for notification.
+     * Generate the details of the notification to send.
      *
-     * @param object $data
-     * @return stdclass
+     * @param stdclass $moddata
+     * @param stdclass $user
+     * @param \context $context
+     * @param array $notificationoverrides
+     * @return array Basic details to send notification.
      */
     public function generate_notification_details($moddata, $user, $context, $notificationoverrides=[]) {
 
@@ -584,7 +818,7 @@ class notification {
         $roleusers = $this->get_users_withroles($roles, $context);
 
         // Filter the cc users for this instance.
-        $cc =  $this->notificationdata->cc;
+        $cc = $this->notificationdata->cc;
         $ccusers = array_filter($roleusers, function($value) use ($cc) {
             return in_array($value->roleid, $cc);
         });
@@ -606,18 +840,22 @@ class notification {
         return (object) $result;
     }
 
+    /**
+     * Get the tenant role sender user.
+     *
+     * @param stdclass $scheduledata
+     * @return stdclass
+     */
     public function get_tenantrole_sender($scheduledata) {
         // TODO: Tenant based sender fetch goes here.
         return (object) [];
     }
 
-
-
     /**
-     * Undocumented function
+     * Find the sender users for the course context, fetched the teachers based on group assignment.
      *
-     * @param [type] $coursecontext
-     * @param [type] $groupid
+     * @param \context $coursecontext
+     * @param int $groupid
      * @return stdclass
      */
     protected static function get_sender_users($coursecontext, $groupid) {
@@ -633,7 +871,6 @@ class notification {
             1,
             true
         );
-
 
         return !empty($sender) ? current($sender) : [];
     }
@@ -656,10 +893,21 @@ class notification {
         return $list;
     }
 
-    public static function get_schedule_status($value) {
+    /**
+     * Get the status of the schedule.
+     *
+     * @param int $value
+     * @param stdclass $row
+     * @return string
+     */
+    public static function get_schedule_status($value, $row) {
+
         if ($value == self::STATUS_DISABLED) {
             return get_string('onhold', 'pulseaction_notification');
         } else if ($value == self::STATUS_QUEUED) {
+            if (!$row->instancestatus) {
+                return get_string('onhold', 'pulseaction_notification');
+            }
             return get_string('queued', 'pulseaction_notification');
         } else if ($value == self::STATUS_SENT) {
             return get_string('sent', 'pulseaction_notification');
@@ -668,12 +916,20 @@ class notification {
         }
     }
 
+    /**
+     * Get the schedule subject to display in the reports.
+     *
+     * @param string $value Subject
+     * @param stdclass $row
+     * @return string
+     */
     public static function get_schedule_subject($value, $row) {
         global $DB;
 
+        $value = $row->instancesubject ?: $row->templatesubject; // Use templates subject if instance subject doesn't overrides.
         $sender = \core_user::get_support_user();
         $courseid = $DB->get_field('pulse_autoinstances', 'courseid', ['id' => $row->instanceid]);
-        $user =  (object) \core_user::get_user($row->userid);
+        $user = (object) \core_user::get_user($row->userid);
         $course = get_course($courseid ?? SITEID);
 
         list($subject, $messagehtml) = \mod_pulse\helper::update_emailvars('', $value, $course, $user, null, $sender);
@@ -686,6 +942,12 @@ class notification {
         ]);
     }
 
+    /**
+     * Get the list of modules data for the placholders.
+     *
+     * @param array $modules List of modules.
+     * @return array
+     */
     public static function get_modules_data($modules) {
         global $DB, $CFG;
 
@@ -727,9 +989,6 @@ class notification {
             }
         }
 
-
         return $list;
     }
 }
-
-

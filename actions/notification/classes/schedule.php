@@ -1,4 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Notification pulse action - Send the scheduled notifications.
+ *
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace pulseaction_notification;
 
@@ -7,47 +29,109 @@ use mod_pulse\automation\instances;
 use mod_pulse\helper as pulsehelper;
 use stdClass;
 
+/**
+ * Notification pulse action - Send the scheduled notifications.
+ */
 class schedule {
 
+    /**
+     * The user object of support user.
+     * @var stdclass
+     */
     protected $supportuser;
 
+    /**
+     * The automation instance data.
+     * @var stdclass
+     */
     protected $instancedata;
 
+    /**
+     * The record of notification schedule.
+     * @var stdclass
+     */
     protected $schedulerecord;
 
+    /**
+     * The record of entire notifcation schedule row.
+     * @var stdclass
+     */
     protected $schedule;
 
+    /**
+     * The course object.
+     * @var stdclass
+     */
     protected $course;
 
+    /**
+     * The user data object.
+     * @var stdclass
+     */
     protected $user;
 
     /**
-     * Undocumented variable
+     * Notification record.
      *
      * @var notification
      */
     protected $notification;
 
+    /**
+     * List of overrides in the notification action.
+     *
+     * @var array
+     */
     protected $notificationoverrides;
 
+    /**
+     * Notification data processed with overrides.
+     *
+     * @var stdclass
+     */
     protected $notificationdata;
 
+    /**
+     * Course context.
+     *
+     * @var \context_course
+     */
     protected $coursecontext; // Context_module.
 
+    /**
+     * List of conditions enabled in this instance.
+     *
+     * @var array
+     */
     protected $conditions;
 
+    /**
+     * Schedule constructor.
+     */
     public function __construct() {
         // Support user.
         $this->supportuser = \core_user::get_support_user();
 
     }
 
+    /**
+     * Create a instance of this schedule controller.
+     *
+     * @return self
+     */
     public static function instance() {
 
         $self = new self();
         return $self;
     }
 
+    /**
+     * Sends scheduled notifications to users.
+     *
+     * @param int|null $userid (Optional) The ID of the user. If provided, notifications will be sent only to this user.
+     *
+     * @return void
+     */
     public function send_scheduled_notification($userid=null) {
         global $DB, $CFG;
 
@@ -78,7 +162,8 @@ class schedule {
                 'id' => $schedule->cm_id
             ];
             // Generate the details to send the notification, it contains user, cc, bcc and schedule data.
-            $detail = $this->notification->generate_notification_details($cmdata, $this->user, $this->coursecontext, $this->notificationoverrides);
+            $detail = $this->notification->generate_notification_details(
+                $cmdata, $this->user, $this->coursecontext, $this->notificationoverrides);
 
             $sender = $this->find_sender_user();
 
@@ -105,8 +190,17 @@ class schedule {
             // Prepare the module data. based on dynamic content and includ the session data.
             $mod = $this->prepare_moduledata_placeholders($modules, $cmdata);
 
+            // Check the session condition are set for this notification. if its added then load the session data for placeholders.
+            $sessionin = in_array('session', (array) $this->instancedata->template->triggerconditions);
+            $sessionin = ($this->schedulerecord->con_isoverridden == 1) ? $this->schedulerecord->con_status : $sessionin;
+            if ($sessionin) {
+                $sessionconditiondata = (object) ['modules' => json_decode($this->schedulerecord->con_additional)->modules];
+                $this->include_session_data($mod, $sessionconditiondata, $this->user->id);
+            }
+
             // Update the email placeholders.
-            list($subject, $messagehtml) = pulsehelper::update_emailvars($detail->content, $detail->subject, $this->course, $this->user, $mod, $sender);
+            list($subject, $messagehtml) = pulsehelper::update_emailvars(
+                $detail->content, $detail->subject, $this->course, $this->user, $mod, $sender);
 
             // Plain message.
             $messageplain = html_to_text($messagehtml);
@@ -115,11 +209,8 @@ class schedule {
             $pulse = (object) ['course' => $this->course->id];
             // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
             // Send the notification to user.
-            /* $messagesend = \mod_pulse\helper::messagetouser(
-                $detail->recipient, $subject, $messageplain, $messagehtml, $pulse, $sender
-            ); */
-
-            $messagesend = email_to_user($detail->recepient, $sender, $subject, $messageplain, $messagehtml, '', '', true, $replyto ?? '');
+            $messagesend = email_to_user($detail->recepient, $sender, $subject,
+                $messageplain, $messagehtml, '', '', true, $replyto ?? '');
 
             if ($messagesend) {
                 // Update the current time as lastrun.
@@ -141,12 +232,20 @@ class schedule {
                 if ($notifycount < $this->notificationdata->notifylimit
                     && $this->notificationdata->notifyinterval['interval'] != notification::INTERVALONCE) {
                     $newschedule = true;
-                    $this->notification->create_schedule_foruser($this->schedule->userid, $notifiedtime, $notifycount, null, null, $newschedule);
+                    $this->notification->create_schedule_foruser(
+                        $this->schedule->userid, $notifiedtime, $notifycount, null, null, $newschedule);
                 }
             }
         }
     }
 
+    /**
+     * Fetch the queued schedules for the user.
+     *
+     * @param int|null $userid (Optional) The ID of the user. If provided, schedules are fetched and inti the notification sent.
+     *
+     * @return void
+     */
     protected function get_scheduled_records($userid=null) {
         global $DB;
 
@@ -184,7 +283,6 @@ class schedule {
         // Number of notification to send in this que.
         $limit = get_config('pulse', 'schedulecount') ?: 100;
 
-        // $DB->set_debug(true);
         $userwhere = $userid ? ' AND ns.userid =:userid ' : '';
         $userparam = $userid ? ['userid' => $userid] : [];
 
@@ -230,6 +328,14 @@ class schedule {
         return $schedules;
     }
 
+    /**
+     * Retrieves dynamic content modules for a list of schedules.
+     *
+     * @param array $schedules An array of schedules containing information about modules.
+     *                         Each schedule should have 'md_name' (module name) and 'cm_instance' (module instance) properties.
+     *
+     * @return array An array of dynamic modules data.
+     */
     protected function get_modules_dynamic_content($schedules) {
         // Get the dynamic modules list of all schedules.
         $dynamicmodules = [];
@@ -240,9 +346,16 @@ class schedule {
             $dynamicmodules[$schedule->md_name][] = $schedule->cm_instance;
         }
 
-        return notification::get_modules_data($dynamicmodules);;
+        return notification::get_modules_data($dynamicmodules);
     }
 
+    /**
+     * Builds the values for a given schedule.
+     *
+     * @param object $schedule The schedule object containing information about the automation instance.
+     *
+     * @return void
+     */
     protected function build_schedule_values($schedule) {
 
         $this->schedulerecord = $schedule;
@@ -300,9 +413,12 @@ class schedule {
 
     }
 
+    /**
+     * Finds the sender user for this schedule.
+     *
+     * @return mixed Returns either a string with the custom sender email, or an object representing the sender user.
+     */
     protected function find_sender_user() {
-
-
         // Find the sender for this schedule.
         if ($this->notificationdata->sender == notification::SENDERCUSTOM) {
             // Use the custom sender email as the support user email.
@@ -311,7 +427,8 @@ class schedule {
             $sender = $this->notification->get_tenantrole_sender($this->schedulerecord);
         } else {
             // Get user groups is sender is configured as group teacher.
-            $groups = $this->notificationdata->sender == notification::SENDERGROUPTEACHER ? groups_get_user_groups($this->course->id, $this->schedule->userid) : 0;
+            $groups = ($this->notificationdata->sender == notification::SENDERGROUPTEACHER)
+                ? groups_get_user_groups($this->course->id, $this->schedule->userid) : 0;
 
             $groupids = 0;
             if (!empty($groups)) {
@@ -327,16 +444,15 @@ class schedule {
             }
         }
 
-
         return $sender;
     }
 
     /**
-     * Undocumented function
+     * Retrieves the sender user(s) for a given group ID.
      *
-     * @param [type] $coursecontext
-     * @param [type] $groupid
-     * @return stdclass
+     * @param int|array $groupid The ID of the group or an array of group IDs.
+     *
+     * @return stdClass|array Returns an object representing the sender user if found, or an empty array if not.
      */
     protected function get_sender_users($groupid) {
 
@@ -354,55 +470,69 @@ class schedule {
             true
         );
 
-
         return !empty($sender) ? current($sender) : [];
     }
 
-    protected function prepare_moduledata_placeholders($modules, $cmdata) {
+    /**
+     * Prepares module data to use as placeholders in notifications.
+     *
+     * @param array $modules An array of dynamic content modules organized by module name and instance.
+     * @param object $cmdata An object containing information about the module (modname, instance, id).
+     *
+     * @return stdClass Returns an object representing the module data to be used as placeholders.
+     */
+    public function prepare_moduledata_placeholders($modules, $cmdata) {
         global $CFG;
 
         // Prepare the module data to use as placeholders.
         $mod = new \stdclass;
 
         // Find the module data if dynamic content is configured.
-        if ($this->notificationdata->dynamiccontent) {
+        if ($modules && $this->notificationdata->dynamiccontent) {
             $mod = (object) $modules[$cmdata->modname][$cmdata->instance] ?? [];
         }
 
-        // Check the session condition are set for this notification. if its added then load the session data for placeholders.
-        $sessionincondition = in_array('session', (array) $this->instancedata->template->triggerconditions);
-        $sessionincondition = $this->schedulerecord->con_isoverridden == 1 ? $this->schedulerecord->con_status : $sessionincondition;
+        return $mod;
+    }
 
-        if ($sessionincondition) {
+    /**
+     * Includes session data in the module object.
+     *
+     * @param stdClass $mod The module object to which session data will be added.
+     * @param stdClass $sessiondata An object containing session data.
+     * @param int $userid The ID of the user.
+     *
+     * @return stdClass The modified module object with session data included.
+     */
+    public function include_session_data(&$mod, $sessiondata, $userid) {
+        global $CFG;
 
-            require_once($CFG->dirroot.'/mod/facetoface/lib.php');
+        require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
-            $modules = json_decode($this->schedulerecord->con_additional)->modules;
-            $sessions = \pulsecondition_session\conditionform::get_session_data($modules, $this->user->id);
-            if (empty($sessions)) {
-                $mod->session = new stdClass();
-            } else {
-                $finalsessiondata = new \stdclass();
-                $session = current($sessions);
-                $finalsessiondata->discountcode = $session->discountcode;
-                $finalsessiondata->details = format_text($session->details);
-                $finalsessiondata->capacity = $session->capacity;
-                $finalsessiondata->normalcost = format_cost($session->normalcost);
-                $finalsessiondata->discountcost = format_cost($session->discountcost);
+        $modules = $sessiondata->modules;
+        $sessions = \pulsecondition_session\conditionform::get_session_data($modules, $userid);
+        if (empty($sessions)) {
+            $mod->session = new stdClass();
+        } else {
+            $finalsessiondata = new \stdclass();
+            $session = current($sessions);
+            $finalsessiondata->discountcode = $session->discountcode;
+            $finalsessiondata->details = format_text($session->details);
+            $finalsessiondata->capacity = $session->capacity;
+            $finalsessiondata->normalcost = format_cost($session->normalcost);
+            $finalsessiondata->discountcost = format_cost($session->discountcost);
 
-                $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
-                $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
+            $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
+            $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
 
-
-                $customfields = facetoface_get_session_customfields();
-                $finalsessiondata->customfield = new \stdclass();
-                foreach ($customfields as $field) {
-                    // $fieldname = "custom_$field->shortname";
-                    $finalsessiondata->customfield->{$field->shortname} = facetoface_get_customfield_value($field, $session->sessionid, 'session');
-                }
-
-                $mod->session = $finalsessiondata;
+            $customfields = facetoface_get_session_customfields();
+            $finalsessiondata->customfield = new \stdclass();
+            foreach ($customfields as $field) {
+                $finalsessiondata->customfield->{$field->shortname} = facetoface_get_customfield_value(
+                    $field, $session->sessionid, 'session');
             }
+
+            $mod->session = $finalsessiondata;
         }
 
         return $mod;

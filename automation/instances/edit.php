@@ -23,9 +23,12 @@
  */
 
 use mod_pulse\automation\condition_base;
+use mod_pulse\automation\helper;
 
 // Require config.
 require(__DIR__.'/../../../../config.php');
+
+require_login();
 
 // Require admin library.
 require_once($CFG->libdir.'/adminlib.php');
@@ -41,11 +44,7 @@ if ($courseid) {
     $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 } else {
     $instanceid = required_param('instanceid', PARAM_INT);
-
 }
-
-// Extend the features of admin settings.
-// admin_externalpage_setup('pulseautomation');
 
 // Create the page url.
 $url = new moodle_url('/mod/pulse/automation/instances/edit.php', ['sesskey' => sesskey()]);
@@ -79,7 +78,6 @@ $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_course(get_course($course->id));
 
-
 // Edit automation templates form.
 $templatesform = new \mod_pulse\forms\automation_instance_form(null, [
     'templateid' => $templateid,
@@ -105,7 +103,6 @@ if ($formdata = $templatesform->get_data()) {
 if ($instanceid !== null && $instanceid > 0) {
 
     if ($record = mod_pulse\automation\instances::create($instanceid)->get_instance_formdata()) {
-        // print_object($record); exit;
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
     } else {
@@ -130,7 +127,6 @@ if ($instanceid !== null && $instanceid > 0) {
         }
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
-        // exit;
     } else {
         // Direct the user to list page with error message, when the requested template instance is not available.
         \core\notification::error(get_string('templatesrecordmissing', 'pulse'));
@@ -143,7 +139,7 @@ $PAGE->set_heading(format_string($course->fullname));
 // PAGE breadcrumbs.
 $PAGE->navbar->add(get_string('mycourses', 'core'), new moodle_url('/course/index.php'));
 $PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', array('id' => $course->id)));
-$PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id]));
+$PAGE->navbar->add(get_string('autotemplates', 'pulse'), $overviewurl);
 $PAGE->navbar->add(get_string('autoinstances', 'pulse'));
 
 // Page content display started.
@@ -152,6 +148,8 @@ echo $OUTPUT->header();
 // Template heading.
 echo $OUTPUT->heading(get_string('editinstance', 'pulse'));
 
+// Course action warning messages.
+echo helper::display_actions_course_warnings($course);
 // Display the template form for create or edit.
 echo $templatesform->display();
 

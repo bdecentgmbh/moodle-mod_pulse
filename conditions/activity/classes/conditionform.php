@@ -1,26 +1,59 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Conditions - Pulse condition class for the "Activity Completion".
+ *
+ * @package   pulsecondition_activity
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace pulsecondition_activity;
 
 use mod_pulse\automation\condition_base;
 
+/**
+ * Automation condition form for acitivty completion.
+ */
 class conditionform extends \mod_pulse\automation\condition_base {
 
-    public function include_action(&$option) {
+    /**
+     * Include condition
+     *
+     * @param array $option
+     * @return void
+     */
+    public function include_condition(&$option) {
         $option['activity'] = get_string('activitycompletion', 'pulsecondition_activity');
     }
 
+    /**
+     * Loads the form elements for activity condition.
+     *
+     * @param MoodleQuickForm $mform The form object.
+     * @param object $forminstance The form instance.
+     */
     public function load_instance_form(&$mform, $forminstance) {
 
         $completionstr = get_string('activitycompletion', 'pulsecondition_activity');
-
         $mform->addElement('select', 'condition[activity][status]', $completionstr, $this->get_options());
         $mform->addHelpButton('condition[activity][status]', 'activitycompletion', 'pulsecondition_activity');
-
         $courseid = $forminstance->get_customdata('courseid') ?? '';
         $modinfo = \course_modinfo::instance($courseid);
-
         // Include the suppress activity settings for the instance.
         $completion = new \completion_info(get_course($courseid));
         $activities = $completion->get_activities();
@@ -28,7 +61,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $value = $value->name;
         });
 
-        $modules = $mform->addElement('autocomplete', 'condition[activity][modules]', get_string('selectactivity', 'pulsecondition_activity'), $activities);
+        $modules = $mform->addElement('autocomplete', 'condition[activity][modules]',
+                            get_string('selectactivity', 'pulsecondition_activity'), $activities);
         $modules->setMultiple(true);
         $mform->hideIf('condition[activity][modules]', 'condition[activity][status]', 'eq', self::DISABLED);
         $mform->addHelpButton('condition[activity][modules]', 'selectactivity', 'pulsecondition_activity');
@@ -38,6 +72,14 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $mform->setType('override[condition_activity_modules]', PARAM_RAW);
     }
 
+    /**
+     * Checks if the user has completed the specified activities.
+     *
+     * @param object $instancedata The instance data.
+     * @param int $userid The user ID.
+     * @param \completion_info|null $completion The completion information.
+     * @return bool True if completed, false otherwise.
+     */
     public function is_user_completed($instancedata, $userid, \completion_info $completion=null) {
         // Get the notification suppres module ids.
         $additional = $instancedata->condition['activity'] ?? [];
@@ -68,7 +110,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
             if (count($result) == count($modules)) {
                 return true;
             }
-
             return false;
         }
         return true;
@@ -77,8 +118,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
     /**
      * Module completed.
      *
-     * @param [type] $eventdata
-     * @return void
+     * @param stdclass $eventdata
+     * @return bool
      */
     public static function module_completed($eventdata) {
         // Event data.
@@ -102,11 +143,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $modules = $additional['modules'] ?? [];
             if (!empty($modules)) {
                 // Remove the schedule only if all the activites are completed.
-                // if ($condition->is_user_completed($notification, $userid, $completion)) {
                 $condition->trigger_instance($notification->instanceid, $userid);
-                // }
             }
-
             return true;
         }
     }
@@ -118,7 +156,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
      * Find the menus which contains the given ID in the access rule (Role or cohorts).
      *
      * @param int $id ID of the triggered method, Role or cohort id.
-     * @param string $method Field to find, Role or Cohort.
      * @return array
      */
     public static function get_acitivty_notifications($id) {
@@ -128,55 +165,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $activitylike = $DB->sql_like('triggercondition', ':activity');
         $sql = "SELECT * FROM {pulse_condition_overrides} WHERE status >= 1 AND $activitylike AND $like";
         $params = ['activity' => 'activity', 'value' => '%"'.$id.'"%'];
-
         $records = $DB->get_records_sql($sql, $params);
-
         return $records;
-    }
-
-
-    public function process_instance_save1($instanceid, $data) {
-        global $DB;
-
-        print_object($data);
-
-
-        $record = [
-            'instanceid' => $instanceid,
-            'triggercondition' => $this->component,
-            'status' => $data['status'] ?? null,
-            'additional' => json_encode($data),
-            'isoverridden' => (isset($data['status']))
-
-        ];
-
-        if ($condition = $DB->get_record('pulse_condition_overrides', ['instanceid' => $instanceid, 'triggercondition' => $this->component]) ) {
-            $record['id'] = $condition->id;
-            print_object($record);
-            exit;
-            // Update the record.
-            $DB->update_record('pulse_condition_overrides', $record);
-        } else {
-            // Insert the record.
-            $DB->insert_record('pulse_condition_overrides', $record);
-        }
-
-        return true;
-    }
-
-    public function include_data_forinstance1(&$instance, $data) {
-
-        $condition[$this->component] = $data->additional ? json_decode($data->additional, true) : [];
-
-        if ($data->isoverridden) {
-            $condition[$this->component]['status'] = $data->status;
-            $instance->override['condition_activity_status'] = 1;
-        }
-
-        $instance->override['condition_activity_modules'] = 1;
-
-        $instance->condition = $instance->condition ?? [];
-        $instance->condition = array_merge($instance->condition, $condition);
     }
 
 }

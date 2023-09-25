@@ -24,20 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-// if (!$ADMIN->fulltree) {
-    // Create Smart Menus settings page as external page.
-    // (and allow users with the theme/boost_union:configure capability to access it).
-
-
 $ADMIN->add('modsettings', new admin_category('modpulse', new lang_string('pluginname', 'mod_pulse')));
-// }
-
 $settings = new admin_settingpage('pulsegeneralsettings', get_string('generalsettings', 'pulse'), 'moodle/site:config', false);
 
 if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_heading('mod_pulse/general', '', get_string('configintro', 'pulse')));
-
     $settings->add(new admin_setting_configcheckbox('mod_pulse/detailedlog', get_string('showhide', 'pulse'),
             get_string('detailedlog', 'pulse'), false));
 
@@ -46,11 +38,9 @@ if ($ADMIN->fulltree) {
 
 }
 $ADMIN->add('modpulse', $settings);
-
 $settings = null; // Reset the settings.
 
 // Include the external page automation settings.
 $automation = new admin_externalpage('pulseautomation', get_string('autotemplates', 'pulse', null, true),
     new moodle_url('/mod/pulse/automation/templates/list.php'), 'mod/pulse:viewtemplateslist');
-
 $ADMIN->add('modpulse', $automation);

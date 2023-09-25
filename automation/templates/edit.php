@@ -27,6 +27,9 @@ use mod_pulse\automation\helper;
 // Require config.
 require(__DIR__.'/../../../../config.php');
 
+// Login check after config inlcusion.
+require_login();
+
 // Require admin library.
 require_once($CFG->libdir.'/adminlib.php');
 
@@ -40,20 +43,25 @@ require_capability('mod/pulse:viewtemplateslist', $context);
 // Automation template ID to edit.
 $id = optional_param('id', null, PARAM_INT);
 
-// Extend the features of admin settings.
-admin_externalpage_setup('pulseautomation');
-
 // Page values.
 $url = new moodle_url('/mod/pulse/automation/templates/edit.php', ['id' => $id, 'sesskey' => sesskey()]);
 
 // Setup page values.
 $PAGE->set_url($url);
 $PAGE->set_context($context);
-$PAGE->set_heading(get_string('autotemplates', 'pulse'));
+
+if (is_siteadmin()) {
+    // Extend the features of admin settings.
+    admin_externalpage_setup('pulseautomation');
+    $PAGE->set_heading(get_string('autotemplates', 'pulse'));
+    $moduleurl = new moodle_url('/admin/category.php?category=modsettings');
+    $PAGE->navbar->add(get_string('activity', 'core'), $moduleurl);
+} else {
+    $moduleurl = new moodle_url('/user/profile.php');
+    $PAGE->navbar->add(get_string('profile', 'core'), $moduleurl);
+}
 
 // PAGE breadcrumbs.
-$PAGE->navbar->add(get_string('mycourses', 'core'), new moodle_url('/course/index.php'));
-// $PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', array('id' => $course->id)));
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/templates/list.php'));
 $PAGE->navbar->add(get_string('edit'));
 

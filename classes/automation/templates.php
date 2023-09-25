@@ -1,42 +1,110 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
+/**
+ * Notification pulse action - Manage automation templates.
+ *
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 namespace mod_pulse\automation;
 
 use context_system;
 use context_module;
 use core_tag_tag;
 
+/**
+ * Manage automation templates.
+ */
 class templates {
 
-
+    /**
+     * Repersents the template visibility is shown.
+     * @var int
+     */
     const VISIBILITY_SHOW = 1;
 
+    /**
+     * Repersents the template visibility is hidden.
+     * @var int
+     */
     const VISIBILITY_HIDDEN = 0;
 
+    /**
+     * Repersents the template status is enabled.
+     * @var int
+     */
     const STATUS_ENABLE = 1;
 
+    /**
+     * Repersents the template status is disabled.
+     * @var int
+     */
     const STATUS_DISABLE = 0;
 
+    /**
+     * ID of the automation template.
+     *
+     * @var int
+     */
     protected $templateid; // Template id.
 
+    /**
+     * The record of the templates
+     *
+     * @var stdclass
+     */
     protected $template;
 
+    /**
+     * Constructor for initializing a template.
+     *
+     * @param int $templateid The ID of the template.
+     */
     protected function __construct($templateid) {
         $this->templateid = $templateid;
         $this->template = $this->get_template_record();
     }
 
+    /**
+     * Get the template associated with this instance.
+     *
+     * @return stdClass The template object.
+     */
     public function get_template() {
         return $this->template;
     }
 
+    /**
+     * Create an instance of the template.
+     *
+     * @param int $templateid The ID of the template.
+     * @return self The instance of the template.
+     */
     public static function create($templateid) {
         // TODO: template exist checks goes here.
-
         return new self($templateid);
     }
 
+    /**
+     * Retrieve the template record from the database.
+     *
+     * @return stdClass The template record.
+     */
     protected function get_template_record() {
 
         $data = $this->get_formdata(); // Fetch the template data from DB.
@@ -57,6 +125,11 @@ class templates {
         return $data;
     }
 
+    /**
+     * Get form data for a template.
+     *
+     * @return stdClass The template data.
+     */
     public function get_formdata() {
         global $DB;
 
@@ -65,6 +138,12 @@ class templates {
         }
     }
 
+    /**
+     * Get data for a specific instance.
+     *
+     * @param stdClass $instance The instance object.
+     * @return stdClass The instance data.
+     */
     public function get_data_forinstance(&$instance) {
         global $DB;
 
@@ -95,7 +174,11 @@ class templates {
         return $data;
     }
 
-
+    /**
+     * Get raw data for templates. NOT RECOMMENDED
+     *
+     * @return stdClass The raw template data.
+     */
     public function get_templates_rawdata() {
         global $DB;
 
@@ -122,7 +205,7 @@ class templates {
         $sql .= $join;
         $sql .= " WHERE te.id=:templateid";
 
-       return $DB->get_record_sql($sql, ['templateid' => $this->templateid]);
+        return $DB->get_record_sql($sql, ['templateid' => $this->templateid]);
     }
 
     /**
@@ -158,7 +241,7 @@ class templates {
     /**
      * Include actions data.
      *
-     * @param [type] $data
+     * @param stdclass $data
      * @return void
      */
     public function include_actions_data(&$data) {
@@ -203,6 +286,7 @@ class templates {
      * Updates the "visible" field of the current menu and deletes it from the cache.
      *
      * @param bool $status The new value for the "status" field.
+     * @param bool $instance
      * @return bool True if the update was successful, false otherwise.
      */
     public function update_status(bool $status, bool $instance=false) {
@@ -246,25 +330,30 @@ class templates {
         return false;
     }
 
+    /**
+     * Get options for tagging templates.
+     *
+     * @return array An associative array with 'itemtype' and 'component'.
+     */
     public static function get_tag_options() {
-
         return [
             'itemtype' => 'pulse_autotemplates',
             'component' => 'mod_pulse'
         ];
     }
 
+    /**
+     * Get options for tagging template instances.
+     *
+     * @return array An associative array with 'itemtype' and 'component'.
+     */
     public static function get_tag_instance_options() {
-
         return [
             'itemtype' => 'pulse_autotemplates_ins',
             'component' => 'mod_pulse'
         ];
     }
 
-    public function get_template_option_override($count=true) {
-
-    }
 
     /**
      * Insert or update the menu instance to DB. Convert the multiple options select elements to json.
@@ -291,6 +380,7 @@ class templates {
 
         // Create template record.
         $record->reference = shorten_text(strip_tags($record->reference), 30);
+        $record->timemodified = time();
         if (isset($formdata->id) && $DB->record_exists('pulse_autotemplates', ['id' => $formdata->id])) {
             $templateid = $formdata->id;
             // Update the template.
@@ -299,7 +389,6 @@ class templates {
             // Show the edited success notification.
             \core\notification::success(get_string('templateupdatesuccess', 'pulse'));
         } else {
-            // print_object($record);exit;
             $templateid = $DB->insert_record('pulse_autotemplates', $record);
             // Show the inserted success notification.
             \core\notification::success(get_string('templateinsertsuccess', 'pulse'));
@@ -310,7 +399,8 @@ class templates {
         $context = context_system::instance();
 
         if (!empty($formdata->tags)) {
-            \core_tag_tag::set_item_tags($tagoptions['component'], $tagoptions['itemtype'], $templateid, $context, $formdata->tags);
+            \core_tag_tag::set_item_tags(
+                $tagoptions['component'], $tagoptions['itemtype'], $templateid, $context, $formdata->tags);
         }
 
         // Store actions data.
@@ -332,8 +422,8 @@ class templates {
     /**
      * Update instance data.
      *
-     * @param [type] $instanceid
-     * @param [type] $options
+     * @param int $instanceid
+     * @param array $options
      * @return void
      */
     public static function update_instance_data($instanceid, $options) {
@@ -344,13 +434,10 @@ class templates {
         }
 
         if ($record = $DB->get_record('pulse_autotemplates_ins', ['instanceid' => $instanceid])) {
-
             $diff = array_diff_key((array) $record, $options);
             $removeoverrides = array_combine(array_keys($diff), array_fill(0, count($diff), null));
-
             $removeoverrides['id'] = $record->id;
             $removeoverrides['instanceid'] = $record->instanceid;
-            $removeoverrides['timemodified'] = date('Y-m-d H:i');
             $removeoverrides = array_merge($removeoverrides, $options);
 
             return $DB->update_record('pulse_autotemplates_ins', $removeoverrides);
@@ -362,22 +449,25 @@ class templates {
         return false;
     }
 
+    /**
+     * Get records for a list of templates.
+     *
+     * @param array $templates An array of template IDs.
+     * @return array An associative array of template records.
+     */
     public static function get_templates_record($templates) {
         global $DB;
 
         if (empty($templates)) {
             return true;
         }
-
+        // Generate SQL for IN clause and prepare parameters.
         list($insql, $inparams) = $DB->get_in_or_equal($templates, SQL_PARAMS_NAMED, 'ins');
         $sql = "SELECT * FROM {pulse_autotemplates} te WHERE te.id $insql";
-
+        // Fetch template records.
         $tempoverride = $DB->get_records_sql($sql, $inparams);
 
         return $tempoverride;
-        /* foreach ($rawdata as $key => $data) {
-            $templateid = $data->templateid;
-        } */
     }
 
 }

@@ -1,5 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Automation instance form for the pulse 2.0.
+ *
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace mod_pulse\forms;
 
@@ -10,19 +31,24 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 use html_writer;
 use mod_pulse\automation\templates;
 
-// Define the automation template form class by extending moodleform.
+/**
+ * Define the automation instance form.
+ */
 class automation_instance_form extends automation_template_form {
 
-
+    /**
+     * After the instance form elements are defined, create its override options for all elemennts, include hidden instance data.
+     * Remove elements doesn't used in instances.
+     *
+     * @return void
+     */
     public function after_definition() {
         global $PAGE;
-
-        // parent::definition();
 
         $mform =& $this->_form;
 
         $mform->updateAttributes(['id' => 'pulse-automation-template' ]);
-
+        // Courseid.
         $course = $this->_customdata['courseid'] ?? '';
         $mform->addElement('hidden', 'courseid', $course);
         $mform->setType('courseid', PARAM_INT);
@@ -41,18 +67,22 @@ class automation_instance_form extends automation_template_form {
         // Get the list of elments add in this form. create override button for all elements expect the hidden elements.
         $elements = $mform->_elements;
 
-        // print_object($elements);exit;
         // Add the Reference element.
         $reference = $mform->createElement('text', 'insreference', get_string('reference', 'pulse'), ['size' => '50']);
         $mform->insertElementBefore($reference, 'reference');
         $mform->setType('insreference', PARAM_ALPHANUMEXT);
-        /* $mform->addRule('insreference', null, 'required', null, 'client');
-        $mform->addHelpButton('insreference', 'reference', 'pulse'); */
+        $mform->addRule('insreference', get_string('required'), 'required', null, 'client');
+        $mform->addHelpButton('insreference', 'reference', 'pulse');
 
         $mform->removeElement('reference');
 
         $templatereference = $this->get_customdata('templatereference');
-        $input = html_writer::empty_tag('input', ['class' => 'form-control', 'type' => 'text', 'value' => $templatereference, 'disabled' => 'disabled']);
+        $input = html_writer::empty_tag('input',
+            ['class' => 'form-control',
+            'type' => 'text',
+            'value' => $templatereference,
+            'disabled' => 'disabled'
+            ]);
         $referenceprefix = $mform->createElement('html', html_writer::div($input, 'hide', ['id' => 'pulse-template-reference']));
         $mform->insertElementBefore($referenceprefix, 'insreference');
 
@@ -69,15 +99,16 @@ class automation_instance_form extends automation_template_form {
                 }
             }
         }
-
-        // Return to the required element tab on submit.
-        // $PAGE->requires->js_call_amd('mod_pulse/automation', 'init');
-
     }
 
+    /**
+     * Add an override element to the form.
+     *
+     * @param mixed $element The form element.
+     */
     protected function add_override_element($element) {
-        $mform =& $this->_form;
 
+        $mform =& $this->_form;
         $elementname = $element->getName();
         $orgelementname = $elementname;
 
@@ -93,7 +124,8 @@ class automation_instance_form extends automation_template_form {
             return;
         }
 
-        $overrideelement = $mform->createElement('advcheckbox', $name, '', '', array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
+        $overrideelement = $mform->createElement('advcheckbox', $name, '', '',
+        array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
 
         // Insert the override checkbox before the element.
         if (isset($mform->_elementIndex[$orgelementname]) && $mform->_elementIndex[$orgelementname]) {
@@ -101,28 +133,19 @@ class automation_instance_form extends automation_template_form {
         }
 
         // Disable the form fields by default, only enable whens its enabled for overriddden.
-        // if (!isset($mform->_rules[$element->getName()]) || empty($mform->_rules[$element->getName()])) {
-            $mform->disabledIf($orgelementname, $name, 'notchecked');
-     /*   // }  else {
-            $element = $mform->getElement($orgelementname);
-            $element->updateAttributes(["readonly" => 'readonly']);
-        } */
+        $mform->disabledIf($orgelementname, $name, 'notchecked');
     }
 
     /**
-     * Includ the template action trigger element to the templates form.
+     * Includ the pulse conditions element to the instance form.
      *
-     * @param [type] $mform
      * @return void
      */
     protected function load_template_conditions() {
 
         $mform =& $this->_form;
-
         $mform->addElement('html', '<div class="tab-pane fade" id="pulse-condition-tab"> ');
-
         $mform->addElement('header', 'generalconditions', '<h3>'.get_string('general').'</h3>');
-
         // Operator element.
         $operators = [
             \mod_pulse\automation\action_base::OPERATOR_ALL => get_string('all', 'pulse'),
@@ -134,7 +157,6 @@ class automation_instance_form extends automation_template_form {
         $conditionplugins = new \mod_pulse\plugininfo\pulsecondition();
         $plugins = $conditionplugins->get_plugins_base();
 
-        $option = [];
         foreach ($plugins as $name => $plugin) {
             $mform->addElement('header', $name, get_string('pluginname', 'pulsecondition_'.$name));
 
@@ -143,42 +165,30 @@ class automation_instance_form extends automation_template_form {
             $mform->setExpanded($name);
         }
         $mform->addElement('html', '</fieldset>'); // E.o of actions triggere tab.
-
         $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
-
     }
 
 
     /**
-     * Load template actions.
+     * Load instance form elments for pulse action plugins.
      *
-     * @param [type] $mform
      * @return void
      */
-    protected function load_template_actions(&$mform) {
-
-        // $mform->addElement('html', '<div class="tab-pane fade" id="pulse-action-tab"> ');
-
-        // $mform->addElement('html', '</fieldset>'); // E.o of actions triggere tab.
-
+    protected function load_template_actions() {
+        $mform =& $this->_form;
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
         $plugins = $actionplugins->get_plugins_base();
-
-        $option = [];
         foreach ($plugins as $name => $plugin) {
             // Define the form elements inside the definition function.
             $mform->addElement('html', '<div class="tab-pane fcontainer fade" id="pulse-action-'.$name.'"> ');
             $mform->addElement('html', '<h4>'.get_string('pluginname', 'pulseaction_'.$name).'</h4>');
+
             // Load the instance elements for this action.
             $plugin->load_instance_form($mform, $this);
-
             $elements = $plugin->default_override_elements();
             $this->load_default_override_elements($elements);
-            // $mform->setExpanded($name);
             $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
         }
-
-
     }
 
     /**
@@ -193,9 +203,7 @@ class automation_instance_form extends automation_template_form {
         if (empty($elements)) {
             return false;
         }
-
         $mform =& $this->_form;
-
         foreach ($elements as $element) {
             $overridename = "override[$element]";
             $mform->addElement('hidden', $overridename, 1);
@@ -203,42 +211,23 @@ class automation_instance_form extends automation_template_form {
         }
     }
 
-
+    /**
+     * Get the default values for a specific key from the form.
+     *
+     * @param string $key The key for the default values.
+     * @return array The default values for the specified key.
+     */
     public function get_default_values($key) {
         return $this->_form->_defaultValues[$key] ?? [];
     }
 
+    /**
+     * Perform actions on the form after data has been defined.
+     */
     public function definition_after_data() {
         $plugins = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         foreach ($plugins as $name => $plugin) {
             $plugin->definition_after_data($this->_form, $this);
         }
     }
-
-    public function validation($data, $files) {
-
-        /*
-        $data.
-        print_object($data);
-        exit;
-        */
-    }
-
-    /**
-     * Load template actions.
-     *
-     * @param [type] $mform
-     * @return void
-     */
-    /* protected function load_template_actions(&$mform) {
-
-        $actionplugins = new \mod_pulse\plugininfo\pulseaction();
-        $plugins = $actionplugins->get_plugins_base();
-
-        $option = [];
-        foreach ($plugins as $name => $plugin) {
-            $plugin->load_global_form($mform, $this);
-        }
-    } */
-
 }

@@ -1,5 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Notification pulse action form.
+ *
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace pulseaction_notification;
 
@@ -11,7 +32,9 @@ use mod_pulse\automation\helper;
 use pulseaction_notification\notification;
 use pulseaction_notification\schedule;
 
-
+/**
+ * Notification action form, contains important method and basic plugin details.
+ */
 class actionform extends \mod_pulse\automation\action_base {
 
     /**
@@ -36,7 +59,7 @@ class actionform extends \mod_pulse\automation\action_base {
     /**
      * Delete notification instances and schedule data for this instance.
      *
-     * @param integer $instanceid
+     * @param int $instanceid
      * @return void
      */
     public function delete_instance_action(int $instanceid) {
@@ -47,16 +70,16 @@ class actionform extends \mod_pulse\automation\action_base {
         return $DB->delete_records($instancetable, ['instanceid' => $instanceid]);
     }
 
-
     /**
      * Prepare editor fileareas.
      *
-     * @param int|null $instanceid
+     * @param stdclass $data Instance/Templates data of the notification.
+     * @param \context $context
      * @return void
      */
     public function prepare_editor_fileareas(&$data, \context $context) {
 
-        $data = (object) ($data ?: ['id' => 0]);
+        $data = (object) ($data ?: ['id' => 0]); // Create empty data set if empty.
 
         $context = \context_system::instance();
         $templateid = $data->templateid ?? $data->id;
@@ -65,7 +88,7 @@ class actionform extends \mod_pulse\automation\action_base {
         if (isset($data->courseid) && isset($data->instanceid)) {
             $prefix = '_instance';
         }
-
+        // List of editors need to prepare for forms.
         $editor = [
             "pulsenotification_headercontent",
             "pulsenotification_staticcontent",
@@ -73,7 +96,6 @@ class actionform extends \mod_pulse\automation\action_base {
         ];
 
         foreach ($editor as $field) {
-
             // Create empty data set for the new template.
             if (!isset($data->$field)) {
                 $data->$field = '';
@@ -86,7 +108,6 @@ class actionform extends \mod_pulse\automation\action_base {
             $data = file_prepare_standard_editor(
                 $data, $field, $this->get_editor_options($context), $context, 'mod_pulse', $filearea, $id
             );
-
         }
 
     }
@@ -94,7 +115,8 @@ class actionform extends \mod_pulse\automation\action_base {
     /**
      * Prepare editor fileareas.
      *
-     * @param int|null $instanceid
+     * @param stdclass $data Instance/Templates data of the notification.
+     * @param \context $context
      * @return void
      */
     public function postupdate_editor_fileareas(&$data, \context $context) {
@@ -128,6 +150,12 @@ class actionform extends \mod_pulse\automation\action_base {
         }
     }
 
+    /**
+     * Get text editor options to manage files.
+     *
+     * @param \stdclass $context
+     * @return void
+     */
     protected function get_editor_options($context=null) {
         global $PAGE;
 
@@ -140,16 +168,24 @@ class actionform extends \mod_pulse\automation\action_base {
     }
 
     /**
-     * Delete the template action.
+     * Delete the notification instance.
      *
-     * @param [type] $templateid
+     * @param int $templateid
      * @return void
      */
     public function delete_template_action($templateid) {
         global $DB;
 
+        $instances = $this->get_template_instances($templateid);
+        // Remove its instances and schedules when the template is deleted.
+        foreach ($instances as $instanceid => $instance) {
+            $DB->delete_records('pulseaction_notification_ins', ['instanceid' => $instanceid]);
+            $DB->delete_records('pulseaction_notification_sch', ['instanceid' => $instanceid]);
+        }
+
         return $DB->delete_records('pulseaction_notification', ['templateid' => $templateid]);
     }
+
 
     /**
      * Action is triggered for the instance. when triggered notification will create a schedule for the triggered users.
@@ -158,6 +194,9 @@ class actionform extends \mod_pulse\automation\action_base {
      *
      * @param stdclass $instancedata
      * @param int $userid
+     * @param int $expectedtime
+     * @param bool $newuser
+     *
      * @return void
      */
     public function trigger_action($instancedata, $userid, $expectedtime=null, $newuser=false) {
@@ -168,18 +207,21 @@ class actionform extends \mod_pulse\automation\action_base {
         $notification->set_notification_data($notificationinstance, $instancedata);
 
         // Create a schedule for user. This method verify the user activity completion before creating schedules.
-        $notification->create_schedule_foruser($userid, '', null, $runtime ?? null, $newuser);
+        $notification->create_schedule_foruser($userid, '', null, $expectedtime ?? null, $newuser);
 
         // Send the scheduled notifications for this user.
         schedule::instance()->send_scheduled_notification($userid);
     }
 
     /**
+     * Remove the user schedules when the user is deleted.
+     *
      * Observe the events, triggered from the main pulse.
      *
-     * @param [type] $instancedata
-     * @param [type] $method
-     * @param [type] $eventdata
+     * @param stdclass $instancedata Automation Instance data.
+     * @param string $method Name of the triggered event.
+     * @param stdclass $eventdata Triggered event data.
+     *
      * @return void
      */
     public function trigger_action_event($instancedata, $method, $eventdata) {
@@ -203,15 +245,16 @@ class actionform extends \mod_pulse\automation\action_base {
      */
     public function get_data_fortemplate($templateid) {
         global $DB;
+        // Notification data for template.
         $actiondata = $DB->get_record('pulseaction_notification', ['templateid' => $templateid]);
         return $actiondata;
     }
 
     /**
-     * Get data for instance.
+     * Get the notification instance record.
      *
-     * @param [type] $instanceid
-     * @return void
+     * @param int $instanceid
+     * @return stdclass Data of the notification instance.
      */
     public function get_data_forinstance($instanceid) {
         global $DB;
@@ -219,6 +262,12 @@ class actionform extends \mod_pulse\automation\action_base {
         return $instancedata;
     }
 
+    /**
+     * Decode the json encoded notification data.
+     *
+     * @param array $actiondata
+     * @return void
+     */
     public function update_encode_data(&$actiondata) {
 
         $actiondata = (array) $actiondata;
@@ -227,19 +276,18 @@ class actionform extends \mod_pulse\automation\action_base {
         $actiondata['bcc'] = json_decode($actiondata['bcc']);
         $actiondata['cc'] = json_decode($actiondata['cc']);
         $actiondata['suppress'] = isset($actiondata['suppress']) ? json_decode($actiondata['suppress']) : [];
-
-
         $actiondata['notifyinterval'] = json_decode($actiondata['notifyinterval'], true);
     }
 
+    /**
+     * Encode the array fields to json type.
+     *
+     * @param array $actiondata
+     * @return void
+     */
     protected function update_data_structure(&$actiondata) {
 
         // Testing the action data.
-
-       /*  if (isset($actiondata->notify)) {
-            $actiondata->notifyinterval = $actiondata->notify;
-        } */
-
         array_walk($actiondata, function(&$value) {
             if (is_array($value)) {
                 $value = json_encode($value);
@@ -248,11 +296,62 @@ class actionform extends \mod_pulse\automation\action_base {
     }
 
     /**
+     * Recreate the schedule for the notification instance, It mostly used when the template is updated.
+     *
+     * @param int $templateid Updated temmplate ID.
+     *
+     * @return void
+     */
+    protected function recreate_instance_schedules(int $templateid) {
+        global $DB;
+
+        $instances = $this->get_template_instances($templateid);
+
+        foreach ($instances as $instanceid => $instance) {
+            $notification = $DB->get_field('pulseaction_notification_ins', 'id', ['instanceid' => $instanceid]);
+            notification::instance($notification)->recreate_schedule_forinstance();
+        }
+
+    }
+
+    /**
+     * Generate the warnings if the instance is not compatibile to send notifications.
+     *
+     * @param \stdclass $course
+     * @return array
+     */
+    public function display_instance_warnings(\stdclass $course): array {
+
+        // Course visibility warnings.
+        if (!$course->visible) {
+            $warning[] = get_string('coursehidden', 'pulseaction_notification');
+        }
+
+        // Course active users warnings.
+        $coursecontext = \context_course::instance($course->id);
+        if (!count_enrolled_users($coursecontext, '', null, true)) {
+            $warning[] = get_string('noactiveusers', 'pulseaction_notification');
+        }
+
+        // Course is not started.
+        if ($course->startdate > time()) {
+            $warning[] = get_string('coursenotstarted', 'pulseaction_notification');
+        }
+
+        // Course is not started.
+        if ($course->enddate && $course->enddate < time()) {
+            $warning[] = get_string('courseenddatereached', 'pulseaction_notification');
+        }
+
+        return $warning ?? [];
+    }
+    /**
      * Save the template config.
      *
      * @param stdclass $record
      * @param string $component
-     * @return void
+     *
+     * @return bool
      */
     public function process_save($record, $component) {
         global $DB;
@@ -271,7 +370,7 @@ class actionform extends \mod_pulse\automation\action_base {
             // Update the data strucured before save.
             $this->update_data_structure($actiondata);
 
-            // try {
+            try {
                 // In moodle, the main table should be the name of the component.
                 // Therefore, generate the table name based on the component name.
                 $tablename = 'pulseaction_'. $component;
@@ -286,54 +385,58 @@ class actionform extends \mod_pulse\automation\action_base {
                     $DB->insert_record($tablename, $actiondata);
                 }
 
-            // } catch (\Exception $e) {
-            //     // Throw  an error incase of issue with manage the data update.
-            //     throw new \moodle_exception('actiondatanotsave', $component);
-            // }
+                // Recreate the schedules for the instance.
+                $templateid = $actiondata->templateid;
+                $this->recreate_instance_schedules($templateid);
+
+            } catch (\Exception $e) {
+                // Throw  an error incase of issue with manage the data update.
+                throw new \moodle_exception('actiondatanotsave', $component);
+            }
         }
         return true;
     }
 
+    /**
+     * Save the submitted instance data for the notification action. Update the array values to json.
+     * After insert/update the data to DB then trigger the notification schedule for the instance course.
+     *
+     * @param int $instanceid
+     * @param stdclass $record
+     * @return bool
+     */
     public function process_instance_save($instanceid, $record) {
         global $DB;
 
         // Filter the current action data from the templates data by its shortname.
         $actiondata = $this->filter_action_data((array) $record);
+        // Update the data strucured before save.
+        $this->update_data_structure($actiondata);
+        $actiondata->instanceid = $instanceid;
 
-        // $actiondata->templateid = $record->templateid;
+        try {
+            // In moodle, the main table should be the name of the component.
+            // Therefore, generate the table name based on the component name.
+            $tablename = 'pulseaction_notification_ins';
+            // Get the record by using the templateid, one instance is allowed for each template.
+            // Manage the action component data for this template.
+            if (isset($instanceid) && $notifyinstance = $DB->get_record($tablename, ['instanceid' => $instanceid])) {
+                $actiondata->id = $notifyinstance->id;
 
-        // if (!empty($actiondata)) {
+                $notificationinstance = $actiondata->id;
+                // Update the latest data into the action component.
+                $DB->update_record($tablename, $actiondata);
+            } else {
+                // Create new instance for this tempalte.
+                $notificationinstance = $DB->insert_record($tablename, $actiondata);
+            }
+            // TODO: Create a schedules based on receipents role.
+            notification::instance($notificationinstance)->create_schedule_forinstance();
+        } catch (\Exception $e) {
+            // Throw  an error incase of issue with manage the data update.
+            throw new \moodle_exception('actiondatanotsave', 'pulseaction_notification');
+        }
 
-            // Update the data strucured before save.
-            $this->update_data_structure($actiondata);
-
-            $actiondata->instanceid = $instanceid;
-            // try {
-                // In moodle, the main table should be the name of the component.
-                // Therefore, generate the table name based on the component name.
-                $tablename = 'pulseaction_notification_ins';
-                // Get the record by using the templateid, one instance is allowed for each template.
-                // Manage the action component data for this template.
-                // print_object($record);exit;
-                if (isset($instanceid) && $notifyinstance = $DB->get_record($tablename, ['instanceid' => $instanceid])) {
-                    $actiondata->id = $notifyinstance->id;
-
-                    $notificationinstance = $actiondata->id;
-                    // Update the latest data into the action component.
-                    $DB->update_record($tablename, $actiondata);
-                } else {
-                    // Create new instance for this tempalte.
-                    /* print_object($actiondata);
-                    exit; */
-                    $notificationinstance = $DB->insert_record($tablename, $actiondata);
-                }
-                // TODO: Create a schedules based on receipents role.
-                notification::instance($notificationinstance)->create_schedule_forinstance();
-            // } catch (\Exception $e) {
-            //     // Throw  an error incase of issue with manage the data update.
-            //     throw new \moodle_exception('actiondatanotsave', $component);
-            // }
-        // }
         return true;
     }
 
@@ -355,7 +458,7 @@ class actionform extends \mod_pulse\automation\action_base {
     }
 
     /**
-     * Load the instance elements for the form.
+     * Load the notification elements for the instance form.
      *
      * @param moodle_form $mform
      * @param actionform $forminstance
@@ -391,7 +494,8 @@ class actionform extends \mod_pulse\automation\action_base {
             \mod_pulse\automation\action_base::OPERATOR_ALL => get_string('all', 'pulse'),
             \mod_pulse\automation\action_base::OPERATOR_ANY => get_string('any', 'pulse'),
         ];
-        $suppressopertor = $mform->createElement('select', 'pulsenotification_suppressoperator', get_string('suppressoperator', 'pulseaction_notification'), $operators);
+        $suppressopertor = $mform->createElement('select', 'pulsenotification_suppressoperator',
+            get_string('suppressoperator', 'pulseaction_notification'), $operators);
         $mform->setDefault('suppressoperator', \mod_pulse\automation\action_base::OPERATOR_ANY);
         $mform->insertElementBefore($suppressopertor, 'pulsenotification_notifylimit');
         $mform->addHelpButton('pulsenotification_suppressoperator', 'suppressoperator', 'pulseaction_notification');
@@ -402,19 +506,20 @@ class actionform extends \mod_pulse\automation\action_base {
         $list = array_merge($books, $pages);
         foreach ($list as $page) {
             $modules[$page->id] = $page->get_formatted_name();
-
         }
 
-        $dynamic = $mform->createElement('select', 'pulsenotification_dynamiccontent', get_string('dynamiccontent', 'pulseaction_notification'), $modules);
+        $dynamic = $mform->createElement('select', 'pulsenotification_dynamiccontent',
+            get_string('dynamiccontent', 'pulseaction_notification'), $modules);
         $mform->insertElementBefore($dynamic, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_dynamiccontent', 'dynamiccontent', 'pulseaction_notification');
 
-        // Add 'content_type' element with the following options:
-        $content_type_options = array(
+        // Add 'content_type' element with the following options.
+        $contenttypeoptions = array(
             notification::DYNAMIC_DESCRIPTION => get_string('description', 'pulseaction_notification'),
             notification::DYNAMIC_CONTENT => get_string('content', 'pulseaction_notification'),
         );
-        $dynamic2 = $mform->createElement('select', 'pulsenotification_contenttype', get_string('contenttype', 'pulseaction_notification'), $content_type_options);
+        $dynamic2 = $mform->createElement('select', 'pulsenotification_contenttype',
+            get_string('contenttype', 'pulseaction_notification'), $contenttypeoptions);
         $mform->insertElementBefore($dynamic2, 'pulsenotification_footercontent_editor');
         $mform->hideIf('pulsenotification_contenttype', 'pulsenotification_dynamiccontent', 'eq', 0);
         $mform->addHelpButton('pulsenotification_contenttype', 'contenttype', 'pulseaction_notification');
@@ -424,12 +529,13 @@ class actionform extends \mod_pulse\automation\action_base {
         $cmid = $instanceid ? $DB->get_field('pulseaction_notification_ins', 'dynamiccontent', ['instanceid' => $instanceid]) : '';
         if (!empty($cmid)) {
             $sql = 'SELECT bc.id, bc.title FROM {course_modules} cm
-            JOIN {book_chapters} as bc ON bc.bookid = cm.instance
+            JOIN {book_chapters} bc ON bc.bookid = cm.instance
             WHERE cm.id = :cmid';
             $chapters = $DB->get_records_sql_menu($sql, ['cmid' => $cmid]);
         }
         $options['ajax'] = 'pulseaction_notification/chaptersource';
-        $chapter = $mform->createElement('autocomplete', 'pulsenotification_chapterid', get_string('chapters', 'pulseaction_notification'), $chapters ?? [], $options);
+        $chapter = $mform->createElement('autocomplete', 'pulsenotification_chapterid',
+            get_string('chapters', 'pulseaction_notification'), $chapters ?? [], $options);
         $mform->insertElementBefore($chapter, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_chapterid', 'chapters', 'pulseaction_notification');
         $mform->hideIf('pulsenotification_chapterid', 'pulsenotification_dynamiccontent', 'eq', 0);
@@ -438,12 +544,13 @@ class actionform extends \mod_pulse\automation\action_base {
         }
 
         // Content Length Group.
-        $content_length_options = array(
+        $contentlengthoptions = array(
             notification::LENGTH_TEASER => get_string('teaser', 'pulseaction_notification'),
             notification::LENGTH_LINKED => get_string('full_linked', 'pulseaction_notification'),
             notification::LENGTH_NOTLINKED => get_string('full_not_linked', 'pulseaction_notification'),
         );
-        $dynamic3 = $mform->createElement('select', 'pulsenotification_contentlength', get_string('contentlength', 'pulseaction_notification'), $content_length_options);
+        $dynamic3 = $mform->createElement('select', 'pulsenotification_contentlength',
+            get_string('contentlength', 'pulseaction_notification'), $contentlengthoptions);
         $mform->insertElementBefore($dynamic3, 'pulsenotification_footercontent_editor');
         $mform->addHelpButton('pulsenotification_contentlength', 'contentlength', 'pulseaction_notification');
 
@@ -451,11 +558,13 @@ class actionform extends \mod_pulse\automation\action_base {
 
         asort($mform->_elementIndex);
 
-        $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'updateChapter', ['contextid' => $PAGE->context->id]);
+        $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'updateChapter',
+            ['contextid' => $PAGE->context->id]
+        );
     }
 
     /**
-     * Global form elements.
+     * Global form elements for notification action.
      *
      * @param moodle_form $mform
      * @param \automation_instance_form $forminstance
@@ -466,14 +575,14 @@ class actionform extends \mod_pulse\automation\action_base {
 
         require_once($CFG->dirroot.'/course/lib.php');
 
-        // Sender Group
-        $sender_options = array(
+        // Sender Group.
+        $senderoptions = array(
             notification::SENDERCOURSETEACHER => get_string('courseteacher', 'pulseaction_notification'),
             notification::SENDERGROUPTEACHER => get_string('groupteacher', 'pulseaction_notification'),
             notification::SENDERTENANTROLE => get_string('tenantrole', 'pulseaction_notification'),
             notification::SENDERCUSTOM => get_string('custom', 'pulseaction_notification')
         );
-        $mform->addElement('select', 'pulsenotification_sender', get_string('sender', 'pulseaction_notification'), $sender_options);
+        $mform->addElement('select', 'pulsenotification_sender', get_string('sender', 'pulseaction_notification'), $senderoptions);
         $mform->addHelpButton('pulsenotification_sender', 'sender', 'pulseaction_notification');
 
         // Add additional settings for the 'custom' option, if selected.
@@ -489,7 +598,8 @@ class actionform extends \mod_pulse\automation\action_base {
             notification::INTERVALWEEKLY => get_string('weekly', 'pulseaction_notification'),
             notification::INTERVALMONTHLY => get_string('monthly', 'pulseaction_notification'),
         );
-        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[interval]', get_string('interval', 'pulseaction_notification'), $intervaloptions);
+        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[interval]',
+            get_string('interval', 'pulseaction_notification'), $intervaloptions);
 
         // Add additional settings based on the selected interval.
         $dayweeks = array(
@@ -503,23 +613,30 @@ class actionform extends \mod_pulse\automation\action_base {
         );
 
         // Add 'day_of_week' element if 'weekly' is selected in the 'interval' element.
-        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[weekday]', get_string('interval', 'pulseaction_notification'), $dayweeks);
-        $mform->hideIf('pulsenotification_notifyinterval[weekday]', 'pulsenotification_notifyinterval[interval]', 'neq', notification::INTERVALWEEKLY);
+        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[weekday]',
+            get_string('interval', 'pulseaction_notification'), $dayweeks);
+        $mform->hideIf('pulsenotification_notifyinterval[weekday]', 'pulsenotification_notifyinterval[interval]',
+            'neq', notification::INTERVALWEEKLY);
 
         $dates = range(1, 31);
         // Add 'day_of_month' element if 'monthly' is selected in the 'interval' element.
-        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[monthdate]', get_string('interval', 'pulseaction_notification'), $dates);
-        $mform->hideIf('pulsenotification_notifyinterval[monthdate]', 'pulsenotification_notifyinterval[interval]', 'neq', notification::INTERVALMONTHLY);
+        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[monthdate]',
+            get_string('interval', 'pulseaction_notification'), $dates);
+        $mform->hideIf('pulsenotification_notifyinterval[monthdate]', 'pulsenotification_notifyinterval[interval]',
+            'neq', notification::INTERVALMONTHLY);
 
         // Time to send notification.
         $dates = $this->get_times();
         // Add 'time_of_day' element.
         // Add 'day_of_month' element if 'monthly' is selected in the 'interval' element.
-        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[time]', get_string('interval', 'pulseaction_notification'), $dates);
-        $mform->hideIf('pulsenotification_notifyinterval[time]', 'pulsenotification_notifyinterval[interval]', 'eq', notification::INTERVALONCE);
+        $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[time]',
+            get_string('interval', 'pulseaction_notification'), $dates);
+        $mform->hideIf('pulsenotification_notifyinterval[time]', 'pulsenotification_notifyinterval[interval]',
+            'eq', notification::INTERVALONCE);
 
         // Notification interval button groups.
-        $mform->addGroup($interval, 'pulsenotification_notifyinterval', get_string('interval', 'pulseaction_notification'), array(' '), false);
+        $mform->addGroup($interval, 'pulsenotification_notifyinterval',
+            get_string('interval', 'pulseaction_notification'), array(' '), false);
         $mform->addHelpButton('pulsenotification_notifyinterval', 'interval', 'pulseaction_notification');
 
         // Notification delay.
@@ -528,69 +645,83 @@ class actionform extends \mod_pulse\automation\action_base {
             notification::DELAYBEFORE => get_string('before', 'pulseaction_notification'),
             notification::DELAYAFTER => get_string('after', 'pulseaction_notification'),
         );
-        $mform->addElement('select', 'pulsenotification_notifydelay', get_string('delay', 'pulseaction_notification'), $delayoptions);
+        $mform->addElement('select', 'pulsenotification_notifydelay',
+            get_string('delay', 'pulseaction_notification'), $delayoptions);
         $mform->setDefault('delay', 'none');
         $mform->addHelpButton('pulsenotification_notifydelay', 'delay', 'pulseaction_notification');
 
+        // Delay duration.
         $mform->addElement('duration', 'pulsenotification_delayduration', get_string('delayduraion', 'pulseaction_notification'));
-        // $mform->setType('pulsenotification_delayduration', PARAM_INT);
         $mform->hideIf('pulsenotification_delayduration', 'pulsenotification_notifydelay', 'eq', notification::DELAYNONE);
         $mform->addHelpButton('pulsenotification_delayduration', 'delayduraion', 'pulseaction_notification');
 
-        // Limit no of notifications Group
+        // Limit no of notifications Group.
         $mform->addElement('text', 'pulsenotification_notifylimit', get_string('limit', 'pulseaction_notification'));
         $mform->setType('pulsenotification_notifylimit', PARAM_INT);
         $mform->addHelpButton('pulsenotification_notifylimit', 'limit', 'pulseaction_notification');
-        $mform->hideIf('pulsenotification_notifylimit', 'pulsenotification_notifyinterval[interval]', 'eq', notification::INTERVALONCE);
+        $mform->hideIf('pulsenotification_notifylimit', 'pulsenotification_notifyinterval[interval]',
+            'eq', notification::INTERVALONCE);
 
         // Recipients Group.
         // Add 'recipients' element with all roles that can receive notifications.
         $roles = get_roles_with_capability('pulseaction/notification:receivenotification');
         $rolenames = role_fix_names($roles);
         $roleoptions = array_combine(array_column($rolenames, 'id'), array_column($rolenames, 'localname'));
-        $mform->addElement('autocomplete', 'pulsenotification_recipients', get_string('recipients', 'pulseaction_notification'), $roleoptions, array('multiple' => 'multiple'));
+        $mform->addElement('autocomplete', 'pulsenotification_recipients',
+            get_string('recipients', 'pulseaction_notification'), $roleoptions, array('multiple' => 'multiple'));
         $mform->addHelpButton('pulsenotification_recipients', 'recipients', 'pulseaction_notification');
 
         // CC Group.
         // Add 'cc' element with all course context and user context roles.
         $courseroles = $forminstance->course_roles();
-        $mform->addElement('autocomplete', 'pulsenotification_cc', get_string('ccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
+        $mform->addElement('autocomplete', 'pulsenotification_cc',
+            get_string('ccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
         $mform->addHelpButton('pulsenotification_cc', 'ccrecipients', 'pulseaction_notification');
 
         // Set BCC.
-        $mform->addElement('autocomplete', 'pulsenotification_bcc', get_string('bccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
+        $mform->addElement('autocomplete', 'pulsenotification_bcc',
+            get_string('bccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
         $mform->addHelpButton('pulsenotification_bcc', 'bccrecipients', 'pulseaction_notification');
 
         // Subject.
-        $mform->addElement('text', 'pulsenotification_subject', get_string('subject', 'pulseaction_notification'), ['size' => 100]);
+        $mform->addElement('text', 'pulsenotification_subject',
+            get_string('subject', 'pulseaction_notification'), ['size' => 100]);
         $mform->setType('pulsenotification_subject', PARAM_TEXT);
         $mform->addHelpButton('pulsenotification_subject', 'subject', 'pulseaction_notification');
 
         $context = \context_system::instance();
-        $mform->addElement('editor', 'pulsenotification_headercontent_editor', get_string('headercontent', 'pulseaction_notification'),
-            ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
-            $mform->addHelpButton('pulsenotification_headercontent_editor', 'headercontent', 'pulseaction_notification');
+        $mform->addElement('editor', 'pulsenotification_headercontent_editor',
+            get_string('headercontent', 'pulseaction_notification'),
+            ['class' => 'fitem_id_templatevars_editor'],
+            $this->get_editor_options($context)
+        );
+        $mform->addHelpButton('pulsenotification_headercontent_editor', 'headercontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
 
         // Statecontent editor.
-        $mform->addElement('editor', 'pulsenotification_staticcontent_editor', get_string('staticcontent', 'pulseaction_notification'),
-            ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
+        $mform->addElement('editor', 'pulsenotification_staticcontent_editor',
+            get_string('staticcontent', 'pulseaction_notification'),
+            ['class' => 'fitem_id_templatevars_editor'],
+            $this->get_editor_options($context)
+        );
         $mform->addHelpButton('pulsenotification_staticcontent_editor', 'staticcontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
 
         // Footer Content.
-        $mform->addElement('editor', 'pulsenotification_footercontent_editor', get_string('footercontent', 'pulseaction_notification'),
+        $mform->addElement('editor', 'pulsenotification_footercontent_editor',
+            get_string('footercontent', 'pulseaction_notification'),
             ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
         $mform->addHelpButton('pulsenotification_footercontent_editor', 'footercontent', 'pulseaction_notification');
         $forminstance->pulse_email_placeholders($mform);
 
         // Preview Button.
-        $mform->addElement('button', 'pulsenotification_preview', get_string('preview', 'pulseaction_notification'));
+        $test = $mform->addElement('button', 'pulsenotification_preview', get_string('preview', 'pulseaction_notification'));
         $mform->addHelpButton('pulsenotification_preview', 'preview', 'pulseaction_notification');
 
         // Email tempalte placholders.
         $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
-        $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'previewNotification', ['contextid' => $PAGE->context->id]);
+        $contextid = $PAGE->context->id;
+        $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'previewNotification', ['contextid' => $contextid]);
     }
 
     /**

@@ -17,8 +17,8 @@
 /**
  * Define plugin capabilities.
  *
- * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @package   pulseaction_notification
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

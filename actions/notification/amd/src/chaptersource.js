@@ -26,20 +26,20 @@
 define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/fragment', 'core/str', 'core/modal_events'],
     function($, Ajax, Notification, ModalFactory, Fragment, Str, ModalEvents) {
 
+    const previewModalBody = function(contextID, userid = null) {
 
-    const previewModalBody = function(contextID, userid=null) {
-
+        var params;
         if (window.tinyMCE !== undefined) {
-            // editorPlugin = window.tinyMCE;
-            var params = {
+            // EditorPlugin = window.tinyMCE;
+            params = {
                 contentheader: window.tinyMCE.get('id_pulsenotification_headercontent_editor').getContent(),
                 contentstatic: window.tinyMCE.get('id_pulsenotification_staticcontent_editor').getContent(),
                 contentfooter: window.tinyMCE.get('id_pulsenotification_footercontent_editor').getContent(),
                 userid: userid
             };
         } else {
-            // editorPlugin = document;
-            var params = {
+            // EditorPlugin = document;
+            params = {
                 contentheader: document.querySelector('#id_pulsenotification_headercontent_editoreditable').innerHTML,
                 contentstatic: document.querySelector('#id_pulsenotification_staticcontent_editoreditable').innerHTML,
                 contentfooter: document.querySelector('#id_pulsenotification_footercontent_editoreditable').innerHTML,
@@ -48,6 +48,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
         }
 
         var dynamicparams = {};
+
         if (document.querySelector('[name=pulsenotification_dynamiccontent]') !== null) {
             dynamicparams = {
                 contentdynamic: document.querySelector('[name=pulsenotification_dynamiccontent]').value,
@@ -56,9 +57,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
                 contentlength: document.querySelector('[name=pulsenotification_contentlength]').value,
             };
         }
+        // Get the form data.
+        var formData;
+        var form = document.forms['pulse-automation-template'];
+        var formdata = new FormData(form);
+        formdata = new URLSearchParams(formdata).toString();
+        formData = {
+            formdata: formdata
+        };
 
-        return Fragment.loadFragment('pulseaction_notification', 'preview_content', contextID, {...params, ...dynamicparams});
-    }
+        var finalParams = {...params, ...dynamicparams, ...formData};
+
+        return Fragment.loadFragment('pulseaction_notification', 'preview_content', contextID, finalParams);
+    };
 
     const previewModal = function(contextID) {
 
@@ -74,9 +85,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
                     e.preventDefault();
                     var target = e.target;
                     modal.setBody(previewModalBody(contextID, target.value));
-                })
-            })
-        });
+                });
+            });
+
+            return;
+        }).catch();
     };
 
     const notificationModal = function(contextID, instance, userid) {
@@ -92,15 +105,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
             large: true,
         }).then((modal) => {
             modal.show();
-
-            /* modal.getRoot().on(ModalEvents.bodyRendered, function() {
-                modal.getRoot().get(0).querySelector('[name=userselector]').addEventListener('change', (e) => {
-                    e.preventDefault();
-                    var target = e.target;
-                    modal.setBody(previewModalBody(contextID, target.value));
-                })
-            }) */
-        });
+            return;
+        }).catch();
     };
 
     return {
@@ -127,14 +133,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
         updateChapter: function() {
 
             const SELECTORS = {
-                chaperType : "#id_pulsenotification_contenttype",
+                chaperType: "#id_pulsenotification_contenttype",
                 mod: "#id_pulsenotification_dynamiccontent"
             };
 
-            document.querySelector(SELECTORS.chaperType).addEventListener("change", (e) => resetChapter());
-            document.querySelector(SELECTORS.mod).addEventListener("change", (e) => resetChapter());
+            document.querySelector(SELECTORS.chaperType).addEventListener("change", () => resetChapter());
+            document.querySelector(SELECTORS.mod).addEventListener("change", () => resetChapter());
             var chapter = document.querySelector("#id_pulsenotification_chapterid");
 
+            /**
+             *
+             */
             function resetChapter() {
                 chapter.innerHTML = '';
                 chapter.value = '';
@@ -152,7 +161,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
 
             btn.addEventListener('click', function() {
                 previewModal(contextid);
-            })
+            });
         },
 
         reportModal: function(contextID) {

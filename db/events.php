@@ -22,10 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * Need to define list of events that plugin will go to observe.
- */
-
 defined('MOODLE_INTERNAL') || die();
 
 $observers = [
@@ -39,9 +35,7 @@ $observers = [
         'callback' => '\mod_pulse\eventobserver::user_enrolment_deleted',
     ),
 
-    /**
-     * To create a automation instance schedule for new user.
-     */
+    // To create a automation instance schedule for new user.
     array(
         'eventname' => 'core\event\user_enrolment_created',
         'callback' => '\mod_pulse\eventobserver::user_enrolment_created',

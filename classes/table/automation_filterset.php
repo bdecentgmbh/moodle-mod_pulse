@@ -15,12 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Participants table filterset.
+ * Automation filter set class.
  *
- * @package    core
- * @category   table
- * @copyright  2020 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 declare(strict_types=1);
@@ -32,11 +31,11 @@ use core_table\local\filter\integer_filter;
 use core_table\local\filter\string_filter;
 
 /**
- * Participants table filterset.
+ * Automation table filterset.
  *
- * @package    core
- * @copyright  2020 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class automation_filterset extends filterset {
 
@@ -48,9 +47,7 @@ class automation_filterset extends filterset {
      * @return array.
      */
     public function get_required_filters(): array {
-        return [
-            // 'category' => string_filter::class,
-        ];
+        return [];
     }
 
     /**
@@ -62,7 +59,6 @@ class automation_filterset extends filterset {
      * @return array
      */
     public function get_optional_filters(): array {
-
         return [
             'category' => integer_filter::class,
         ];

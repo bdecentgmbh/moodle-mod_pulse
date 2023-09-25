@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse notification entities for report builder
+ * Pulse notification entities for report builder.
  *
  * @package   pulseaction_notification
  * @copyright 2023, bdecent gmbh bdecent.de
@@ -67,6 +67,11 @@ class notification extends base {
         return new lang_string('notificationreport', 'pulseaction_notification');
     }
 
+    /**
+     * Initialise the notification datasource columns and filter, conditions.
+     *
+     * @return base
+     */
     public function initialise(): base {
 
         $columns = $this->get_all_columns();
@@ -97,7 +102,9 @@ class notification extends base {
         $templatesalias = $this->get_table_alias('pulse_autotemplates');
         $templatesinsalias = $this->get_table_alias('pulse_autotemplates_ins');
 
+        $instancealias = $this->get_table_alias('pulse_autoinstances');
         $notificationalias = $this->get_table_alias('pulseaction_notification');
+
         $notificationinsalias = $this->get_table_alias('pulseaction_notification_ins');
 
         // Time the schedule is created.
@@ -131,8 +138,12 @@ class notification extends base {
             $this->get_entity_name()
         ))
         ->set_is_sortable(true)
-        ->add_field("IF ({$templatesalias}.title <> '', {$templatesalias}.title, {$templatesinsalias}.title)", 'title')
-        ->add_callback(fn($val, $row) => format_string($val));
+        ->add_field("{$templatesalias}.title", 'templatetitle')
+        ->add_field("{$templatesinsalias}.title", 'institle')
+        ->add_callback(function($val, $row) {
+            $val = $row->institle ?: $row->templatetitle;
+            return format_string($val);
+        });
 
         // Subject field.
         $columns[] = (new column(
@@ -141,13 +152,11 @@ class notification extends base {
             $this->get_entity_name()
         ))
         ->set_is_sortable(true)
-        ->add_field("IF ({$notificationinsalias}.subject <> '',
-            {$notificationinsalias}.subject, {$notificationalias}.subject)", "subject")
+        ->add_field("{$notificationinsalias}.subject", "instancesubject")
+        ->add_field("{$notificationalias}.subject", "templatesubject")
         ->add_field("{$templatesinsalias}.instanceid")
         ->add_field("{$notificationschalias}.userid")
         ->add_callback([pulsenotification::class, 'get_schedule_subject']);
-
-
 
         // Status of the schedule.
         $columns[] = (new column(
@@ -157,6 +166,7 @@ class notification extends base {
         ))
         ->set_is_sortable(true)
         ->add_field("{$notificationschalias}.status")
+        ->add_field("{$instancealias}.status", "instancestatus")
         ->add_callback([pulsenotification::class, 'get_schedule_status']);
 
         return $columns;

@@ -62,6 +62,5 @@ Feature: Preset create pulse with custom params.
     Then ".modal-body" "css_element" should not be visible
     Then the field "id_name" matches value "Customize preset"
     And the field "id_introeditor" matches value "Pulse created using apply and customize - custom value"
-    Then I should see "Pulse created using apply and customize - custom value"
     And I press "Save and return to course"
     Then I should see "Pulse created using apply and customize - custom value"

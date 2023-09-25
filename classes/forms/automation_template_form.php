@@ -1,5 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Automation template form for the pulse 2.0.
+ *
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace mod_pulse\forms;
 
@@ -8,31 +29,30 @@ defined('MOODLE_INTERNAL') || die('No direct access!');
 require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 
-use vars;
 use moodleform;
-use tabobject;
 use html_writer;
-use moodle_url;
 use mod_pulse\automation\helper;
 use mod_pulse\automation\templates;
 
-// Define the automation template form class by extending moodleform.
+/**
+ * Define the automation template form.
+ */
 class automation_template_form extends moodleform {
 
-    // Define the form elements inside the definition function.
+    /**
+     * Define the form elements inside the definition function.
+     *
+     * @return void
+     */
     public function definition() {
         global $PAGE, $OUTPUT;
 
-
         $mform = $this->_form; // Get the form instance.
-
         $mform->updateAttributes(['id' => 'pulse-automation-template' ]);
-
         $tabs = [
             ['name' => 'autotemplate-general', 'title' => get_string('tabgeneral', 'pulse'), 'active' => 'active'],
             ['name' => 'pulse-condition-tab', 'title' => get_string('tabcondition', 'pulse')]
         ];
-
         // Load all actions forms.
         // Define the lang key "formtab" in the action component it automatically includes it.
         foreach (helper::get_actions() as $key => $action) {
@@ -40,7 +60,6 @@ class automation_template_form extends moodleform {
         }
 
         $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
-
         $mform->addElement('html', $tab);
 
         // Set the id of template.
@@ -87,12 +106,18 @@ class automation_template_form extends moodleform {
         $this->add_action_buttons(true);
     }
 
+    /**
+     * Load the templates general elements to the form
+     *
+     * @return void
+     */
     protected function load_template_options() {
         global $DB;
 
         $mform =& $this->_form;
 
-        $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">  <div class="tab-pane fade show active" id="autotemplate-general">');
+        $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">
+                            <div class="tab-pane fade show active" id="autotemplate-general">');
 
         // Add the Title element.
         $mform->addElement('text', 'title', get_string('title', 'pulse'), ['size' => '50']);
@@ -107,11 +132,11 @@ class automation_template_form extends moodleform {
         $mform->addHelpButton('reference', 'reference', 'pulse');
 
         // Add the Visibility element.
-        $visibility_options = [
+        $visibilityoptions = [
             templates::VISIBILITY_SHOW => get_string('show', 'pulse'),
             templates::VISIBILITY_HIDDEN => get_string('hidden', 'pulse'),
         ];
-        $mform->addElement('select', 'visible', get_string('visibility', 'pulse'), $visibility_options);
+        $mform->addElement('select', 'visible', get_string('visibility', 'pulse'), $visibilityoptions);
         $mform->addHelpButton('visible', 'visibility', 'pulse');
 
         // Add the Internal Notes element.
@@ -120,33 +145,34 @@ class automation_template_form extends moodleform {
         $mform->addHelpButton('notes', 'internalnotes', 'pulse');
 
         // Add the Status element.
-        $status_options = [
+        $statusoptions = [
             templates::STATUS_ENABLE => get_string('enabled', 'pulse'),
             templates::STATUS_DISABLE => get_string('disabled', 'pulse'),
         ];
-        $mform->addElement('select', 'status', get_string('status', 'pulse'), $status_options);
+        $mform->addElement('select', 'status', get_string('status', 'pulse'), $statusoptions);
         $mform->addHelpButton('status', 'status', 'pulse');
 
-
         // Add the Tags element.
-        $tags_options = templates::get_tag_options(); // Populate with the available tags for administrative purposes.
+        $tagsoptions = templates::get_tag_options(); // Populate with the available tags for administrative purposes.
         $instanceid = $this->get_customdata('instanceid');
 
         // Use the instance related tags options in the instance form.
         if ($instanceid && $DB->get_field('pulse_autotemplates_ins', 'tags', ['instanceid' => $instanceid])) {
-            $tags_options = templates::get_tag_instance_options();
+            $tagsoptions = templates::get_tag_instance_options();
         }
-        $mform->addElement('tags', 'tags', get_string('tags', 'pulse'), $tags_options, ['multiple' => 'multiple']);
+        $mform->addElement('tags', 'tags', get_string('tags', 'pulse'), $tagsoptions, ['multiple' => 'multiple']);
         $mform->addHelpButton('tags', 'tags', 'pulse');
 
         // Add the Available for Tenants element.
-        $tenants_options = []; // Populate with the available tenants for Moodle Workplace.
-        $mform->addElement('autocomplete', 'tenants', get_string('availablefortenants', 'pulse'), $tenants_options, ['multiple' => 'multiple']);
+        $tenantsoptions = []; // Populate with the available tenants for Moodle Workplace.
+        $mform->addElement('autocomplete', 'tenants', get_string('availablefortenants', 'pulse'), $tenantsoptions,
+                ['multiple' => 'multiple']);
         $mform->addHelpButton('tenants', 'availablefortenants', 'pulse');
 
         // Add the Available in Course Categories element.
         $categories = \core_course_category::make_categories_list();
-        $cate = $mform->addElement('autocomplete', 'categories', get_string('availableincoursecategories', 'pulse'), $categories);
+        $cate = $mform->addElement('autocomplete', 'categories', get_string('availableincoursecategories', 'pulse'),
+                $categories);
         $cate->setMultiple(true);
         $mform->addHelpButton('categories', 'availableincoursecategories', 'pulse');
 
@@ -156,7 +182,6 @@ class automation_template_form extends moodleform {
     /**
      * Includ the template action trigger element to the templates form.
      *
-     * @param [type] $mform
      * @return void
      */
     protected function load_template_conditions() {
@@ -170,7 +195,7 @@ class automation_template_form extends moodleform {
 
         $option = [];
         foreach ($plugins as $name => $plugin) {
-            $plugin->include_action($option);
+            $plugin->include_condition($option);
         }
 
         $condition = $mform->addElement('autocomplete', 'triggerconditions', get_string('conditiontrigger', 'pulse'), $option);
@@ -191,22 +216,20 @@ class automation_template_form extends moodleform {
     /**
      * Load template actions.
      *
-     * @param [type] $mform
      * @return void
      */
-    protected function load_template_actions(&$mform) {
+    protected function load_template_actions() {
 
+        $mform =& $this->_form;
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
         $plugins = $actionplugins->get_plugins_base();
 
-        $option = [];
         foreach ($plugins as $name => $plugin) {
             // Define the form elements inside the definition function.
             $mform->addElement('html', '<div class="tab-pane fcontainer fade" id="pulse-action-'.$name.'"> ');
             $mform->addElement('html', '<h4>'.get_string('pluginname', 'pulseaction_'.$name).'</h4>');
             // Load the instance elements for this action.
             $plugin->load_global_form($mform, $this);
-
             $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
         }
     }
@@ -221,7 +244,6 @@ class automation_template_form extends moodleform {
         $vars = \pulse_email_vars::vars();
 
         static $htmlvars;
-
         if ($htmlvars === null) {
             $htmlvars = html_writer::start_tag('div', ['class' => 'form-group row fitem']);
             $htmlvars .= html_writer::div('', 'col-md-3');
@@ -238,17 +260,7 @@ class automation_template_form extends moodleform {
             $htmlvars .= html_writer::end_div();
             $htmlvars .= html_writer::end_div();
         }
-
         $mform->addElement('html', $htmlvars);
-
-        /* $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars'>");
-        $optioncount = 0;
-        foreach ($vars as $option) {
-            $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
-            $optioncount++;
-        }
-        $mform->addElement('html', "</div></div></div>"); */
     }
 
     /**
@@ -259,49 +271,18 @@ class automation_template_form extends moodleform {
      */
     public function data_preprocessing(&$defaultvalues) {
         $context = \context_system::instance();
-
-       /*  if (isset($this->_customdata['courseid'])) {
-            $courseid = $this->_customdata['courseid'];
-            $context = \context_course::instance($courseid);
-        } */
-        // Prepare the editor to support files.
         helper::prepare_editor_draftfiles($defaultvalues, $context);
     }
 
+    /**
+     * Get custom data associated with a specific key.
+     *
+     * @param string $key The key to retrieve custom data.
+     * @return mixed The custom data if found, otherwise an empty string.
+     */
     public function get_customdata($key) {
-        // print_object($this->get_array_value_by_keys());exit;
         return $this->_customdata[$key] ?? '';
     }
-
-    /**
-     * Prepare the data after form was submited.
-     *
-     * @param  mixed $data submitted data
-     * @return void
-     */
-    /* public function data_postprocessing($data) {
-        print_object($data);
-        exit;
-        $context = \context_system::instance();
-        // Prepare the editor to support files.
-        helper::postupdate_editor_draftfiles($data, $context);
-    }
- */
-    /**
-     * Return submitted data if properly submitted or returns NULL if validation fails or
-     * if there is no submitted data.
-     *
-     * Do not override this method, override data_postprocessing() instead.
-     *
-     * @return object submitted data; NULL if not valid or not submitted or cancelled
-     */
-/*     public function get_data() {
-        $data = parent::get_data();
-        if ($data) {
-            $this->data_postprocessing($data);
-        }
-        return $data;
-    } */
 
     /**
      * Load in existing data as form defaults. Usually new entry defaults are stored directly in
@@ -310,21 +291,16 @@ class automation_template_form extends moodleform {
      *
      * note: $slashed param removed
      *
-     * @param stdClass|array $default_values object or array of default values
+     * @param stdClass|array $defaultvalues object or array of default values
      */
-    function set_data($defaultvalues) {
-        $this->data_preprocessing($defaultvalues); // Include to store the files.
+    public function set_data($defaultvalues) {
 
+        $this->data_preprocessing($defaultvalues); // Include to store the files.
         if (is_object($defaultvalues)) {
             $defaultvalues = (array)$defaultvalues;
         }
-
-        // print_object($defaultvalues);exit;
-
         $this->_form->setDefaults($defaultvalues);
     }
-
-
 
     /**
      * Get list of all course and user context roles.
@@ -348,6 +324,4 @@ class automation_template_form extends moodleform {
         }
         return $roles;
     }
-
-
 }

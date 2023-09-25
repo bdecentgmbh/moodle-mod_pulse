@@ -1,5 +1,28 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Notification pulse action - Automation instances.
+ *
+ * This controller handles the manitence of automation instance create, edit and delete.
+ *
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 namespace mod_pulse\automation;
 
 use availability_completion\condition;
@@ -10,35 +33,63 @@ use course_enrolment_manager;
 use moodle_exception;
 
 /**
- * Instances.
+ * Automation Instance controller, handles instance data management.
  */
 class instances extends templates {
 
+    /**
+     * The ID of the automation instance.
+     *
+     * @var int
+     */
     protected $instanceid;
 
+    /**
+     * The processed data of the automation instance.
+     *
+     * @var stdclass
+     */
     protected $instance;
 
+    /**
+     * List of pulse action plugins
+     *
+     * @var stdclass
+     */
     protected $actions;
 
+    /**
+     * Constructor for the class.
+     *
+     * @param int $instanceid The ID of the instance.
+     *
+     * @throws moodle_exception If the instance does not exist.
+     */
     public function __construct($instanceid) {
         // TODO Check istance exists. throw exception if not available.
         $this->instanceid = $instanceid;
-        // $this->instance = $this->get_instance_data();
         $this->set_instance_actions();
     }
 
+    /**
+     * Create a new instance of the class.
+     *
+     * @param int $instanceid The ID of the instance.
+     *
+     * @return self An instance of this class.
+     */
     public static function create($instanceid) {
         $instance = new self($instanceid);
         return $instance;
     }
 
     /**
-     * Get instance data.
+     * Get instance data. Contains the conditions, and actions data related to this instance.
+     * Those data's are generated based on overrides.
      *
      * @return stdclass
      */
     public function get_instance_data() {
-        global $DB;
 
         // Fetch the instance record to find the template id.
         $instance = $this->get_instance_record();
@@ -46,20 +97,25 @@ class instances extends templates {
         if (empty($instance)) {
             throw new moodle_exception('instancedatanotgenerated', 'pulse');
         }
-
+        // Include the template data with overrides merged.
         $instance->template = \mod_pulse\automation\templates::create($instance->templateid)->get_data_forinstance($instance);
-
+        // Include the actions plugins data.
         $instance->actions = $this->include_actions_data($instance, false);
+        // Include all the conditions data.
         $this->include_conditions_data($instance);
 
         $this->instance = $instance;
-
+        // Include the course information to instance data.
         $this->instance->course = get_course($instance->courseid);
 
         return $this->instance;
     }
 
-
+    /**
+     * Get the record for the current instance.
+     *
+     * @return stdClass|false The instance record or false if not found.
+     */
     protected function get_instance_record() {
         global $DB;
 
@@ -67,7 +123,9 @@ class instances extends templates {
     }
 
     /**
-     * Get the instance formdata.
+     * Get the instance formdata. Contains the override info, these data is set to the form.
+     *
+     * Actions data are included with its config prefix.
      *
      * @return array
      */
@@ -87,11 +145,16 @@ class instances extends templates {
 
         $this->include_conditions_data($instance);
 
-        /* print_object($instance);
-        exit; */
         return ((array) $instance);
     }
 
+    /**
+     * Include conditions data for the given instance.
+     *
+     * @param stdClass $instance The instance object.
+     *
+     * @return array The array of conditions data.
+     */
     public function include_conditions_data(&$instance) {
         global $DB;
 
@@ -113,7 +176,8 @@ class instances extends templates {
         // Override the instance conditions to template conditions.
         foreach ($overrides as $condition) {
             if (isset($conditions[$condition->triggercondition])) {
-                $conditiondata[$condition->triggercondition] = $conditions[$condition->triggercondition]->include_data_forinstance($instance, $condition);
+                $triggercon = $condition->triggercondition;
+                $conditiondata[$triggercon] = $conditions[$triggercon]->include_data_forinstance($instance, $condition);
             }
         }
 
@@ -121,10 +185,12 @@ class instances extends templates {
     }
 
     /**
-     * Include actions data.
+     * Include actions data for the given instance.
      *
-     * @param [type] $data
-     * @return void
+     * @param stdClass $instance The instance object.
+     * @param bool $prefix Whether to include prefixes.
+     *
+     * @return array The array of actions data.
      */
     public function include_actions_data(&$instance, $prefix=true) {
 
@@ -138,25 +204,37 @@ class instances extends templates {
         return $actiondata;
     }
 
+    /**
+     * Get the course ID associated with this instance.
+     *
+     * @return int The course ID.
+     */
     public function get_courseid() {
         global $DB;
         return $DB->get_field('pulse_autoinstances', 'courseid', ['instance' => $this->instanceid]);
     }
 
+    /**
+     * Set the instance actions based on enable status.
+     * TODO: Fetch the actions based on the enable status for instances in future.
+     */
     public function set_instance_actions() {
         // TODO: Fetch the actions based on the enable status for instances in future.
         $this->actions = \mod_pulse\plugininfo\pulseaction::get_list();
     }
 
-
-
-     /**
+    /**
      * Updates the "visible" field of the current menu and deletes it from the cache.
      *
      * @param bool $status The new value for the "status" field.
+     * @param bool $instance
      * @return bool True if the update was successful, false otherwise.
      */
     public function update_status(bool $status, bool $instance = false) {
+
+        foreach ($this->actions as $component => $action) {
+            $action->instance_disabled($this->instanceid, $status);
+        }
 
         return $this->update_field('status', $status, ['id' => $this->instanceid]);
     }
@@ -221,6 +299,11 @@ class instances extends templates {
         self::manage_instance($instance);
     }
 
+    /**
+     * Get the URL to view the notification report.
+     *
+     * @return moodle_url The URL to the report.
+     */
     public function get_report_url() {
         global $DB;
 
@@ -245,7 +328,7 @@ class instances extends templates {
      *
      * Find the lis of actions and get linked template instance based template id and delete those actions.
      *
-     * @param int $templateid
+     * @param int $instanceid
      * @return void
      */
     public function delete_actions_instances($instanceid) {
@@ -259,32 +342,30 @@ class instances extends templates {
     }
 
     /**
-     * Trigger the instace actions.
+     * Trigger the action for a user.
      *
-     * @param [type] $userid
-     * @return void
+     * @param int      $userid   The ID of the user.
+     * @param int|null $runtime  The runtime of the action.
+     * @param bool     $newuser  Whether this is a new user.
      */
     public function trigger_action($userid, $runtime=null, $newuser=false) {
         global $DB;
 
         // Check the trigger conditions are ok.
         $instancedata = (object) $this->get_instance_formdata();
-       /*  $conditions = $instancedata->condition ?? [];
-        if (empty($conditions)) {
-            return true;
+
+        foreach ($this->actions as $name => $plugin) {
+            // Send the trigger conditions are statified, then initate the instances based.
+            $plugin->trigger_action($instancedata, $userid, $runtime, $newuser);
         }
-
-        // Verify the user is completed the instance conditions to access the actions.
-        if ($this->find_user_completion_conditions($conditions, $instancedata, $userid)) { */
-
-            foreach ($this->actions as $name => $plugin) {
-                // Send the trigger conditions are statified, then initate the instances based.
-                $plugin->trigger_action($instancedata, $userid, $runtime, $newuser);
-            }
-        // }
     }
 
-
+    /**
+     * Trigger an action event.
+     *
+     * @param string $method     The method to trigger.
+     * @param mixed  $eventdata  The event data.
+     */
     public function trigger_action_event($method, $eventdata) {
         global $DB;
 
@@ -304,7 +385,7 @@ class instances extends templates {
      * @param stdclass $conditions
      * @param stdclass $instancedata
      * @param int $userid
-     *
+     * @param bool $isnewuser
      * @return void
      */
     public function find_user_completion_conditions($conditions, $instancedata, $userid, $isnewuser=false) {
@@ -315,7 +396,6 @@ class instances extends templates {
 
         $course = $instancedata->course ?? get_course($instancedata->courseid);
 
-        // print_object($conditions);exit;
         $completion = new \completion_info($course);
 
         // Trigger condition operator method, require the user to complete all the conditions or any of one is fine.
@@ -356,6 +436,13 @@ class instances extends templates {
         return ($enabled == $result) ? true : false;
     }
 
+    /**
+     * Get the creation time of a user's enrolment in a course.
+     *
+     * @param int     $userid  The ID of the user.
+     * @param stdClass $course The course object.
+     * @return int|false       The enrolment creation time or false if not found.
+     */
     public function get_user_enrolment_createtime($userid, $course) {
         global $PAGE, $CFG;
 
@@ -363,7 +450,6 @@ class instances extends templates {
 
         static $context;
         static $courseid;
-
 
         if ($context == null || $course != $course->id) {
             $context = \context_course::instance($course->id);
@@ -401,21 +487,14 @@ class instances extends templates {
             array_walk($override, function($value, $key) use (&$override) {
                 $length = strlen('_editor');
                 if (substr_compare($key, '_editor', -$length) === 0) { // Find elements Ends with _editor.
-                    $key = str_replace('_editor','', $key);
+                    $key = str_replace('_editor', '', $key);
                     $override[$key] = $value;
                 }
 
                 // Update the interval key to notify.
                 // TODO: Update the method to notification action.
                 // TODO: create hook to update the elements or add override element for groups.
-                /* if ($key == 'interval') {
-                    $key = 'pulsenotification_notify';
-                    $override[$key] = $value;
-                } */
             });
-
-             /* print_object($override);
-            exit; */
 
             $overridenkeys = array_filter($override, function($value) {
                 return $value ? true : false;
@@ -442,7 +521,7 @@ class instances extends templates {
         ];
 
         // Check the isntance is already created. if created update the record otherwise create new instance.
-
+        $instancedata->timemodified = time();
         if (isset($formdata->instanceid) && $DB->record_exists('pulse_autoinstances', ['id' => $formdata->instanceid])) {
 
             $instancedata->id = $formdata->instanceid;
@@ -459,78 +538,73 @@ class instances extends templates {
             \core\notification::success(get_string('templateinsertsuccess', 'pulse'));
         }
 
-
         // Store the tags.
         if (isset($overridenkeys['tags']) && !empty($overridenkeys['tags'])) {
             $tagoptions = self::get_tag_instance_options();
             $context = \context_system::instance();
             if (!empty($record->tags)) {
-                \core_tag_tag::set_item_tags($tagoptions['component'], $tagoptions['itemtype'], $instanceid, $context, $record->tags);
+                \core_tag_tag::set_item_tags(
+                    $tagoptions['component'], $tagoptions['itemtype'], $instanceid, $context, $record->tags);
             }
         }
         // Store the templates, conditions and actions data. Find the overridden elements.
-        // if (!empty($overridenkeys)) {
 
-            $conditions =  helper::filter_record_byprefix($override, 'condition');
+        $conditions = helper::filter_record_byprefix($override, 'condition');
 
-            foreach ($conditions as $key => $status) {
-                $component = explode('_', $key)[0];
-                if (!isset($record->condition[$component])) {
-                    continue;
-                }
-                $conditionname = "pulsecondition_".$component."\conditionform";
-                $condition = new $conditionname();
-                $condition->set_component($component);
-
-                $condition->process_instance_save($instanceid, $record->condition[$component]);
+        foreach ($conditions as $key => $status) {
+            $component = explode('_', $key)[0];
+            if (!isset($record->condition[$component])) {
+                continue;
             }
+            $conditionname = "pulsecondition_".$component."\conditionform";
+            $condition = new $conditionname();
+            $condition->set_component($component);
 
-            // Fetch the value of the overridden settings.
-            $overriddenelements = array_intersect_key((array) $record, $overridenkeys);
+            $condition->process_instance_save($instanceid, $record->condition[$component]);
+        }
 
-            // ...Store the templates overrides.
-            // Fetch the auto templates fields.
-            $templatefields = $DB->get_columns('pulse_autotemplates_ins');
-            $fields = array_keys($templatefields);
-            $preventfields = ['id', 'triggerconditions', 'timemodified'];
+        // Fetch the value of the overridden settings.
+        $overriddenelements = array_intersect_key((array) $record, $overridenkeys);
 
-            // Clear unused fields from list.
-            $fields = array_diff_key(array_flip($fields), array_flip($preventfields));
-            $templatedata = array_intersect_key((array) $overriddenelements, $fields);
+        // ...Store the templates overrides.
+        // Fetch the auto templates fields.
+        $templatefields = $DB->get_columns('pulse_autotemplates_ins');
+        $fields = array_keys($templatefields);
+        $preventfields = ['id', 'triggerconditions', 'timemodified'];
 
-            // Convert the elements array into json.
-            array_walk($templatedata, function(&$value) {
-                if (is_array($value)) {
-                    $value = json_encode($value);
-                }
-            });
+        // Clear unused fields from list.
+        $fields = array_diff_key(array_flip($fields), array_flip($preventfields));
+        $templatedata = array_intersect_key((array) $overriddenelements, $fields);
 
-            $tablename = 'pulse_autotemplates_ins'; // Template instance tablename to update.
-            // Update the instance overridden data related to template.
-            \mod_pulse\automation\templates::update_instance_data($instanceid, $templatedata);
-
-            // ...Send the data to action plugins for perform the data store.
-            $context = \context_course::instance($record->courseid);
-            // Find list of actions.
-            $actionplugins = \mod_pulse\plugininfo\pulseaction::get_list();
-
-            // Added the item id for file editors.
-            $overriddenelements['instanceid'] = $instanceid;
-            $overriddenelements['courseid'] = $record->courseid;
-            $overriddenelements['templateid'] = $formdata->templateid;
-
-            /* print_object($record);
-            print_object($overridenkeys);
-            exit; */
-            foreach ($actionplugins as $component => $pluginbase) {
-                $pluginbase->postupdate_editor_fileareas($overriddenelements, $context);
-                $pluginbase->process_instance_save($instanceid, $overriddenelements);
+        // Convert the elements array into json.
+        array_walk($templatedata, function(&$value) {
+            if (is_array($value)) {
+                $value = json_encode($value);
             }
-        // }
+        });
+
+        $tablename = 'pulse_autotemplates_ins'; // Template instance tablename to update.
+        // Update the instance overridden data related to template.
+        $templatedata['timemodified'] = time();
+        \mod_pulse\automation\templates::update_instance_data($instanceid, $templatedata);
+
+        // ...Send the data to action plugins for perform the data store.
+        $context = \context_course::instance($record->courseid);
+        // Find list of actions.
+        $actionplugins = \mod_pulse\plugininfo\pulseaction::get_list();
+
+        // Added the item id for file editors.
+        $overriddenelements['instanceid'] = $instanceid;
+        $overriddenelements['courseid'] = $record->courseid;
+        $overriddenelements['templateid'] = $formdata->templateid;
+
+        foreach ($actionplugins as $component => $pluginbase) {
+            $pluginbase->postupdate_editor_fileareas($overriddenelements, $context);
+            $pluginbase->process_instance_save($instanceid, $overriddenelements);
+        }
 
         // Allow to update the DB changes to Database.
         $transaction->allow_commit();
-
 
         return $instanceid;
     }
@@ -539,6 +613,7 @@ class instances extends templates {
      * Remove the values of previously overrides values, those values are removed now.
      *
      * @param array $fields
+     * @param int $instanceid
      * @return void
      */
     protected static function remove_override_values($fields, $instanceid) {
@@ -546,10 +621,11 @@ class instances extends templates {
 
         if (!empty($fields)) {
             // Remove the conditions overrides.
-            $conditions =  helper::filter_record_byprefix($fields, 'condition');
+            $conditions = helper::filter_record_byprefix($fields, 'condition');
             foreach ($conditions as $key => $status) {
                 $component = explode('_', $key)[0];
-                $DB->set_field('pulse_condition_overrides', 'isoverridden', null, ['instanceid' => $instanceid, 'triggercondition' => $component]);
+                $DB->set_field('pulse_condition_overrides', 'isoverridden', null,
+                    ['instanceid' => $instanceid, 'triggercondition' => $component]);
             }
 
             // Remove template fields data.
@@ -577,6 +653,4 @@ class instances extends templates {
             }
         }
     }
-
-
 }

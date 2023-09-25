@@ -80,9 +80,7 @@ class notify_users extends \core\task\scheduled_task {
         // Get all the notification instance configures the suppress with this activity.
         $notifications = self::get_suppress_notifications($cmid);
 
-
         self::is_suppress_reached($notifications, $userid, $course, $completion);
-
     }
 
     /**
@@ -160,13 +158,11 @@ class notify_users extends \core\task\scheduled_task {
     }
 
     /**
-     * Fetch the list of menus which is used the triggered ID in the access rules for the given method.
+     * Retrieves notifications with suppression value containing a specific ID.
      *
-     * Find the menus which contains the given ID in the access rule (Role or cohorts).
+     * @param int $id The ID to search for within the suppression values.
      *
-     * @param int $id ID of the triggered method, Role or cohort id.
-     * @param string $method Field to find, Role or Cohort.
-     * @return array
+     * @return array An array of notification records matching the suppression criteria.
      */
     public static function get_suppress_notifications($id) {
         global $DB;

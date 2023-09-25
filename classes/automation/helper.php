@@ -1,5 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Notification pulse action - Automation helper.
+ *
+ * @package   mod_pulse
+ * @copyright 2023, bdecent gmbh bdecent.de
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace mod_pulse\automation;
 
@@ -7,22 +28,31 @@ use mod_pulse\plugininfo\pulseaction;
 use moodle_url;
 use single_button;
 
+/**
+ * Automation helper.
+ */
 class helper {
 
-
+    /**
+     * Get templates for an instance. Retrieves templates for a given course, filtering based on categories, status, and visibility.
+     *
+     * @param int|null $courseid The ID of the course. Defaults to null.
+     *
+     * @return array Associative array of templates.
+     */
     public static function get_templates_forinstance($courseid=null) {
         global $DB;
-
+        // Get course information.
         $course = get_course($courseid);
-
-        // $templates = $DB->get_records_menu('pulse_autotemplates', ['status' => 1, 'visible' => 1]);
-
+        // Generate the SQL LIKE condition for categories.
         $like = $DB->sql_like('categories', ':value');
-        $sql = "SELECT * FROM {pulse_autotemplates} WHERE (categories = '[]' OR categories = '' OR $like) AND status = 1 AND visible = 1";
+        // Construct the SQL query.
+        $sql = "SELECT * FROM {pulse_autotemplates}
+            WHERE (categories = '[]' OR categories = '' OR $like) AND status = 1 AND visible = 1";
         $params = ['value' => '%"'.$course->category.'"%'];
-
+        // Retrieve records from the database.
         $records = $DB->get_records_sql_menu($sql, $params);
-
+        // Format string values in the result.
         array_walk($records, function(&$val) {
             $val = format_string($val);
         });
@@ -30,6 +60,14 @@ class helper {
         return $records;
     }
 
+    /**
+     * Merge instance overrides with template data.
+     *
+     * @param array $overridedata Array of overridden data.
+     * @param array $templatedata Array of template data.
+     *
+     * @return array Merged data.
+     */
     public static function merge_instance_overrides($overridedata, $templatedata) {
         // Filter the empty values.
         $filtered = array_filter((array) $overridedata, function($value) {
@@ -41,6 +79,14 @@ class helper {
         return $filtered;
     }
 
+    /**
+     * Filter the record data by keys with a specific prefix.
+     *
+     * @param array|object $record The record data to be filtered.
+     * @param string $prefix The prefix to filter keys by.
+     *
+     * @return array The filtered data with the prefix removed from keys.
+     */
     public static function filter_record_byprefix($record, $prefix) {
 
         // Filter the data based on the shortname.
@@ -59,14 +105,30 @@ class helper {
         return $final;
     }
 
+    /**
+     * Get a list of available actions plugins.
+     *
+     * @return array An array of available actions.
+     */
     public static function get_actions() {
         return \mod_pulse\plugininfo\pulseaction::get_list();
     }
 
+    /**
+     * Get a list of available conditions.
+     *
+     * @return array An array of available conditions.
+     */
     public static function get_conditions() {
         return \mod_pulse\plugininfo\pulsecondition::get_list();
     }
 
+    /**
+     * Prepare editor draft files for actions.
+     *
+     * @param array $data The data to be prepared.
+     * @param context $context The context.
+     */
     public static function prepare_editor_draftfiles(&$data, $context) {
 
         $actions = self::get_actions();
@@ -75,6 +137,12 @@ class helper {
         }
     }
 
+    /**
+     * Post-update editor draft files for actions.
+     *
+     * @param array $data The data to be updated.
+     * @param context $context The context.
+     */
     public static function postupdate_editor_draftfiles(&$data, $context) {
 
         $actions = self::get_actions();
@@ -83,6 +151,13 @@ class helper {
         }
     }
 
+    /**
+     * Get instances associated with a course.
+     *
+     * @param int $courseid The ID of the course.
+     *
+     * @return array An array of instances associated with the course.
+     */
     public static function get_course_instances($courseid) {
         global $DB;
 
@@ -94,10 +169,9 @@ class helper {
     /**
      * Insert the additional module fields data to the table.
      *
-     * @param int $cmid Course module id.
-     * @param int $courseid Course id.
-     * @param string $name Field name.
-     * @param mixed $value value of the field.
+     * @param int $tablename
+     * @param int $instanceid
+     * @param array $options
      * @return void
      */
     public static function update_instance_option($tablename, int $instanceid,  $options) {
@@ -128,13 +202,13 @@ class helper {
     /**
      * Generate the button which is displayed on top of the templates table. Helps to create templates.
      *
+     * @param bool $filtered Is the table result is filtered.
      * @return string The HTML contents to display the create templates button.
      */
     public static function template_buttons($filtered=false) {
         global $OUTPUT, $DB, $CFG;
 
         require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
-
 
         // Setup create template button on page.
         $caption = get_string('templatecreatenew', 'pulse');
@@ -170,8 +244,6 @@ class helper {
             ]);
         }
 
-
-
         return $button;
     }
 
@@ -191,14 +263,15 @@ class helper {
         $form = new \template_addinstance_form($url, ['courseid' => $courseid], 'get');
 
         $html = \html_writer::start_tag('div', ['class' => 'template-add-form']);
-        $templates = \mod_pulse\automation\helper::get_templates_forinstance($courseid);
+        $templates = self::get_templates_forinstance($courseid);
         if (!empty($templates)) {
             $html .= $form->render();
         }
 
         // Button to access the manage the automation templates list.
         $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php');
-        $html .= \html_writer::link($manageurl->out(true), get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary', 'target' => '_blank']);
+        $html .= \html_writer::link($manageurl->out(true),
+            get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary', 'target' => '_blank']);
 
         $tdir = optional_param('tdir', null, PARAM_INT);
         $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
@@ -208,7 +281,8 @@ class helper {
             'courseid' => $courseid, 'tsort' => 'idnumber', 'tdir' => $tdir
         ]);
         if (!empty($templates)) {
-            $html .= \html_writer::link($manageurl->out(false), $dirimage.get_string('sort'), ['class' => 'sort-autotemplates btn btn-primary ml-2']);
+            $html .= \html_writer::link($manageurl->out(false),
+                $dirimage.get_string('sort'), ['class' => 'sort-autotemplates btn btn-primary ml-2']);
         }
         $html .= \html_writer::end_tag('div');
 
@@ -225,16 +299,18 @@ class helper {
 
         $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         array_walk($actions, function(&$value) {
-            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary pulseaction_notification']);
-            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon pulseaction_notification']);
+            $classname = 'pulseaction_'.$value->get_component();
+            $result['badge'] = \html_writer::tag('span',
+                get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary '.$classname]);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon '.$classname]);
             $value = $result;
         });
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => '<b> Welcome message </b>',
+            'help2' => get_string('automationwelcomemsg', 'pulse'),
             'help3' => implode(',', array_column($actions, 'badge')),
-            'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
+            'help4' => '<h5 class="template-reference">'.get_string('automationreferencedemo', 'pulse').'</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
             'help6' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
             'help7' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
@@ -266,16 +342,18 @@ class helper {
 
         $actions = \mod_pulse\plugininfo\pulseaction::instance()->get_plugins_base();
         array_walk($actions, function(&$value) {
-            $result['badge'] = \html_writer::tag('span', get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary']);
-            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon pulseaction_notification']);
+            $classname = 'pulseaction_'.$value->get_component();
+            $result['badge'] = \html_writer::tag('span',
+                get_string('formtab', 'pulseaction_'.$value->get_component()), ['class' => 'badge badge-primary ' . $classname]);
+            $result['icon'] = \html_writer::span($value->get_action_icon(), 'action', ['class' => 'action-icon ' . $classname]);
             $value = $result;
         });
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => '<b> Welcome message </b>',
+            'help2' => get_string('automationwelcomemsg', 'pulse'),
             'help3' => implode(',', array_column($actions, 'badge')),
-            'help4' => '<h5 class="template-reference">WELCOME_MESSAGE</h5>',
+            'help4' => '<h5 class="template-reference">'.get_string('automationreferencedemo', 'pulse').'</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
             'help6' => $OUTPUT->pix_icon('t/copy', \get_string('copy')),
             'help7' => $OUTPUT->pix_icon('i/calendar', \get_string('copy')),
@@ -297,59 +375,23 @@ class helper {
     }
 
     /**
-     * Generate the tabs for settings to display on the templates edit form.
+     * Display the warning messages of actions for this course, If this instance is not ready to preform the actions.
      *
+     * @param stdclass $course
      * @return void
      */
-   /*  public static function get_formtabs() {
-        global $OUTPUT;
+    public static function display_actions_course_warnings($course) {
+        $actions = self::get_actions();
 
-        $templateid = optional_param('id', 0, PARAM_INT);
-        $tab = optional_param('tab', null, PARAM_TEXT);
-
-
-        $tabs[] = new \tabobject('general', new moodle_url('/mod/pulse/automation/templates/edit.php', ['sesskey' => sesskey(), 'id' => $templateid]), get_string('tabgeneral', 'pulse'));
-        $tabs[] = new \tabobject(
-            'condition',
-            new moodle_url('/mod/pulse/automation/templates/edit.php', ['tab' => 'condition', 'sesskey' => sesskey(), 'id' => $templateid]),
-            get_string('tabcondition', 'pulse')
-        );
-
-        $actions = (new pulseaction())->get_plugins_list();
-        foreach ($actions as $component => $plugindir) {
-            $tabs[] = new \tabobject(
-                $component,
-                new moodle_url('/mod/pulse/automation/templates/edit.php', ['tab' => $component, 'sesskey' => sesskey(), 'id' => $templateid]),
-                get_string('formtab', 'pulseaction_'.$component));
+        $messages = [];
+        foreach ($actions as $component => $action) {
+            if (method_exists($action, 'display_instance_warnings')) {
+                $messages += $action->display_instance_warnings($course);
+            }
         }
 
-        return $OUTPUT->tabtree($tabs, $tab ?: 'general');
+        $ul = \html_writer::tag('ul', implode('', array_map(fn($val) => '<li>' . $val . '</li>', array_filter($messages))));
+        echo \html_writer::div($ul, 'pulse-warnings text-warning');
     }
 
-
-    public static function get_instance_formtabs() {
-        global $OUTPUT, $PAGE;
-
-        $templateid = optional_param('id', 0, PARAM_INT);
-        $tab = optional_param('tab', null, PARAM_TEXT);
-
-
-        $tabs[] = new \tabobject('general', $PAGE->url, get_string('tabgeneral', 'pulse'));
-        $tabs[] = new \tabobject(
-            'condition',
-            new moodle_url($PAGE->url, ['tab' => 'condition']),
-            get_string('tabcondition', 'pulse')
-        );
-
-        $actions = (new pulseaction())->get_plugins_list();
-        foreach ($actions as $component => $plugindir) {
-            $tabs[] = new \tabobject(
-                $component,
-                new moodle_url($PAGE->url, ['tab' => $component]),
-                get_string('formtab', 'pulseaction_'.$component)
-            );
-        }
-
-        return $OUTPUT->tabtree($tabs, $tab ?: 'general');
-    } */
 }

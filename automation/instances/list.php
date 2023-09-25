@@ -27,16 +27,12 @@ use mod_pulse\automation\helper;
 // Require config.
 require(__DIR__.'/../../../../config.php');
 
-// Require plugin libraries.
-// require_once($CFG->dirroot. '/theme/boost_union/smartmenus/menulib.php');
+require_login();
 
 // Require admin library.
 require_once($CFG->libdir.'/adminlib.php');
 
-
-
 // Get parameters.
-// $courseid = required_param('course', PARAM_INT); // Course id.
 $action = optional_param('action', null, PARAM_ALPHAEXT);
 
 $courseid = optional_param('courseid', null, PARAM_INT);
@@ -125,9 +121,6 @@ $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pu
 
 // Build automation templates table.
 $filterset = new mod_pulse\table\automation_filterset;
-/* $filterset->add_filter(
-    new \core_table\local\filter\integer_filter('categorid', \core_table\local\filter\filter::JOINTYPE_DEFAULT, [(int) $course->id])
-); */
 
 $table = new mod_pulse\table\auto_instances($context->id);
 $table->define_baseurl($PAGE->url);
@@ -192,12 +185,13 @@ if ($countmenus < 1) {
                         document.querySelector(id).remove();
                         target.dataset.collapse = 1;
                     }
+                    target.childNodes[0].classList.toggle("fa-angle-right");
+                    target.childNodes[0].classList.toggle("fa-angle-down");
                 })
             });
         }
     })');
 }
-
 
 // Finish page output.
 echo $OUTPUT->footer();

@@ -23,9 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core_editor/events'], function(events) {
-
-    var tinyEditor = false;
+define(['core_editor/events'], function() {
 
     return {
         /**
@@ -38,7 +36,9 @@ define(['core_editor/events'], function(events) {
             for (var l = 0; l < templatevars.length; l++) {
                 templatevars[l].addEventListener('click', function() {
                     var EditorInput = document.getElementById('id_pulse_content_editoreditable');
-                    module.insertCaretActive(EditorInput);
+                    if (EditorInput !== null) {
+                        module.insertCaretActive(EditorInput);
+                    }
                 });
             }
 
@@ -58,18 +58,18 @@ define(['core_editor/events'], function(events) {
                 });
             }
 
-            var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
+            templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             if (templatevars) {
                 templatevars.forEach((elem) => {
                     elem.addEventListener('click', function(e) {
                         var target = e.currentTarget;
-                        var EditorInput  = target.querySelector('[id*="_editoreditable"]');
+                        var EditorInput = target.querySelector('[id*="_editoreditable"]');
                         module.insertCaretActive(EditorInput);
                     });
-                })
+                });
             }
 
-            // console.log(window.tinyMCE.get());
+            // Console.log(window.tinyMCE.get());
             var targetNode = document.querySelector('textarea[id$=_editor]');
             if (targetNode !== null) {
                 var observer = new MutationObserver(function() {
@@ -77,7 +77,7 @@ define(['core_editor/events'], function(events) {
                         setTimeout(initIframeListeners, 100);
                     }
                 });
-                observer.observe(targetNode, { attributes: true, childList: true });
+                observer.observe(targetNode, {attributes: true, childList: true});
             }
 
             const initIframeListeners = () => {
@@ -93,7 +93,7 @@ define(['core_editor/events'], function(events) {
                         var currentFrame = e.target;
                         iframes.forEach((frame) => {
                             var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
-                            if (frameElem != null) {
+                            if (frameElem !== null) {
                                 frameElem.classList.remove("insertatcaretactive");
                             }
                         });
@@ -101,13 +101,12 @@ define(['core_editor/events'], function(events) {
                         var contentBody = currentFrame.querySelector('body');
                         if (contentBody !== null) {
                             contentBody.classList.add("insertatcaretactive");
-                            var id = contentBody.dataset.id;
-                            var editor = window.tinyMCE.get(id);
-                            tinyEditor = editor;
                         }
                     });
                 });
-            }
+
+                return true;
+            };
 
 
             var clickforword = document.getElementsByClassName('clickforword');
@@ -116,11 +115,32 @@ define(['core_editor/events'], function(events) {
                     e.preventDefault(); // To prevent the default behaviour of a tag.
 
                     var content = "{" + this.getAttribute('data-text') + "}";
+                    var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
+                    if (iframes === null || !iframes.length) {
+                        return false;
+                    }
+                    var tinyEditor;
+                    iframes.forEach((frame) => {
+                        var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
+                        if (frameElem !== null) {
+                            var contentBody = frame.contentDocument.querySelector('body');
+                            if (contentBody !== null) {
+                                contentBody.classList.add("insertatcaretactive");
+                                var id = contentBody.dataset.id;
+                                var editor = window.tinyMCE.get(id);
+                                tinyEditor = editor;
+                            }
+                        }
+                        return false;
+                    });
+
                     if (tinyEditor) {
                         tinyEditor.selection.setContent(content);
                     } else {
                         module.insertAtCaret(content);
                     }
+
+                    return true;
                 });
             }
 
@@ -144,7 +164,6 @@ define(['core_editor/events'], function(events) {
             if (EditorInput === null) {
                 return;
             }
-            tinyEditor = false;
             var caret = document.getElementsByClassName("insertatcaretactive");
             for (var j = 0; j < caret.length; j++) {
                 caret[j].classList.remove("insertatcaretactive");
@@ -163,6 +182,26 @@ define(['core_editor/events'], function(events) {
         },
 
         /**
+         * Find the selection is inside the editor
+         *
+         * @param {string} div
+         * @returns {bool}
+         */
+        isSelectionInsideDiv: (div) => {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) {
+              return false;
+            }
+
+            // Get the start and end nodes of the selection.
+            const startNode = selection.getRangeAt(0).startContainer;
+            const endNode = selection.getRangeAt(0).endContainer;
+
+            // Check if the start and end nodes are both descendants of the editor div.
+            return div.contains(startNode) && div.contains(endNode);
+        },
+
+        /**
          * Insert the placeholder in selected caret place.
          * @param  {string} myValue
          */
@@ -172,7 +211,7 @@ define(['core_editor/events'], function(events) {
             for (var n = 0; n < caretelements.length; n++) {
                 var thiselem = caretelements[n];
 
-                if (typeof thiselem.value === 'undefined' && window.getSelection) {
+                if (typeof thiselem.value === 'undefined' && window.getSelection && this.isSelectionInsideDiv(thiselem)) {
                     sel = window.getSelection();
                     if (sel.getRangeAt && sel.rangeCount) {
                         range = sel.getRangeAt(0);

@@ -15,19 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Define event observers.
+ * DB Events -  Define event observers for "User Enrolment Condition".
  *
- * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @package   pulsecondition_enrolment
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Need to define list of events that plugin will go to observe.
- */
-
 defined('MOODLE_INTERNAL') || die();
 
+// User created, deleted and updated event observers for the "User Enrolment Completion" condition in the pulse 2.0.
 $observers = [
     array(
         'eventname' => 'core\event\user_enrolment_created',

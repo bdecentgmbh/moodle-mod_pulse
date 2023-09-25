@@ -150,8 +150,6 @@ class pulse_email_vars {
         $coursefields = self::course_fields();
 
         $result = array_merge($userfields, $coursefields);
-
-
         $otherfields = array(
             // Course fields .
             'courseurl', 'enrolment_startdate', 'enrolment_enddate',
@@ -183,9 +181,6 @@ class pulse_email_vars {
                 $result[] = $method->name;
             }
         }
-
-
-
         return $result;
     }
 
@@ -203,10 +198,6 @@ class pulse_email_vars {
 
                 $object = strtolower($matches[1]);
                 $property = strtolower($matches[2]);
-
-                /* print_object($matches);
-                print_object($this->mod);
-                print_object($property); */
 
                 if ($this->$object == null) {
                     return $this->blank;
@@ -367,7 +358,7 @@ class pulse_email_vars {
             $fields = array_merge(array_keys($userfields), array_values($profilefields));
 
             array_walk($fields, function(&$value) {
-                $value = 'User_'.$value;
+                $value = 'User_'.ucwords($value);
             });
 
             $fields = array_values($fields);
@@ -412,7 +403,7 @@ class pulse_email_vars {
             $fields = array_merge($coursefields, array_values($customfields));
 
             array_walk($fields, function(&$value) {
-                $value = 'Course_'.$value;
+                $value = 'Course_'.ucwords($value);
             });
 
             $fields = array_values($fields);
@@ -461,6 +452,10 @@ class pulse_email_vars {
      */
     public static function session_fields() {
         global $CFG;
+        // Verify the face to face is installed. if not, prevent session placeholder inclusion.
+        if (!file_exists($CFG->dirroot.'/mod/facetoface/lib.php')) {
+            return [];
+        }
 
         require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 

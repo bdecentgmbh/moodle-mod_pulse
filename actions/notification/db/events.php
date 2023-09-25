@@ -15,17 +15,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Define event observers.
+ * Pulseaction notification - Define event observers.
  *
- * @package   mod_pulse
+ * @package   pulseaction_notification
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Need to define list of events that plugin will go to observe.
- */
-
 defined('MOODLE_INTERNAL') || die();
 
 $observers = [

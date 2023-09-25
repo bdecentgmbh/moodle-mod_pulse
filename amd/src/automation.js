@@ -13,7 +13,7 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
         }
 
         menu = menu.parentNode;
-        menu.dataset.forceintomoremenu = false,
+        menu.dataset.forceintomoremenu = false;
         menu.querySelector('a').classList.remove('dropdown-item');
         menu.querySelector('a').classList.add('nav-link');
         menu.parentNode.removeChild(menu);
@@ -37,17 +37,22 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
             }
 
             var tabid = invalidElement.parentNode.parentNode.parentNode.id;
-            var hrefSelector = '[href="#'+tabid+'"]';
+            var hrefSelector = '[href="#' + tabid + '"]';
 
             document.querySelector(hrefSelector).click();
-        }
+
+            return true;
+        };
+
+        return true;
     };
 
     // No need.
     const updateAutoCompletionPositions = function() {
         var group = "checkboxgroupautomation";
 
-        if (document.querySelectorAll('input[type=checkbox].'+group) === null || document.querySelectorAll('[data-fieldtype="autocomplete"]') === null) {
+        if (document.querySelectorAll('input[type=checkbox].' + group)
+            === null || document.querySelectorAll('[data-fieldtype="autocomplete"]') === null) {
             return true;
         }
 
@@ -59,36 +64,39 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
 
             var observer = new MutationObserver(function(mutations) {
                 mutations.forEach((mutation) => {
-                    console.log(mutation);
-                    // if(mutation.type === 'attributes') {
-                    target = mutation.target;
+                    // Console.log(mutation);
+                    // If(mutation.type === 'attributes') {
+                    var target = mutation.target;
                     var overrideElement = target.querySelector('.custom-switch');
                     if (overrideElement === null) {
                         return;
                     }
                     overrideElement.parentNode.append(overrideElement);
                     observer.disconnect();
-                })
+                });
             });
-            observer.observe(element, { attributes: true, childList: true, subtree: true, });
-            // observer.disconnect();
-        })
-    }
+            observer.observe(element, {attributes: true, childList: true, subtree: true});
+            // Observer.disconnect();
+            return true;
+        });
+
+        return true;
+    };
 
     const moveOverRidePosition = function() {
 
         var group = "checkboxgroupautomation";
 
-        if (document.querySelectorAll('input[type=checkbox].'+group) === null) {
+        if (document.querySelectorAll('input[type=checkbox].' + group) === null) {
             return true;
         }
 
-        document.querySelectorAll('input[type=checkbox].'+group).forEach((overElement) => {
+        document.querySelectorAll('input[type=checkbox].' + group).forEach((overElement) => {
             var id = overElement.id;
             id = id.replace('id_override_', '');
-            var element = document.querySelector('div#fitem_id_'+id);
+            var element = document.querySelector('div#fitem_id_' + id);
             if (element === null) {
-                element = document.querySelector('div#fgroup_id_'+id);
+                element = document.querySelector('div#fgroup_id_' + id);
                 if (element === null) {
                     return true;
                 }
@@ -101,10 +109,13 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
             nodeToMove.classList.add('custom-control', 'custom-switch');
             nodeToMove.append(parent);
             element.querySelector(".felement").append(nodeToMove);
+            return true;
         });
         // Move the override button for autocompletion fields after the autocomplete nodes are created.
         updateAutoCompletionPositions();
-    }
+
+        return true;
+    };
 
     /**
      * Create a modal to display the list of instances which is overriden the template setting.
@@ -135,30 +146,33 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
                 e.preventDefault();
                 var element = e.target;
                 var data = element.dataset;
-                var instance = document.querySelector('[name=overinstance_'+data.element+']');
+                var instance = document.querySelector('[name=overinstance_' + data.element + ']');
                 if (instance !== null) {
                     var overrides = JSON.parse(instance.value);
                     overrides.map((value) => {
-                        value.url = M.cfg.wwwroot+'/mod/pulse/automation/instances/edit.php?instanceid='+value.id+'&sesskey='+M.cfg.sesskey
+                        var path = '/mod/pulse/automation/instances/edit.php?instanceid=';
+                        value.url = M.cfg.wwwroot + path + value.id + '&sesskey=' + M.cfg.sesskey;
                         return value;
-                    })
+                    });
                     Modal.create({
                         title: Str.get_string('instanceoverrides', 'pulse'),
                         body: Template.render('mod_pulse/overrides', {instances: overrides})
                     }).then((modal) => {
                         modal.show();
-                    });
+                        return true;
+                    }).catch();
                 }
-            })
-        })
+            });
+        });
     };
 
     const enableTitleOnSubmit = function() {
         if (document.forms['pulse-automation-template'] === null) {
             return;
         }
-        document.forms['pulse-automation-template'].onsubmit = (e) => document.querySelector('[name="title"]').removeAttribute("disabled");
-    }
+        document.forms['pulse-automation-template'].onsubmit =
+            () => document.querySelector('[name="title"]').removeAttribute("disabled");
+    };
 
     return {
 
@@ -174,5 +188,5 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
             moveOutMoreMenu(primaryNav);
         },
 
-    }
-})
+    };
+});

@@ -15,19 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Define event observers.
+ * DB Events -  Define event observers for "Course Completion Condition".
  *
- * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @package   pulsecondition_course
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Need to define list of events that plugin will go to observe.
- */
-
 defined('MOODLE_INTERNAL') || die();
 
+// Course completed event observer for the "Course Completion" condition in the pulse 2.0.
 $observers = [
     array(
         'eventname' => 'core\event\course_completed',
