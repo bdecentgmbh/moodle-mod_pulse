@@ -515,8 +515,9 @@ class actionform extends \mod_pulse\automation\action_base {
 
         // Add 'content_type' element with the following options.
         $contenttypeoptions = array(
-            notification::DYNAMIC_DESCRIPTION => get_string('description', 'pulseaction_notification'),
-            notification::DYNAMIC_CONTENT => get_string('content', 'pulseaction_notification'),
+            notification::DYNAMIC_PLACEHOLDER => get_string('dynamicplacholder', 'pulseaction_notification'),
+            notification::DYNAMIC_DESCRIPTION => get_string('dynamicdescription', 'pulseaction_notification'),
+            notification::DYNAMIC_CONTENT => get_string('dynamiccontent', 'pulseaction_notification'),
         );
         $dynamic2 = $mform->createElement('select', 'pulsenotification_contenttype',
             get_string('contenttype', 'pulseaction_notification'), $contenttypeoptions);

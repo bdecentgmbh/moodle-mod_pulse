@@ -50,8 +50,10 @@ $string['before'] = 'Before';
 $string['after'] = 'After';
 
 $string['suppressnotification'] = 'Suppress notification';
-$string['description'] = 'Description';
-$string['content'] = 'Content';
+$string['dynamicplacholder'] = 'Placeholder';
+$string['dynamicdescription'] = 'Description';
+$string['dynamiccontent'] = 'Content';
+
 $string['teaser'] = 'Teaser';
 $string['full_linked'] = 'Full linked';
 $string['full_not_linked'] = 'Full not linked';

@@ -127,6 +127,12 @@ class notification {
     const LENGTH_NOTLINKED = 3;
 
     /**
+     * Represents the content of the dynamic module is only for placeholder.
+     * @var int
+     */
+    const DYNAMIC_PLACEHOLDER = 0;
+
+    /**
      * Represents the description of the dynamic module is included in the notification.
      * @var int
      */
@@ -771,15 +777,20 @@ class notification {
      * @param \context $context
      * @param stdclass $cm
      *
-     * @return void
+     * @return string
      */
     public static function generate_dynamic_content($contenttype, $contentlength, $chapterid, $context, $cm) {
-
         global $CFG, $DB;
 
+        // Include module libarary files.
         require_once($CFG->dirroot.'/lib/modinfolib.php');
         require_once($CFG->dirroot.'/mod/book/lib.php');
         require_once($CFG->libdir.'/filelib.php');
+
+        // Content type is placholder, no need to include the content.
+        if ($contenttype == self::DYNAMIC_PLACEHOLDER) {
+            return '';
+        }
 
         if ($contenttype == self::DYNAMIC_CONTENT) {
 

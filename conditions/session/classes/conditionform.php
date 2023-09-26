@@ -178,7 +178,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
     public static function get_session_time($notification, $instancedata) {
         global $DB;
 
-        if (isset($instancedata->condition['session']) && $instancedata->condition['session']['status']) {
+        if (isset($instancedata->condition['session']) && $instancedata->condition['session']['status']
+            && isset($instancedata->condition['session']['modules'])) {
             $module = $instancedata->condition['session']['modules'];
             $existingsignup = self::get_session_data($module, $notification->userid);
             return !empty($existingsignup) ? current($existingsignup)->timestart : '';

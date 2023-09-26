@@ -298,7 +298,7 @@ class pulse_email_vars {
         } else if ($DB->record_exists('course_completions', ['course' => $this->course->id, 'userid' => $this->user->id])) {
             return get_string('inprogress');
         } else if (is_enrolled($coursecontext, $this->user->id)) {
-            return get_string('enroled');
+            return get_string('completionenrolled', 'pulse');
         }
         return '';
     }

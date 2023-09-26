@@ -139,6 +139,7 @@ function pulseaction_notification_output_fragment_preview_content($args) {
         $user = (object) ($args['userid'] != null ? core_user::get_user($args['userid']) : current($users));
 
         $dynamiccontent = '';
+        $mod = new stdclass;
         if (isset($args['contentdynamic']) && !empty($args['contentdynamic'])) {
 
             $module = get_coursemodule_from_id('', $args['contentdynamic']);
@@ -156,7 +157,6 @@ function pulseaction_notification_output_fragment_preview_content($args) {
                 $context,
                 $moddata
             );
-            $mod = new stdclass;
             // TODO: Inlcude the vars update from condition plugins.
             if ($args['contentdynamic']) {
                 // Prepare the module data. based on dynamic content and includ the session data.
@@ -166,7 +166,6 @@ function pulseaction_notification_output_fragment_preview_content($args) {
                 $mod = current($modules[$modname]);
             }
             // Check the session condition are set for this notification. if its added then load the session data for placeholders.
-
             $sessionincondition = in_array('session', (array) array_keys($formdata['condition']));
             if ($sessionincondition && $formdata['condition']['session']['status']) {
                 $sessionconditiondata = (object) ['modules' => $formdata['condition']['session']['modules']];

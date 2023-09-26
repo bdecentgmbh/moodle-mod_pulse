@@ -370,3 +370,4 @@ $string['automationinstance_help8'] = 'Use this toggle to turn on or off the aut
 
 // Pulse automation template profile navigation link.
 $string['pulsetemplink'] = "Pulse Automation Template";
+$string['completionenrolled'] = 'enrolled';
