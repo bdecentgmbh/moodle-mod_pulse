@@ -54,6 +54,8 @@ class behat_pulseaction_notification extends behat_base {
         $this->execute("behat_general::i_click_on", ["Create new template", "button"]);
         $this->execute('behat_forms::i_set_the_field_to', ["Title", $title]);
         $this->execute('behat_forms::i_set_the_field_to', ["Reference", $reference]);
+        $this->execute("behat_general::i_click_on_in_the", ["Condition", "link", "#automation-tabs", "css_element"]);
+        $this->execute('behat_forms::i_set_the_field_to', ["Triggers", "User enrolment"]);
         $this->execute("behat_general::i_click_on_in_the", ["Notification", "link", "#automation-tabs", "css_element"]);
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$notificationdata]);
         $this->execute("behat_general::i_click_on", ["Save changes", "button"]);

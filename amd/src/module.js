@@ -117,10 +117,11 @@ define(['core_editor/events'], function() {
                     var content = "{" + this.getAttribute('data-text') + "}";
                     var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
                     if (iframes === null || !iframes.length) {
-                        return false;
+                        module.insertAtCaret(content);
+                        return true;
                     }
                     var tinyEditor;
-                    iframes.forEach((frame) => {
+                    iframes.forEach(function(frame) {
                         var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
                         if (frameElem !== null) {
                             var contentBody = frame.contentDocument.querySelector('body');
@@ -131,7 +132,6 @@ define(['core_editor/events'], function() {
                                 tinyEditor = editor;
                             }
                         }
-                        return false;
                     });
 
                     if (tinyEditor) {
