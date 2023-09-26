@@ -206,19 +206,15 @@ class auto_instances extends table_sql {
         );
 
         // Show/Hide.
-        if ($row->status) {
-            $actions[] = array(
-                'url' => new \moodle_url($listurl, array('action' => 'disable')),
-                'icon' => new \pix_icon('t/hide', \get_string('hide')),
-                'attributes' => array('data-action' => 'hide', 'class' => 'action-hide')
-            );
-        } else {
-            $actions[] = array(
-                'url' => new \moodle_url($listurl, array('action' => 'enable')),
-                'icon' => new \pix_icon('t/show', \get_string('show')),
-                'attributes' => array('data-action' => 'show', 'class' => 'action-show')
-            );
-        }
+        $checked = ($row->status) ? ['checked' => 'checked'] : [];
+        $checkbox = html_writer::div(
+            html_writer::empty_tag('input',
+                ['type' => 'checkbox', 'class' => 'custom-control-input'] + $checked
+            ) . html_writer::tag('span', '', ['class' => 'custom-control-label']),
+            'custom-control custom-switch'
+        );
+        $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
+        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => 'pulse-instance-status-switch']);
 
         // Delete.
         $actions[] = array(
@@ -245,26 +241,4 @@ class auto_instances extends table_sql {
         return html_writer::span(join('', $actionshtml), 'menu-item-actions item-actions mr-0');
     }
 
-    /**
-     * Create a navbar switch for toggling editing mode.
-     *
-     * @param stdclass $row
-     * @return string Html containing the edit switch
-     */
-    public function edit_switch($row) {
-        global $PAGE, $OUTPUT;
-
-        if ($PAGE->user_allowed_editing()) {
-
-            $temp = (object) [
-                'legacyseturl' => (new moodle_url('/mod/pulse/automation/templates/list.php',
-                    ['id' => $row->id, 'sesskey' => sesskey()]))->out(false),
-                'pagecontextid' => $PAGE->context->id,
-                'pageurl' => $PAGE->url,
-                'sesskey' => sesskey(),
-                'checked' => $row->status
-            ];
-            return $OUTPUT->render_from_template('pulse/status_switch', $temp);
-        }
-    }
 }

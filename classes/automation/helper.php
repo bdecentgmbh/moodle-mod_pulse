@@ -308,9 +308,9 @@ class helper {
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => get_string('automationwelcomemsg', 'pulse'),
+            'help2' => get_string('automation_title', 'pulse'),
             'help3' => implode(',', array_column($actions, 'badge')),
-            'help4' => '<h5 class="template-reference">'.get_string('automationreferencedemo', 'pulse').'</h5>',
+            'help4' => '<h5 class="template-reference">'.get_string('automation_reference', 'pulse').'</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
             'help6' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
             'help7' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
@@ -351,13 +351,16 @@ class helper {
 
         $templatehelp = [
             'help1' => implode(',', array_column($actions, 'icon')),
-            'help2' => get_string('automationwelcomemsg', 'pulse'),
+            'help2' => get_string('automationinstance_title', 'pulse'),
             'help3' => implode(',', array_column($actions, 'badge')),
-            'help4' => '<h5 class="template-reference">'.get_string('automationreferencedemo', 'pulse').'</h5>',
+            'help4' => '<h5 class="template-reference">'.get_string('automationinstance_reference', 'pulse').'</h5>',
             'help5' => $OUTPUT->pix_icon('t/edit', \get_string('edit')),
             'help6' => $OUTPUT->pix_icon('t/copy', \get_string('copy')),
-            'help7' => $OUTPUT->pix_icon('i/calendar', \get_string('copy')),
-            'help8' => $OUTPUT->pix_icon('t/hide', \get_string('hide')),
+            'help7' => $OUTPUT->pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
+            'help8' => \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
+                <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]),
+            'help9' => $OUTPUT->pix_icon('t/delete', \get_string('delete')),
+
         ];
 
         $table = new \html_table();

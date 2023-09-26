@@ -347,7 +347,8 @@ $string['schedulecountdesc'] = 'This setting allows you to control how many sche
 
 // ...Automation templates table instruction help texts.
 $string['instruction'] = 'Instructions';
-$string['automationwelcomemsg'] = '<b> Welcome message </b>';
+$string['automation_title'] = '<b> Template title  </b>';
+$string['automation_reference'] = 'TEMPLATE_REFERENCE';
 $string['automationreferencedemo'] = 'WELCOME_MESSAGE';
 $string['automationtemplate_help1'] = 'The icon represents the enabled action(s) in the automation (template). the following actions are available: "Notification", "Assignment". "Membership", "Skills",';
 $string['automationtemplate_help2'] = 'The title of the automation <b>template</b>. This should be a generic explanation about what the template is for. It can be changed inline by clicking on the pencil icon.';
@@ -359,6 +360,8 @@ $string['automationtemplate_help7'] = 'Use this toggle to turn on or off a templ
 $string['automationtemplate_help8'] = 'How many automation instances are using the template? The number in brackets indicates the number of disabled instances.';
 
 // ...Automation instance table instruction help texts.
+$string['automationinstance_title'] = ' <b> Instance title  </b>';
+$string['automationinstance_reference'] = 'INSTANCE_REFERENCE';
 $string['automationinstance_help1'] = 'The icon represents the enabled action(s) in the automation (template). the following actions are available: "Notification", "Assignment". "Membership", "Skills",';
 $string['automationinstance_help2'] = 'The title of the automation <b>instance</b>. This should be a generic explanation about what the template is for. It can be changed inline by clicking on the pencil icon.';
 $string['automationinstance_help3'] = 'The pills provide additional improtant information about the automation instance. In this case, it explains that it\'s a notification.';
@@ -367,6 +370,7 @@ $string['automationinstance_help5'] = 'Click on this icon to edit the automation
 $string['automationinstance_help6'] = 'Duplicate the automation';
 $string['automationinstance_help7'] = 'Open the automation queue (in the report builder), which provides information about all the automations that ran.';
 $string['automationinstance_help8'] = 'Use this toggle to turn on or off the automation instance locally. This will override the status of the template, i.e. even if the template is turned off, it can be enabled.';
+$string['automationinstance_help9'] = 'Click on this icon to delete the automation instance.';
 
 // Pulse automation template profile navigation link.
 $string['pulsetemplink'] = "Pulse Automation Template";

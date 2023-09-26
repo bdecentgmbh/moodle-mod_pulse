@@ -190,7 +190,18 @@ if ($countmenus < 1) {
                 })
             });
         }
+
+        // Make the status toggle check and uncheck on click on status update toggle.
+        var form = document.querySelectorAll(".pulse-instance-status-switch");
+        form.forEach((switche) => {
+            switche.addEventListener("click", function(e) {
+                var form = e.currentTarget.querySelector("input[type=checkbox]");
+                form.click();
+            })
+        });
+
     })');
+
 }
 
 // Finish page output.
