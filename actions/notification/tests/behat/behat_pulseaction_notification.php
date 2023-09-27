@@ -80,20 +80,46 @@ class behat_pulseaction_notification extends behat_base {
     }
 
     /**
-     * Fills a automation template condition form with field/value data.
+     * Create a new an automation instance and fills the form with field/value data.
+     *
+     * @Given /^I initiate new automation instance of template "([^"]*)" to these values:$/
+     * @param String $title
+     * @param TableNode $generaldata
+     */
+    public function i_set_pulsenotification_instance_with_general($title, TableNode $generaldata) {
+
+        $this->execute('behat_forms::i_set_the_field_to', ["templateid", $title]);
+        $this->execute("behat_general::i_click_on", ["Add automation instance", "button"]);
+        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$generaldata]);
+    }
+
+    /**
+     * Fills the previously initiated instance notification actions form with these values.
+     *
+     * @Given /^I set previous automation instance notification to these values:$/
+     * @throws ElementNotFoundException Thrown by behat_base::find
+     * @param TableNode $notificationdata
+     */
+    public function i_set_previous_instance_notification($notificationdata) {
+        $this->execute("behat_general::i_click_on_in_the", ["Notification", "link", "#automation-tabs", "css_element"]);
+        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$notificationdata]);
+    }
+
+    /**
+     * Create a new automation template, Fills a automation template form with field/value data.
      *
      * @Given /^I initiate new automation template to these values:$/
      * @throws ElementNotFoundException Thrown by behat_base::find
      * @param TableNode $generaldata
      */
     public function i_set_pulsenotification_template_with_general($generaldata) {
-        $this->execute('behat_pulse::i_navigate_to_automation_template');
+        $this->execute('behat_pulse::i_navigate_to_automation_templates');
         $this->execute("behat_general::i_click_on", ["Create new template", "button"]);
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$generaldata]);
     }
 
     /**
-     * Fills a automation template condition form with field/value data.
+     * Fills the previously initiated templates notification actions form with these values.
      *
      * @Given /^I set previous automation template notification to these values:$/
      * @throws ElementNotFoundException Thrown by behat_base::find
@@ -101,7 +127,7 @@ class behat_pulseaction_notification extends behat_base {
      */
     public function i_set_previous_template_notification($notificationdata) {
 
-        $this->execute("behat_general::i_click_on_in_the", ["Notification", "link", "#automation-tabs .nav-item", "css_element"]);
+        $this->execute("behat_general::i_click_on_in_the", ["Notification", "link", "#automation-tabs", "css_element"]);
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$notificationdata]);
 
     }

@@ -121,8 +121,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $cohortlike = $DB->sql_like('co.triggercondition', ':cohort2');
 
         $sql = "SELECT * FROM {pulse_autoinstances} ai
-        JOIN {pulse_autotemplates} AS pat ON pat.id = ai.templateid
-        JOIN {pulse_condition_overrides} AS co ON co.instanceid = ai.id
+        JOIN {pulse_autotemplates} pat ON pat.id = ai.templateid
+        JOIN {pulse_condition_overrides} co ON co.instanceid = ai.id
         WHERE ($patlike OR ($cohortlike AND co.status > 0) ) AND $overlike";
 
         $params = ['cohort' => 'cohort', 'cohort2' => 'cohort', 'value' => '%"'.$cohortid.'"%'];

@@ -232,11 +232,13 @@ class instances extends templates {
      */
     public function update_status(bool $status, bool $instance = false) {
 
+        $result = $this->update_field('status', $status, ['id' => $this->instanceid]);
+
         foreach ($this->actions as $component => $action) {
-            $action->instance_disabled($this->instanceid, $status);
+            $action->instance_status_updated($this->get_instance_data(), $status);
         }
 
-        return $this->update_field('status', $status, ['id' => $this->instanceid]);
+        return $result;
     }
 
     /**
@@ -513,11 +515,13 @@ class instances extends templates {
         // Start the database transcation.
         $transaction = $DB->start_delegated_transaction();
 
+        // Fetch the related template data.
+        $templatedata = parent::create($formdata->templateid)->get_formdata();
         // Instance data to store in autoinstance table.
         $instancedata = (object) [
             'templateid' => $formdata->templateid,
             'courseid' => $formdata->courseid,
-            'status' => true,
+            'status' => $formdata->status ?? $templatedata->status,
         ];
 
         // Check the isntance is already created. if created update the record otherwise create new instance.
@@ -548,9 +552,7 @@ class instances extends templates {
             }
         }
         // Store the templates, conditions and actions data. Find the overridden elements.
-
         $conditions = helper::filter_record_byprefix($override, 'condition');
-
         foreach ($conditions as $key => $status) {
             $component = explode('_', $key)[0];
             if (!isset($record->condition[$component])) {

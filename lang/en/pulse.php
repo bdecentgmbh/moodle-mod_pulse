@@ -375,3 +375,5 @@ $string['automationinstance_help9'] = 'Click on this icon to delete the automati
 // Pulse automation template profile navigation link.
 $string['pulsetemplink'] = "Pulse Automation Template";
 $string['completionenrolled'] = 'enrolled';
+// ...Automation template error.
+$string['errortemplatenotavailable'] = 'This automation template is not available for this course';

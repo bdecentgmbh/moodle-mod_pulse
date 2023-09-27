@@ -101,6 +101,28 @@ class templates {
     }
 
     /**
+     * Find the template is available to add in the course.
+     *
+     * @param int $categoryid
+     * @return bool
+     */
+    public function is_available_forcourse(int $categoryid): bool {
+        // Fetch template record.
+        $formdata = $this->template;
+        // Check the template is visible.
+        if (!$formdata->visible) {
+            return false;
+        }
+        // Verify template has category restriction, if contains check the course category is included in the categories list.
+        $categories = (array) $formdata->categories;
+        if ($categories && !in_array($categoryid, $categories)) {
+            return false;
+        }
+        // Template is visible.
+        return true;
+    }
+
+    /**
      * Retrieve the template record from the database.
      *
      * @return stdClass The template record.
@@ -161,6 +183,7 @@ class templates {
         $data = (object) \mod_pulse\automation\helper::merge_instance_overrides($autotemplateins, $autotemplate);
 
         // Convert the json values to array.
+        $data->status = $instance->status; // Use the instance status as final instance status.
         $data->tenants = json_decode($data->tenants);
         $data->categories = json_decode($data->categories);
         $data->triggerconditions = json_decode($data->triggerconditions);
@@ -239,6 +262,21 @@ class templates {
     }
 
     /**
+     * Retrieves instances associated with this template.
+     *
+     * @return array An array of template instances or an empty array if none are found.
+     */
+    public function get_instances_record() {
+        global $DB;
+
+        if ($instances = $DB->get_records('pulse_autoinstances', ['templateid' => $this->templateid]) ) {
+            return $instances;
+        }
+
+        return [];
+    }
+
+    /**
      * Include actions data.
      *
      * @param stdclass $data
@@ -293,7 +331,9 @@ class templates {
         global $DB;
 
         if ($instance) {
-            $DB->set_field('pulse_autoinstances', 'status', $status, ['templateid' => $this->templateid]);
+            foreach ($this->get_instances_record() as $instanceid => $instance) {
+                instances::create($instanceid)->update_status($status);
+            }
         }
 
         return $this->update_field('status', $status, ['id' => $this->templateid]);

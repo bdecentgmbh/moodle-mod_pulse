@@ -29,7 +29,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
     const previewModalBody = function(contextID, userid = null) {
 
         var params;
-        if (window.tinyMCE !== undefined) {
+        if (window.tinyMCE !== undefined && window.tinyMCE.get('id_pulsenotification_headercontent_editor')) {
             // EditorPlugin = window.tinyMCE;
             params = {
                 contentheader: window.tinyMCE.get('id_pulsenotification_headercontent_editor').getContent(),

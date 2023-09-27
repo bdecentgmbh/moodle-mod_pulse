@@ -462,6 +462,24 @@ class notification {
     }
 
     /**
+     * Disable the queued schdule for all users.
+     *
+     * @return void
+     */
+    protected function disable_schedules() {
+        global $DB;
+
+        $params = [
+            'instanceid' => $this->notificationdata->instanceid,
+            'status' => self::STATUS_QUEUED
+        ];
+
+        // Disable the queued schedules for this instance.
+        $DB->set_field('pulseaction_notification_sch', 'status', self::STATUS_DISABLED, $params);
+
+    }
+
+    /**
      * Removes the current queued schedules and recreate the schedule for all the qualified users.
      *
      * @return void
@@ -485,6 +503,12 @@ class notification {
         // Generate the notification instance data.
         if (empty($this->instancedata)) {
             $this->create_instance_data();
+        }
+
+        // Confirm the instance is not disabled.
+        if (!$this->instancedata->status) {
+            $this->disable_schedules();
+            return false;
         }
 
         // Course context.

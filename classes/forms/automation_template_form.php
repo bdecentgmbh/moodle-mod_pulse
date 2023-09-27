@@ -312,7 +312,7 @@ class automation_template_form extends moodleform {
 
         list($insql, $inparam) = $DB->get_in_or_equal([CONTEXT_COURSE, CONTEXT_USER]);
         $sql = "SELECT lvl.id, lvl.roleid, rle.name, rle.shortname FROM {role_context_levels} lvl
-        JOIN {role} AS rle ON rle.id = lvl.roleid
+        JOIN {role} rle ON rle.id = lvl.roleid
         WHERE contextlevel $insql ";
 
         $result = $DB->get_records_sql($sql, $inparam);

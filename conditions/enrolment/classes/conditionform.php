@@ -84,8 +84,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
         // Trigger the instances, this will trigger its related actions for this user.
         $like = $DB->sql_like('pat.triggerconditions', ':value');
         $sql = "SELECT * FROM {pulse_autoinstances} ai
-        JOIN {pulse_autotemplates} AS pat ON pat.id = ai.templateid
-        JOIN {pulse_condition_overrides} AS co ON co.instanceid = ai.id
+        JOIN {pulse_autotemplates} pat ON pat.id = ai.templateid
+        JOIN {pulse_condition_overrides} co ON co.instanceid = ai.id
         WHERE ai.courseid=:courseid AND ($like OR co.triggercondition = 'enrol')";
 
         $params = ['courseid' => $courseid, 'value' => '%"enrol"%'];

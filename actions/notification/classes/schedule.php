@@ -288,17 +288,17 @@ class schedule {
 
         // Fetch the schedule which is status as 1 and nextrun not empty and not greater than now.
         $sql = "SELECT $select FROM {pulseaction_notification_sch} ns
-            JOIN {pulse_autoinstances} AS ai ON ai.id = ns.instanceid
-            JOIN {pulse_autotemplates} AS pat ON pat.id = ai.templateid
-            JOIN {pulse_autotemplates_ins} AS pati ON pati.instanceid = ai.id
-            JOIN {pulseaction_notification_ins} AS ni ON ni.instanceid = ns.instanceid
-            JOIN {pulseaction_notification} AS an ON an.templateid = ai.templateid
-            JOIN {user} AS ue ON ue.id = ns.userid
-            JOIN {course} as c ON c.id = ai.courseid
-            JOIN {context} AS ctx ON ctx.instanceid = c.id AND ctx.contextlevel = 50
-            LEFT JOIN {pulse_condition_overrides} AS con ON con.instanceid = pati.instanceid AND con.triggercondition = 'session'
-            LEFT JOIN {course_modules} AS cm ON cm.id = ni.dynamiccontent
-            LEFT JOIN {modules} AS md ON md.id = cm.module
+            JOIN {pulse_autoinstances} ai ON ai.id = ns.instanceid
+            JOIN {pulse_autotemplates} pat ON pat.id = ai.templateid
+            JOIN {pulse_autotemplates_ins} pati ON pati.instanceid = ai.id
+            JOIN {pulseaction_notification_ins} ni ON ni.instanceid = ns.instanceid
+            JOIN {pulseaction_notification} an ON an.templateid = ai.templateid
+            JOIN {user} ue ON ue.id = ns.userid
+            JOIN {course} c ON c.id = ai.courseid
+            JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = 50
+            LEFT JOIN {pulse_condition_overrides} con ON con.instanceid = pati.instanceid AND con.triggercondition = 'session'
+            LEFT JOIN {course_modules} cm ON cm.id = ni.dynamiccontent
+            LEFT JOIN {modules} md ON md.id = cm.module
             JOIN (
                 SELECT DISTINCT eu1_u.id, ej1_e.courseid, COUNT(ej1_ue.enrolid) AS activeenrolment
                     FROM {user} eu1_u
@@ -308,7 +308,7 @@ class schedule {
                 AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= :timestart)
                 AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > :timeend)
                 GROUP BY eu1_u.id, ej1_e.courseid
-            ) AS active_enrols ON active_enrols.id = ue.id AND active_enrols.courseid = c.id
+            ) active_enrols ON active_enrols.id = ue.id AND active_enrols.courseid = c.id
             WHERE ns.status = :status
             AND active_enrols.activeenrolment <> 0
             AND c.visible = 1

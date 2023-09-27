@@ -11,6 +11,9 @@ Feature: Configuring the pulseaction_notification plugin on the "Automation temp
     And the following "course" exist:
       | fullname    | shortname | category |
       | Course 1    | C1        | 0        |
+    And the following "activities" exist:
+      | activity   | name                   | intro                         | course | idnumber    |
+      | book       | Test book name         | Test book description         | C1     | book1       |
     And the following "users" exist:
       | username | firstname | lastname | email |
       | student1 | student | User 1 | student1@test.com |
@@ -71,6 +74,45 @@ Feature: Configuring the pulseaction_notification plugin on the "Automation temp
     | student User 1  | Welcome to learning portal Acceptance test site | Queued |
 
   @javascript
+  Scenario: Preview the notification content
+    Given I log in as "admin"
+    And I initiate new automation template to these values:
+      | Title     | WELCOME MESSAGE |
+      | Reference | WELCOMEMESSAGE_ |
+    And I set previous automation template notification to these values:
+      | Sender     | Course teacher   |
+      | Recipients | Student          |
+      | Subject     | Welcome to {Site_FullName} |
+      | Header content | Hi {User_firstname} {User_lastname}, <br> Welcome to {Site_FullName} |
+      | Footer content | <p> Copyright @ 2023 {Site_FullName} </p> |
+    And I press "Preview"
+    And I should see "Preview" in the ".modal-header .modal-title" "css_element"
+    Then I set the field "userselector" to "student User 1"
+    And I should see "Hi student User 1," in the ".modal .modal-body" "css_element"
+    And I should see "Welcome to Acceptance test site" in the ".modal .modal-body" "css_element"
+    And I should see "Copyright @ 2023 Acceptance test site" in the ".modal .modal-body" "css_element"
+    Then I click on ".close" "css_element" in the ".modal-header" "css_element"
+    And I press "Save changes"
+    Then I should see "Automation templates"
+    And I should see "WELCOME MESSAGE" in the "pulse_automation_template" "table"
+    And I navigate to course "Course 1" automation instances
+    And I initiate new automation instance of template "WELCOME MESSAGE" to these values:
+      | Reference | COURSE_1         |
+    And I set previous automation template notification to these values:
+      | Recipients | Student         |
+    And I press "Preview"
+    And I should see "Preview" in the ".modal-header .modal-title" "css_element"
+    Then I set the field "userselector" to "student User 1"
+    And I should see "Hi student User 1," in the ".modal .modal-body" "css_element"
+    And I should see "Welcome to Acceptance test site" in the ".modal .modal-body" "css_element"
+    And I should see "Copyright @ 2023 Acceptance test site" in the ".modal .modal-body" "css_element"
+    Then I click on ".close" "css_element" in the ".modal-header" "css_element"
+    Then I set the field "Dynamic content" to "Test book name"
+    And I set the field "Content type" to "Description"
+    And I press "Preview"
+    And I should see "Test book description" in the ".modal-body .no-overflow" "css_element"
+
+  @javascript
   Scenario: Set delayed notification
     Given I log in as "admin"
     And I navigate to automation templates
@@ -127,3 +169,5 @@ Feature: Configuring the pulseaction_notification plugin on the "Automation temp
       | recipient | studentshouldorshouldnot | teachershouldorshouldnot |
       | Student   | should                   | should not               |
       | Teacher   | should not               | should                   |
+
+

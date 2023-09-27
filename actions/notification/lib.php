@@ -165,9 +165,9 @@ function pulseaction_notification_output_fragment_preview_content($args) {
                 $modules = notification::get_modules_data($dynamicmodules);
                 $mod = current($modules[$modname]);
             }
+
             // Check the session condition are set for this notification. if its added then load the session data for placeholders.
-            $sessionincondition = in_array('session', (array) array_keys($formdata['condition']));
-            if ($sessionincondition && $formdata['condition']['session']['status']) {
+            if (isset($formdata['condition']['session']['status']) && $formdata['condition']['session']['status']) {
                 $sessionconditiondata = (object) ['modules' => $formdata['condition']['session']['modules']];
                 schedule::instance()->include_session_data($mod, $sessionconditiondata, $user->id);
             }

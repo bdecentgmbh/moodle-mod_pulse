@@ -102,7 +102,6 @@ class auto_instances extends table_sql {
         // Fetch the templates data with its actions for all the instances.
         $templatedata = \mod_pulse\automation\templates::get_templates_record($templates);
         // Merge each instances with its templatedata, it will assign the template data for non overridden fields for instance.
-
         foreach ($rawdata as $key => $data) {
             $templateid = $data->templateid;
             if (isset($templatedata[$templateid])) {
@@ -110,7 +109,7 @@ class auto_instances extends table_sql {
                 $this->rawdata[$key] = \mod_pulse\automation\helper::merge_instance_overrides($data, $templatedata[$templateid]);
             }
         }
-
+        // Filter the data.
         $this->rawdata = array_filter($this->rawdata);
 
     }
@@ -214,7 +213,7 @@ class auto_instances extends table_sql {
             'custom-control custom-switch'
         );
         $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
-        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => 'pulse-instance-status-switch']);
+        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => 'pulse-instance-status-switch action-hide']);
 
         // Delete.
         $actions[] = array(

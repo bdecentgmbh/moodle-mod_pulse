@@ -534,7 +534,7 @@ function mod_pulse_output_fragment_completionbuttons($args) {
     $modules = json_decode($args['modules']);
     list($insql, $inparams) = $DB->get_in_or_equal($modules);
     $sql = "SELECT cm.*, nf.completionapproval, nf.completionapprovalroles, nf.completionself FROM {course_modules} cm
-    JOIN {modules} AS md ON md.id = cm.module
+    JOIN {modules} md ON md.id = cm.module
     JOIN {pulse} nf ON nf.id = cm.instance WHERE cm.id $insql AND md.name = 'pulse'";
     $records = $DB->get_records_sql($sql, $inparams);
 

@@ -298,13 +298,13 @@ class notification extends base {
         $notificationalias = $this->get_table_alias('pulseaction_notification');
 
         return "
-            JOIN {pulse_autoinstances} AS {$autoinstancesalias} ON {$autoinstancesalias}.id = {$notificationschalias}.instanceid
-            JOIN {pulse_autotemplates} AS {$autotemplatesalias} ON {$autotemplatesalias}.id = {$autoinstancesalias}.templateid
-            JOIN {pulse_autotemplates_ins} AS {$autotemplatesinsalias}
+            JOIN {pulse_autoinstances} {$autoinstancesalias} ON {$autoinstancesalias}.id = {$notificationschalias}.instanceid
+            JOIN {pulse_autotemplates} {$autotemplatesalias} ON {$autotemplatesalias}.id = {$autoinstancesalias}.templateid
+            JOIN {pulse_autotemplates_ins} {$autotemplatesinsalias}
                 ON {$autotemplatesinsalias}.instanceid = {$autoinstancesalias}.id
-            JOIN {pulseaction_notification_ins} AS {$notificationinsalias}
+            JOIN {pulseaction_notification_ins} {$notificationinsalias}
                 ON {$notificationinsalias}.instanceid = {$notificationschalias}.instanceid
-            JOIN {pulseaction_notification} AS  {$notificationalias}
+            JOIN {pulseaction_notification} {$notificationalias}
                 ON {$notificationalias}.templateid = {$autoinstancesalias}.templateid";
     }
 }

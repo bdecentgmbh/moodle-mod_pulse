@@ -71,6 +71,23 @@ class actionform extends \mod_pulse\automation\action_base {
     }
 
     /**
+     * Instances disabled, then disable all the schedules of the instances.
+     *
+     * @param stdclass $instancedata
+     * @param bool $status
+     * @return void
+     */
+    public function instance_status_updated($instancedata, $status) {
+        global $DB;
+
+        $notificationid = $instancedata->actions['notification']['id'];
+        $notification = notification::instance($notificationid);
+        $notification->set_notification_data($instancedata->actions['notification'], $instancedata);
+
+        $notification->create_schedule_forinstance();
+    }
+
+    /**
      * Prepare editor fileareas.
      *
      * @param stdclass $data Instance/Templates data of the notification.
@@ -154,7 +171,7 @@ class actionform extends \mod_pulse\automation\action_base {
      * Get text editor options to manage files.
      *
      * @param \stdclass $context
-     * @return void
+     * @return array
      */
     protected function get_editor_options($context=null) {
         global $PAGE;

@@ -63,9 +63,20 @@ if (isset($course->id)) {
     $url->param('courseid', $course->id);
 }
 
+// Instance list page url for this course.
+$overviewurl = new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id, 'sesskey' => sesskey()]);
+
 if ($templateid) {
     $url->params(['templateid' => $templateid]);
-    $templatereference = mod_pulse\automation\templates::create($templateid)->get_formdata()->reference;
+    // Create this instance template object.
+    $tempalteobj = mod_pulse\automation\templates::create($templateid);
+    // Check this template is avialable for this course to create instances.
+    if (!$tempalteobj->is_available_forcourse($course->category)) {
+        // Not available to create instance. redirect to instance list.
+        redirect($overviewurl, get_string('errortemplatenotavailable', 'pulse'));
+    }
+    // Template reference to add as prefix.
+    $templatereference = $tempalteobj->get_template()->reference;
 }
 
 // Page values.
@@ -85,9 +96,6 @@ $templatesform = new \mod_pulse\forms\automation_instance_form(null, [
     'instanceid' => $instanceid,
     'templatereference' => $templatereference ?? ''
 ]);
-
-// Instance list page url for this course.
-$overviewurl = new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $course->id, 'sesskey' => sesskey()]);
 
 // Instance form submitted, handel the submitted data.
 if ($formdata = $templatesform->get_data()) {
