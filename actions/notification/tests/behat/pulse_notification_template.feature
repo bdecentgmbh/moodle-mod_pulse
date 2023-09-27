@@ -169,5 +169,3 @@ Feature: Configuring the pulseaction_notification plugin on the "Automation temp
       | recipient | studentshouldorshouldnot | teachershouldorshouldnot |
       | Student   | should                   | should not               |
       | Teacher   | should not               | should                   |
-
-

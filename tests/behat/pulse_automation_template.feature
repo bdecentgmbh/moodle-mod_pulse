@@ -118,16 +118,14 @@ Feature: Pulse automation templates
     Then I should see "WELCOME MESSAGE" in the ".template-add-form .custom-select" "css_element"
     And I navigate to "Plugins > Activity modules > Pulse > Automation templates" in site administration
     Then I click on ".action-edit" "css_element" in the "WELCOME MESSAGE" "table_row"
-    And I set the field "Status" to "Disable"
+    And I set the field "Visibility" to "Hidden"
     Then I press "Save changes"
     And I am on "Course 1" course homepage
     And I follow "Automation"
     And ".template-add-form .custom-select#id_templateid" "css_element" should not exist
     Then I should not see "WELCOME MESSAGE" in the ".template-add-form" "css_element"
     And I navigate to "Plugins > Activity modules > Pulse > Automation templates" in site administration
-    Then I click on "input[name='status']" "css_element" in the "WELCOME MESSAGE" "table_row"
-    And I should see "Update Template" in the ".modal" "css_element"
-    And I click on "Update Template" "button" in the ".modal-footer" "css_element"
+    Then I click on ".action-show" "css_element" in the "WELCOME MESSAGE" "table_row"
     And I am on "Course 1" course homepage
     And I follow "Automation"
     And ".template-add-form .custom-select#id_templateid" "css_element" should exist
@@ -266,7 +264,7 @@ Feature: Pulse automation templates
     And I should see "1(0)" in the "notification" "table_row"
     And I am on "Course 1" course homepage
     And I follow "Automation"
-    Then I click on ".action-hide" "css_element" in the "Welcomemessageinstance" "table_row"
+    Then I click on ".pulse-instance-status-switch" "css_element" in the "Welcomemessageinstance" "table_row"
     And I navigate to "Plugins > Activity modules > Pulse > Automation templates" in site administration
     And I should see "3(1)" in the "WELCOME MESSAGE" "table_row"
     And I should see "1(0)" in the "notification" "table_row"

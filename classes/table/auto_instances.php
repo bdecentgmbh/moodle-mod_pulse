@@ -213,7 +213,9 @@ class auto_instances extends table_sql {
             'custom-control custom-switch'
         );
         $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
-        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => 'pulse-instance-status-switch action-hide']);
+        $statusclass = 'pulse-instance-status-switch ';
+        $statusclass .= $row->status ? 'action-hide' : 'action-show';
+        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => $statusclass]);
 
         // Delete.
         $actions[] = array(

@@ -347,3 +347,9 @@
 #page-mod-pulse-automation-instances-edit .pulse-warnings li span {
     color: initial;
 }
+
+/* Behat issue fix for auto instance */
+body.behat-site .pulse-instance-status-switch input.custom-control-input {
+    position: relative;
+    z-index: -1;
+}
