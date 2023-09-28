@@ -264,7 +264,8 @@ $string['pulse:sender'] = 'Notification sender user';
 // ...Templates list string.
 $string['autotemplates'] = 'Automation templates';
 $string['automation'] = 'Automation';
-$string['autotemplates_desc'] = 'Automation templates define the kind of automations you can use on this moodle site. Depending on the configuration of an automation template, they either work as "default" and will be applied to new courses can be forced onto every course or can be used to create and automation instance from within a course.';
+$string['autotemplates_desc'] = 'Users with the appropriate permissions create automation templates globally, independent of specific courses. The template itself doesn\'t perform any actions, it serves as the foundation for creating the instances.';
+$string['autoinstance_desc'] = 'Users with the requisite permissions can generate automation instances by selecting an existing template. Within each automation instance, the initial values for settings are inherited from the template. However, should a user desire to deviate from the template\'s values, they have the option to locally override them by activating the "override" toggle and implementing local adjustments to the settings.';
 // ...create new template btn.
 $string['templatecreatenew'] = 'Create new template';
 // ...Edit templates page stirng.

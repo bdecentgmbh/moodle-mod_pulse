@@ -167,20 +167,6 @@ class schedule {
 
             $sender = $this->find_sender_user();
 
-            if (is_string($sender)) {
-                $replyto = $sender;
-                $sender = (object) [
-                    'from' => $replyto,
-                    'firstname' => '',
-                    'lastname' => '',
-                    'firstnamephonetic' => '',
-                    'lastnamephonetic' => '',
-                    'middlename' => '',
-                    'alternatename' => '',
-                    'firstname' => '',
-                    'lastname' => '',
-                ];
-            }
             // Add bcc and CC to sender user custom headers.
             $sender->customheaders = [
                 "Bcc: $detail->bcc\r\n",
@@ -210,7 +196,7 @@ class schedule {
             // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
             // Send the notification to user.
             $messagesend = email_to_user($detail->recepient, $sender, $subject,
-                $messageplain, $messagehtml, '', '', true, $replyto ?? '');
+                $messageplain, $messagehtml, '', '', true, $sender->from ?? '');
 
             if ($messagesend) {
                 // Update the current time as lastrun.
@@ -283,6 +269,7 @@ class schedule {
         // Number of notification to send in this que.
         $limit = get_config('pulse', 'schedulecount') ?: 100;
 
+        // Trigger the schedules for sepecied users.
         $userwhere = $userid ? ' AND ns.userid =:userid ' : '';
         $userparam = $userid ? ['userid' => $userid] : [];
 
@@ -309,7 +296,7 @@ class schedule {
                 AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > :timeend)
                 GROUP BY eu1_u.id, ej1_e.courseid
             ) active_enrols ON active_enrols.id = ue.id AND active_enrols.courseid = c.id
-            WHERE ns.status = :status
+            WHERE ns.status = :status AND ai.status <> 0
             AND active_enrols.activeenrolment <> 0
             AND c.visible = 1
             AND c.startdate <= :startdate AND  (c.enddate = 0 OR c.enddate >= :enddate)
@@ -421,8 +408,26 @@ class schedule {
     protected function find_sender_user() {
         // Find the sender for this schedule.
         if ($this->notificationdata->sender == notification::SENDERCUSTOM) {
+            // Find the user from moodle for this custom email.
+            $emailuser = \core_user::get_user_by_email($this->notificationdata->senderemail);
             // Use the custom sender email as the support user email.
             $sender = $this->notificationdata->senderemail;
+
+            // SEnder is not found and is a custom email. then create dummy user data with custom email.
+            if (is_string($sender)) {
+                $replyto = $sender;
+                $expsender = explode('@', $sender);
+                $sender = (object) [
+                    'from' => $replyto,
+                    'firstname' => $expsender[0] ?? $sender, // Use the first part of the email as firstname of the user.
+                    'lastname' => '',
+                    'firstnamephonetic' => '',
+                    'lastnamephonetic' => '',
+                    'middlename' => '',
+                    'alternatename' => '',
+                ];
+            }
+
         } else if ($this->notificationdata->sender == notification::SENDERTENANTROLE) {
             $sender = $this->notification->get_tenantrole_sender($this->schedulerecord);
         } else {
@@ -521,12 +526,14 @@ class schedule {
             $finalsessiondata->capacity = $session->capacity;
             $finalsessiondata->normalcost = format_cost($session->normalcost);
             $finalsessiondata->discountcost = format_cost($session->discountcost);
+            $finalsessiondata->link = $CFG->wwwroot . "/mod/facetoface/signup.php?s=$session->id";
 
             $formatedtime = facetoface_format_session_times($session->timestart, $session->timefinish, null);
             $finalsessiondata = (object) array_merge((array) $finalsessiondata, (array) $formatedtime);
-
+            // Fetch the sessions custom fields.
             $customfields = facetoface_get_session_customfields();
             $finalsessiondata->customfield = new \stdclass();
+            // Include the session custom fields.
             foreach ($customfields as $field) {
                 $finalsessiondata->customfield->{$field->shortname} = facetoface_get_customfield_value(
                     $field, $session->sessionid, 'session');

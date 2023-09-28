@@ -34,6 +34,21 @@ use single_button;
 class helper {
 
     /**
+     * Create the instance of the helper.
+     *
+     * @return helper
+     */
+    public static function create() {
+        static $instance;
+
+        if (!$instance) {
+            $instance = new self();
+        }
+
+        return $instance;
+    }
+
+    /**
      * Get templates for an instance. Retrieves templates for a given course, filtering based on categories, status, and visibility.
      *
      * @param int|null $courseid The ID of the course. Defaults to null.
@@ -395,6 +410,119 @@ class helper {
 
         $ul = \html_writer::tag('ul', implode('', array_map(fn($val) => '<li>' . $val . '</li>', array_filter($messages))));
         echo \html_writer::div($ul, 'pulse-warnings text-warning');
+    }
+
+
+    /**
+     * Find the time management tool installed and enabled in the learningtools.
+     *
+     * @return bool result of the time management plugin availability.
+     */
+    public function timemanagement_installed() {
+        global $DB, $CFG;
+        $tools = \core_plugin_manager::instance()->get_subplugins_of_plugin('local_learningtools');
+        if (in_array('ltool_timemanagement', array_keys($tools))) {
+            $status = $DB->get_field('local_learningtools_products', 'status', ['shortname' => 'timemanagement']);
+            if ($status) {
+                require_once($CFG->dirroot.'/local/learningtools/ltool/timemanagement/lib.php');
+            }
+            return ($status) ? true : false;
+        }
+        return false;
+    }
+
+    /**
+     * Get course time mananagment details user current course progress and due modules course.
+     *
+     * @param string $var
+     * @param \stdClass $course
+     * @param int $userid
+     * @param \context $context
+     * @param \stdClass $mod
+     * @return string
+     */
+    public function timemanagement_details(string $var, \stdClass $course, int $userid, $context=null, $mod=null): string {
+        global $CFG, $DB, $PAGE;
+
+        require_once($CFG->dirroot.'/enrol/locallib.php');
+
+        if (!$this->timemanagement_installed()) {
+            return '';
+        }
+
+        $context = $context ?? context_course::instance($course->id);
+        // Find the course due date. only if the timemanagement installed.
+        if ($var == 'coursedue' && function_exists('ltool_timemanagement_cal_course_duedate')) {
+            // Get user enrolment info in course.
+            $usercourseenrollinfo = ltool_timemanagement_get_course_user_enrollment($course->id, $userid);
+            $coursedatesinfo = $DB->get_record('ltool_timemanagement_course', array('course' => $course->id));
+            // Check course set in time management.
+            if ($coursedatesinfo) {
+                $duedate = ltool_timemanagement_cal_course_duedate($coursedatesinfo, $usercourseenrollinfo[0]['timestart']);
+                return $duedate ? userdate($duedate) : '';
+            }
+            return '';
+        }
+
+        if ($mod && $var == 'activityduedate' && function_exists('ltool_timemanagement_get_course_user_enrollment')) {
+            $userenrolments = ltool_timemanagement_get_course_user_enrollment($course->id, $userid);
+            $record = $DB->get_record('ltool_timemanagement_modules', array('cmid' => $mod->cmid));
+            if ($record) {
+                $dates = ltool_timemanagement_cal_coursemodule_managedates($record, $userenrolments[0]['timestart']);
+                return isset($dates['duedate']) ? userdate($dates['duedate']) : '';
+            }
+            return '';
+        }
+
+        if ($mod && $var == 'upcomingmods' && function_exists('ltool_timemanagement_get_course_user_enrollment')) {
+            $mods = $this->ltool_timemanagement_get_upcoming_activities($course->id, $userid);
+            return implode(', ', array_map(
+                fn($mod) => \html_writer::link((new \moodle_url("/mod/$mod->modname/view.php", ['id' => $mod->id]))->out(false),
+                    format_string($mod->name)),
+                array_values($mods)));
+        }
+
+        if ($var == 'eventdates') {
+            return '';
+        }
+
+        return '';
+    }
+
+    /**
+     * Get upcoming activities list from time management learning tool.
+     *
+     * @param int $courseid
+     * @param int $userid
+     * @return string
+     */
+    protected function ltool_timemanagement_get_upcoming_activities($courseid, $userid) {
+        global $DB;
+        $upcomingmods = [];
+        $modinfo = get_fast_modinfo($courseid);
+        $userenrolments = ltool_timemanagement_get_course_user_enrollment($courseid, $userid);
+        if (!empty($modinfo->sections) && !empty($userenrolments)) {
+            foreach ($modinfo->sections as $modnumbers) {
+                if (!empty($modnumbers)) {
+                    foreach ($modnumbers as $modnumber) {
+                        $mod = $modinfo->cms[$modnumber];
+                        if ($DB->record_exists('course_modules', array('id' => $mod->id, 'deletioninprogress' => 0))
+                            && !empty($mod) && $mod->uservisible) {
+                            $record = $DB->get_record('ltool_timemanagement_modules', array('cmid' => $mod->id));
+                            if (!empty($record)) {
+                                $timestarted = $userenrolments[0]['timestart'];
+                                list('startdate' => $startdate,
+                                'duedate' => $duedate) = ltool_timemanagement_cal_coursemodule_managedates($record, $timestarted);
+                                if ($startdate > time()) {
+                                    $upcomingmods[$modnumber] = $mod;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $upcomingmods;
     }
 
 }

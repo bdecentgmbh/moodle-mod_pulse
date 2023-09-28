@@ -28,13 +28,14 @@ namespace pulseaction_notification;
 
 use book;
 use DateTime;
+use stdClass;
+use moodle_url;
+use html_writer;
+use pulseaction_notification\task\notify_users;
 use mod_pulse\automation\helper;
 use mod_pulse\automation\instances;
 use mod_pulse\helper as pulsehelper;
 use mod_pulse\plugininfo\pulseaction;
-use moodle_url;
-use html_writer;
-use stdClass;
 use tool_dataprivacy\form\context_instance;
 
 /**
@@ -250,10 +251,16 @@ class notification {
      * @return void
      */
     public function set_notification_data($notificationdata, $instancedata) {
-        $data = (object) $notificationdata;
-        $this->notificationdata = $this->update_data_structure($data);
+        // Set the notification data.
+        $notificationdata = (object) $notificationdata;
+        $this->notificationdata = $this->update_data_structure($notificationdata);
 
-        $data = (object) $instancedata;
+        // Set the instance data.
+        $instancedata = (object) $instancedata;
+        // Instance not contains course then include course.
+        if (!isset($instancedata->course)) {
+            $instancedata->course = get_course($instancedata->courseid);
+        }
         $this->instancedata = $instancedata;
     }
 
@@ -523,6 +530,11 @@ class notification {
         // Get the users for this receipents roles.
         $users = $this->get_users_withroles($roles, $context);
         foreach ($users as $userid => $user) {
+            $suppressreached = notify_users::is_suppress_reached(
+                $this->notificationdata, $userid, $this->instancedata->course, null);
+            if ($suppressreached) {
+                continue;
+            }
             $this->create_schedule_foruser($user->id, null, 0, null, $newenrolment);
         }
 
@@ -865,7 +877,7 @@ class notification {
      * @param stdclass $user
      * @param \context $context
      * @param array $notificationoverrides
-     * @return array Basic details to send notification.
+     * @return stdclass Basic details to send notification.
      */
     public function generate_notification_details($moddata, $user, $context, $notificationoverrides=[]) {
 
@@ -1000,7 +1012,7 @@ class notification {
     }
 
     /**
-     * Get the list of modules data for the placholders.
+     * Get the list of modules data for the placholders. includes the metadata fields.
      *
      * @param array $modules List of modules.
      * @return array

@@ -23,6 +23,9 @@
  */
 defined('MOODLE_INTERNAL') || die('No direct access');
 
+
+use mod_pulse\automation\helper;
+
 /**
  * Filter for notification content placeholders.
  */
@@ -93,6 +96,13 @@ class pulse_email_vars {
     protected $blank = "[blank]";
 
     /**
+     * Course context.
+     *
+     * @var \context
+     */
+    protected $coursecontext = null;
+
+    /**
      * Sets up and retrieves the API objects.
      *
      * @param  mixed $user User data record
@@ -112,6 +122,9 @@ class pulse_email_vars {
         $this->mod = $pulse; // Auomation templates pulse is used as module.
 
         $this->course =& $course;
+        // Course context.
+        $this->coursecontext = \context_course::instance($this->course->id);
+
         if (!empty($course->id)) {
             $this->course->url = new moodle_url($wwwroot .'/course/view.php', array('id' => $this->course->id));
         }
@@ -169,8 +182,12 @@ class pulse_email_vars {
 
         $result = array_merge($result, self::session_fields());
 
+        // Traning data fields.
+        $result = array_merge($result, self::training_data_fields());
+
         // List of methods which doesn't used as placeholders.
-        $novars = ['get_user_enrolment', 'user_profile_fields', 'course_fields', 'module_meta_fields', 'session_fields'];
+        $novars = ['get_user_enrolment', 'user_profile_fields', 'course_fields',
+            'module_meta_fields', 'session_fields', 'training_data_fields', 'training'];
 
         // Add all methods of this class that are ok2call to the $result array as well.
         // This means you can add extra methods to this class to cope with values that don't fit in objects mentioned above.
@@ -199,7 +216,9 @@ class pulse_email_vars {
                 $object = strtolower($matches[1]);
                 $property = strtolower($matches[2]);
 
-                if ($this->$object == null) {
+                if (method_exists($this, $object)) {
+                    return $this->$object($property); // Call the method.
+                } else if ($this->$object == null) {
                     return $this->blank;
                 }
 
@@ -279,7 +298,8 @@ class pulse_email_vars {
      * @return string
      */
     public function courseprogress() {
-        return \core_completion\progress::get_course_progress_percentage($this->course, $this->user->id);
+        $progress = \core_completion\progress::get_course_progress_percentage($this->course, $this->user->id);
+        return $progress .'%';
     }
 
     /**
@@ -291,7 +311,7 @@ class pulse_email_vars {
         global $DB;
 
         $completion = new \completion_info($this->course->id);
-        $coursecontext = \context_course::instance($this->course->id);
+        $coursecontext = $this->coursecontext ?? \context_course::instance($this->course->id);
 
         if ($completion->is_course_complete($this->user->id)) {
             return get_string('completed');
@@ -332,6 +352,19 @@ class pulse_email_vars {
             ];
         }
         return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
+    }
+
+    /**
+     * Fetch the traning data.
+     *
+     * @param string $key
+     * @return string
+     */
+    public function training($key) {
+
+        $data = helper::create()->timemanagement_details($key, $this->course, $this->user->id, $this->coursecontext, $this->pulse);
+
+        return $data ?? '';
     }
 
     /**
@@ -460,13 +493,23 @@ class pulse_email_vars {
         require_once($CFG->dirroot.'/mod/facetoface/lib.php');
 
         $fields = [
-            'discountcode', 'details', 'capacity', 'normalcost', 'discountcost', 'starttime', 'startdate', 'enddate', 'endtime'
+            'discountcode', 'details', 'capacity', 'normalcost', 'discountcost', 'starttime', 'startdate', 'enddate', 'endtime',
+            'link', 'type'
         ];
         $customfields = facetoface_get_session_customfields();
         foreach ($customfields as $field) {
             $fields[] = 'customfield_' . $field->shortname;
         }
         return array_map(fn($field) => 'Mod_session_'.$field, $fields);
+    }
+
+    /**
+     * Traning fields. Timemanagement ltools support.
+     *
+     * @return string
+     */
+    public static function training_data_fields() {
+        return ['Traning_Eventdates', 'Training_Coursedue', 'Training_Activityduedate', 'Training_Upcomingmods'];
     }
 
 }

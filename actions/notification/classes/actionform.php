@@ -31,6 +31,7 @@ use DatePeriod;
 use mod_pulse\automation\helper;
 use pulseaction_notification\notification;
 use pulseaction_notification\schedule;
+use pulseaction_notification\task\notify_users;
 
 /**
  * Notification action form, contains important method and basic plugin details.
@@ -219,10 +220,16 @@ class actionform extends \mod_pulse\automation\action_base {
     public function trigger_action($instancedata, $userid, $expectedtime=null, $newuser=false) {
 
         $notification = notification::instance($instancedata->pulsenotification_id);
-        $notificationinstance = helper::filter_record_byprefix($instancedata, $this->config_shortname());
+        $notificationinstance = (object) helper::filter_record_byprefix($instancedata, $this->config_shortname());
 
         $notification->set_notification_data($notificationinstance, $instancedata);
 
+        // Find the suppress conditions are reached.
+        $course = $instancedata->course;
+        $suppressreached = notify_users::is_suppress_reached($notificationinstance, $userid, $course, null);
+        if ($suppressreached) { // Suppress reached not need to setup new schedules.
+            return '';
+        }
         // Create a schedule for user. This method verify the user activity completion before creating schedules.
         $notification->create_schedule_foruser($userid, '', null, $expectedtime ?? null, $newuser);
 

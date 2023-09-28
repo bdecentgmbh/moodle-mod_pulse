@@ -131,7 +131,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('automation', 'pulse'));
 
 // Show smart menus description.
-echo get_string('autotemplates_desc', 'pulse');
+echo get_string('autoinstance_desc', 'pulse');
 
 // Prepare 'Create smart menu' button. // TODO Review.
 $createbutton = $OUTPUT->box_start();

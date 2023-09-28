@@ -145,8 +145,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
                 // Remove the schedule only if all the activites are completed.
                 $condition->trigger_instance($notification->instanceid, $userid);
             }
-            return true;
+
         }
+        return true;
     }
 
 
@@ -161,11 +162,18 @@ class conditionform extends \mod_pulse\automation\condition_base {
     public static function get_acitivty_notifications($id) {
         global $DB;
 
-        $like = $DB->sql_like('additional', ':value');
-        $activitylike = $DB->sql_like('triggercondition', ':activity');
-        $sql = "SELECT * FROM {pulse_condition_overrides} WHERE status >= 1 AND $activitylike AND $like";
-        $params = ['activity' => 'activity', 'value' => '%"'.$id.'"%'];
+        $like = $DB->sql_like('co.additional', ':value'); // Like query to fetch the instances assigned this module.
+        $activitylike = $DB->sql_like('pat.triggerconditions', ':activity');
+
+        $sql = "SELECT *, ai.id as id, ai.id as instanceid FROM {pulse_autoinstances} ai
+            JOIN {pulse_autotemplates} pat ON pat.id = ai.templateid
+            LEFT JOIN {pulse_condition_overrides} co ON co.instanceid = ai.id AND co.triggercondition = 'activity'
+            WHERE $like AND (co.status > 0 OR $activitylike)";
+
+        $params = ['activity' => '%"activity"%', 'value' => '%"'.$id.'"%'];
+
         $records = $DB->get_records_sql($sql, $params);
+
         return $records;
     }
 

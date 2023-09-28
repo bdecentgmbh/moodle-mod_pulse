@@ -80,81 +80,86 @@ class notify_users extends \core\task\scheduled_task {
         // Get all the notification instance configures the suppress with this activity.
         $notifications = self::get_suppress_notifications($cmid);
 
-        self::is_suppress_reached($notifications, $userid, $course, $completion);
+        foreach ($notifications as $notification) {
+            // Update suppress reached for all queued shedules.
+            self::is_suppress_reached($notification, $userid, $course, $completion);
+        }
     }
 
     /**
      * Find the scheduled notification instance supress conditions are reached for the user.
      *
-     * @param array $notifications List of notification to verify the suppress.
+     * @param object $notification List of notification to verify the suppress.
      * @param int $userid User ID to verify for.
      * @param stdclass $course Instance Course record.
      * @param \completion_info $completion Instance course completion info.
      * @return bool True if the user is reached the suppress conditions for the instance. Otherwise False.
      */
-    public static function is_suppress_reached($notifications, $userid, $course, $completion=null) {
+    public static function is_suppress_reached($notification, $userid, $course, $completion=null) {
         global $DB;
 
         $completion = $completion ?: new \completion_info($course);
 
-        foreach ($notifications as $notification) {
-            // Get the notification suppres module ids.
-            $suppress = $notification->suppress ? json_decode($notification->suppress) : '';
+        // Get the notification suppres module ids.
+        $suppress = $notification->suppress && is_string($notification->suppress)
+            ? json_decode($notification->suppress) : $notification->suppress;
 
-            if (!empty($suppress)) {
-                $result = [];
-                // Find the completion status for all this suppress modules.
-                foreach ($suppress as $cmid) {
-                    if (method_exists($completion, 'get_completion_data')) {
-                        $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
-                    } else {
-                        $cminfo = get_coursemodule_from_id('', $cmid);
-                        $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);
-                    }
-                    if ($modulecompletion['completionstate'] == COMPLETION_COMPLETE) {
-                        $result[] = true;
-                    }
-                }
-
-                // If suppress operator set as all, check all the configures modules are completed.
-                if ($notification->suppressoperator == \mod_pulse\automation\action_base::OPERATOR_ALL) {
-                    // Remove the schedule only if all the activites are completed.
-                    if (count($result) == count($suppress)) {
-                        $remove = true;
-                    }
-
+        if (!empty($suppress)) {
+            $result = [];
+            // Find the completion status for all this suppress modules.
+            foreach ($suppress as $cmid) {
+                if (method_exists($completion, 'get_completion_data')) {
+                    $modulecompletion = $completion->get_completion_data($cmid, $userid, []);
                 } else {
-                    // If any one of the activity is completed then remove the schedule from the user.
-                    if (count($result) >= 1) {
-                        $remove = true;
-                    }
+                    $cminfo = get_coursemodule_from_id('', $cmid);
+                    $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);
+                }
+                if ($modulecompletion['completionstate'] == COMPLETION_COMPLETE) {
+                    $result[] = true;
+                }
+            }
+
+            // If suppress operator set as all, check all the configures modules are completed.
+            if ($notification->suppressoperator == \mod_pulse\automation\action_base::OPERATOR_ALL) {
+                // Remove the schedule only if all the activites are completed.
+                if (count($result) == count($suppress)) {
+                    $remove = true;
                 }
 
-                // Update the flag to user schedules as suppress reached, it prevents the update of the schedule on notification.
-                if (isset($remove) && $remove) {
-                    $remove = false; // Reset for the next notification test.
+            } else {
+                // If any one of the activity is completed then remove the schedule from the user.
+                if (count($result) >= 1) {
+                    $remove = true;
+                }
+            }
 
-                    $sql = "SELECT * FROM {pulseaction_notification_sch}
-                            WHERE instanceid = :instanceid AND userid = :userid
-                            AND (status = :disabledstatus  OR status = :queued)";
+            // Update the flag to user schedules as suppress reached, it prevents the update of the schedule on notification.
+            if (isset($remove) && $remove) {
+                $remove = false; // Reset for the next notification test.
 
-                    $params = [
-                        'instanceid' => $notification->instanceid, 'userid' => $userid,
-                        'disabledstatus' => notification::STATUS_DISABLED, 'queued' => notification::STATUS_QUEUED
-                    ];
+                $sql = "SELECT * FROM {pulseaction_notification_sch}
+                        WHERE instanceid = :instanceid AND userid = :userid
+                        AND (status = :disabledstatus  OR status = :queued)";
 
-                    if ($record = $DB->get_record_sql($sql, $params)) {
+                $params = [
+                    'instanceid' => $notification->instanceid, 'userid' => $userid,
+                    'disabledstatus' => notification::STATUS_DISABLED, 'queued' => notification::STATUS_QUEUED
+                ];
+
+                if ($records = $DB->get_records_sql($sql, $params)) {
+                    foreach ($records as $record) {
                         $DB->set_field('pulseaction_notification_sch', 'suppressreached', notification::SUPPRESSREACHED,
                             ['id' => $record->id]
                         );
                     }
-
-                    $suppressreached[$notification->id] = notification::SUPPRESSREACHED;
                 }
+
+                return notification::SUPPRESSREACHED;
             }
 
-            return $suppressreached ?? false;
         }
+        return false;
+
     }
 
     /**

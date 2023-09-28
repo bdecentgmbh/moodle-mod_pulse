@@ -32,11 +32,15 @@ use moodle_url;
 use cm_info;
 use core_course_category;
 use stdclass;
+use context_course;
 
 /**
  * Commonly used method in pulse.
  */
 class helper {
+
+
+
 
     /**
      * Replace email template placeholders with dynamic datas.
@@ -585,5 +589,7 @@ class helper {
         }
         return $result;
     }
+
+
 
 }
