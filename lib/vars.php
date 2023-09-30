@@ -343,7 +343,7 @@ class pulse_email_vars {
     public function completionstatus() {
         global $DB;
 
-        $completion = new \completion_info($this->course->id);
+        $completion = new \completion_info($this->course);
         $coursecontext = $this->coursecontext ?? \context_course::instance($this->course->id);
 
         if ($completion->is_course_complete($this->user->id)) {

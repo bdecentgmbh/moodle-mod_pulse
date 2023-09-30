@@ -116,7 +116,7 @@ $PAGE->add_body_class('mod-pulse-automation-table');
 $PAGE->set_heading(format_string($course->fullname));
 
 $PAGE->navbar->add(get_string('mycourses', 'core'), new moodle_url('/course/index.php'));
-$PAGE->navbar->add(format_string($course->shortname), new moodle_url('/admin/category.php', array('category' => 'mod_pulse')));
+$PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', ['id' => $course->id]));
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/instances/list.php'));
 
 // Build automation templates table.
