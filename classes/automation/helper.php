@@ -24,6 +24,8 @@
 
 namespace mod_pulse\automation;
 
+use core_calendar\local\event\entities\event;
+use html_writer;
 use mod_pulse\plugininfo\pulseaction;
 use moodle_url;
 use single_button;
@@ -446,6 +448,20 @@ class helper {
 
         require_once($CFG->dirroot.'/enrol/locallib.php');
 
+        // Upcoming event dates.
+        if ($var == 'eventdates') {
+            $calendar = \calendar_information::create(time(), $course->id, null);
+            list($data, $template) = calendar_get_view($calendar, 'upcoming_mini');
+            $final = isset($data->events) ? array_map(function($event) {
+                $link = \html_writer::link($event->viewurl, $event->popupname);
+                $link .= '<br>'.$event->formattedtime;
+                return \html_writer::tag('li', $link);
+            } , $data->events) : [];
+
+            return $final ? \html_writer::tag('ul', implode('', $final)) : '';
+        }
+
+        // Other than eventdates all are need learning tools time management installed.
         if (!$this->timemanagement_installed()) {
             return '';
         }
@@ -480,10 +496,6 @@ class helper {
                 fn($mod) => \html_writer::link((new \moodle_url("/mod/$mod->modname/view.php", ['id' => $mod->id]))->out(false),
                     format_string($mod->name)),
                 array_values($mods)));
-        }
-
-        if ($var == 'eventdates') {
-            return '';
         }
 
         return '';

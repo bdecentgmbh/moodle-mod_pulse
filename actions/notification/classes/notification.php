@@ -801,6 +801,7 @@ class notification {
         }
 
         $finalcontent = $headercontent . $staticcontent . $footercontent;
+
         return format_text($finalcontent, FORMAT_HTML, ['noclean' => true, 'overflowdiv' => true]);
     }
 

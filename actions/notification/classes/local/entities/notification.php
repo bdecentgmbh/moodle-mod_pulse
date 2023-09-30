@@ -205,16 +205,16 @@ class notification extends base {
         $filters[] = (new filter(
             text::class,
             'automationinstance',
-            new lang_string('messagetype', 'pulseaction_notification'),
+            new lang_string('automationinstance', 'pulseaction_notification'),
             $this->get_entity_name(),
-            "IF ({$templatesinsalias}.title <> '', {$templatesinsalias}.title, {$templatesalias}.title)"
+            "{$templatesinsalias}.title"
         ));
 
         // Automation template.
         $filters[] = (new filter(
             text::class,
             'automationtemplate',
-            new lang_string('messagetype', 'pulseaction_notification'),
+            new lang_string('automationtemplate', 'pulseaction_notification'),
             $this->get_entity_name(),
             "{$templatesalias}.title"
         ));

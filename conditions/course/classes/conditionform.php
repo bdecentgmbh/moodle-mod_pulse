@@ -93,8 +93,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
         LEFT JOIN {pulse_condition_overrides} co ON co.instanceid = ai.id AND co.triggercondition = 'course'
         WHERE ai.courseid=:courseid AND (co.status > 0 OR $like)";
 
+        // Parameters.
         $params = ['courseid' => $courseid, 'value' => '%"course"%'];
-
+        // Fetch the list of notifications.
         $instances = $DB->get_records_sql($sql, $params);
 
         foreach ($instances as $key => $instance) {

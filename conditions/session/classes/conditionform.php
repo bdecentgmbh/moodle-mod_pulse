@@ -133,7 +133,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $completion = new \completion_info($course);
 
         // Get all the notification instance configures the suppress with this session.
-        $notifications = self::get_acitivty_notifications($cm->instance);
+        $notifications = self::get_session_notifications($cm->instance);
 
         foreach ($notifications as $notification) {
             // Get the notification suppres module ids.
@@ -145,8 +145,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
                 // Trigger all the instance for notifications.
                 $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
             }
-            return true;
         }
+
+        return true;
     }
 
     /**
@@ -157,14 +158,21 @@ class conditionform extends \mod_pulse\automation\condition_base {
      * @param int $id ID of the triggered method, Role or cohort id.
      * @return array
      */
-    public static function get_acitivty_notifications($id) {
+    public static function get_session_notifications($id) {
         global $DB;
 
-        $like = $DB->sql_like('additional', ':value');
-        $sessionlike = $DB->sql_like('triggercondition', ':session');
-        $sql = "SELECT * FROM {pulse_condition_overrides} WHERE status >= 1 AND $sessionlike AND $like";
-        $params = ['session' => 'session', 'value' => '%"'.$id.'"%'];
+        $like = $DB->sql_like('co.additional', ':value'); // Like query to fetch the instances assigned this module.
+        $sessionlike = $DB->sql_like('pat.triggerconditions', ':session');
+
+        $sql = "SELECT *, ai.id as id, ai.id as instanceid FROM {pulse_autoinstances} ai
+        JOIN {pulse_autotemplates} pat ON pat.id = ai.templateid
+        LEFT JOIN {pulse_condition_overrides} co ON co.instanceid = ai.id AND co.triggercondition = 'session'
+        WHERE $like AND (co.status > 0 OR $sessionlike)";
+        // Params.
+        $params = ['session' => '%"session"%', 'value' => '%"'.$id.'"%'];
+
         $records = $DB->get_records_sql($sql, $params);
+
         return $records;
     }
 

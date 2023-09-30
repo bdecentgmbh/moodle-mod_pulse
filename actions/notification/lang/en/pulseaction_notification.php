@@ -144,3 +144,6 @@ $string['coursehidden'] = 'Course is hidden from the students. <span> Please ena
 $string['noactiveusers'] = 'Course doesn\'t contain any active enrolments. <span> Please enroll users in the course.</span>';
 $string['coursenotstarted'] = 'Course has not started. <span> Please set the course start date to a date in the past.</span>';
 $string['courseenddatereached'] = 'Course has ended. <span> Please set the course end date to a date in the future or remove the end date.</span>';
+// ...Reports filter string.
+$string['automationinstance'] = 'Automation instance';
+$string['automationtemplate'] = 'Automation template';

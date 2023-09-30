@@ -78,10 +78,6 @@ class helper {
         // Get formatted name of the category.
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
-        // Convert the placeholders timeformat to user readable.
-        self::convert_varstime_format($course);
-        self::convert_varstime_format($user);
-        self::convert_varstime_format($mod);
 
         $vars = new pulse_email_vars($user, $course, $sender, $mod);
 
@@ -100,34 +96,6 @@ class helper {
             }
         }
         return [$subject, $templatetext];
-    }
-
-    /**
-     * Converts specific timestamp values in an array to user-readable time format.
-     *
-     * @param array $var The array containing timestamp values to be converted.
-     */
-    public static function convert_varstime_format(&$var) {
-        if (empty($var)) {
-            return;
-        }
-        // Update the timestamp to user readable time.
-        array_walk($var, function(&$value, $key) {
-            if (in_array(strtolower($key), ['timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
-                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime'])) {
-                $value = $value ? userdate($value) : '';
-            }
-            // Update the status to user readable strings.
-            if (in_array(strtolower($key), ['visible', 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'enablecompletion'])) {
-                $value = $value == 1 ? get_string('enabled', 'pulse') : get_string('disabled', 'pulse');
-            }
-
-            if (strtolower($key) == 'lang') {
-                // Get the list of translations.
-                $translations = get_string_manager()->get_list_of_translations();
-                $value = $translations[$value] ?? '';
-            }
-        });
     }
 
     /**

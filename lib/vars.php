@@ -103,6 +103,13 @@ class pulse_email_vars {
     protected $coursecontext = null;
 
     /**
+     * Course element without updateing its vars.
+     *
+     * @var stdclass
+     */
+    protected $orgcourse = null;
+
+    /**
      * Sets up and retrieves the API objects.
      *
      * @param  mixed $user User data record
@@ -114,14 +121,19 @@ class pulse_email_vars {
     public function __construct($user, $course, $sender, $pulse) {
         global $CFG;
 
+        self::convert_varstime_format($user);
         $this->user =& $user;
+
         $this->sender =& $sender;
         $wwwroot = $CFG->wwwroot;
         $this->pulse = $pulse;
 
+        self::convert_varstime_format($pulse);
         $this->mod = $pulse; // Auomation templates pulse is used as module.
 
-        $this->course =& $course;
+        $this->orgcourse = clone $course; // Store the course record without before update its format.
+        self::convert_varstime_format($course);
+        $this->course = $course;
         // Course context.
         $this->coursecontext = \context_course::instance($this->course->id);
 
@@ -142,7 +154,38 @@ class pulse_email_vars {
      * @return string
      **/
     private static function ok2call($methodname) {
-        return ($methodname != "vars" && $methodname != "__construct" && $methodname != "__get" && $methodname != "ok2call");
+        return ($methodname != "vars" && $methodname != "__construct" && $methodname != "__get"
+            && $methodname != "ok2call" && $methodname != "convert_varstime_format");
+    }
+
+    /**
+     * Converts specific timestamp values in an array to user-readable time format.
+     *
+     * @param stdclass $var The array containing timestamp values to be converted.
+     */
+    private static function convert_varstime_format(&$var) {
+        if (empty($var)) {
+            return;
+        }
+        // Update the timestamp to user readable time.
+        array_walk($var, function(&$value, $key) {
+            if (in_array(strtolower($key), ['timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
+                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime'])) {
+                $value = $value ? userdate($value) : '';
+            }
+            // Update the status to user readable strings.
+            if (in_array(strtolower($key), ['visible', 'groupmode', 'groupmodeforce', 'defaultgroupingid'])) {
+                $value = $value == 1 ? get_string('enabled', 'pulse') : get_string('disabled', 'pulse');
+            }
+
+            if (strtolower($key) == 'lang') {
+                // Get the list of translations.
+                $translations = get_string_manager()->get_list_of_translations();
+                $value = $translations[$value] ?? '';
+            }
+        });
+
+        $var = (object) $var;
     }
 
     /**
@@ -293,16 +336,6 @@ class pulse_email_vars {
     }
 
     /**
-     * Course progress.
-     *
-     * @return string
-     */
-    public function courseprogress() {
-        $progress = \core_completion\progress::get_course_progress_percentage($this->course, $this->user->id);
-        return $progress .'%';
-    }
-
-    /**
      * Completion status.
      *
      * @return string
@@ -339,7 +372,7 @@ class pulse_email_vars {
         }
         require_once($CFG->dirroot.'/enrol/locallib.php');
 
-        $enrolmanager = new course_enrolment_manager($PAGE, $this->course);
+        $enrolmanager = new course_enrolment_manager($PAGE, $this->orgcourse);
         $enrolments = $enrolmanager->get_user_enrolments($this->user->id);
 
         if (!empty($enrolments)) {
@@ -361,8 +394,14 @@ class pulse_email_vars {
      * @return string
      */
     public function training($key) {
+        // Course user progress in percentage.
+        if ($key == 'courseprogress') {
+            $progress = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
+            return round($progress) .'%';
+        }
 
-        $data = helper::create()->timemanagement_details($key, $this->course, $this->user->id, $this->coursecontext, $this->pulse);
+        $data = helper::create()->timemanagement_details(
+            $key, $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
 
         return $data ?? '';
     }
@@ -504,12 +543,15 @@ class pulse_email_vars {
     }
 
     /**
-     * Traning fields. Timemanagement ltools support.
+     * Training fields. Timemanagement ltools support.
      *
      * @return string
      */
     public static function training_data_fields() {
-        return ['Traning_Eventdates', 'Training_Coursedue', 'Training_Activityduedate', 'Training_Upcomingmods'];
+        return [
+            'Training_Eventdates', 'Training_Coursedue', 'Training_Activityduedate',
+            'Training_Upcomingmods', 'Training_Courseprogress'
+        ];
     }
 
 }
@@ -535,3 +577,4 @@ if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
         }
     }
 }
+
