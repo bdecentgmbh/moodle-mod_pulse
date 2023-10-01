@@ -525,12 +525,18 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->addHelpButton('pulsenotification_suppressoperator', 'suppressoperator', 'pulseaction_notification');
 
         $modules = [0 => get_string('none')];
-        $books = $modinfo->get_instances_of('book');
-        $pages = $modinfo->get_instances_of('page');
-        $list = array_merge($books, $pages);
-        foreach ($list as $page) {
-            $modules[$page->id] = $page->get_formatted_name();
+        $list = $modinfo->get_instances();
+        $contentmods = [];
+        foreach ($list as $modname => $mods) {
+            foreach ($mods as $mod) {
+                $modules[$mod->id] = $mod->get_formatted_name();
+                if ($mod->modname == 'page' || $mod->modname == 'book') {
+                    $contentmods[] = $mod->id;
+                }
+            }
         }
+        // PAGE modules in this course.
+        $pages = $modinfo->get_instances_of('page');
 
         $dynamic = $mform->createElement('select', 'pulsenotification_dynamiccontent',
             get_string('dynamiccontent', 'pulseaction_notification'), $modules);
@@ -584,7 +590,7 @@ class actionform extends \mod_pulse\automation\action_base {
         asort($mform->_elementIndex);
 
         $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'updateChapter',
-            ['contextid' => $PAGE->context->id]
+            ['contextid' => $PAGE->context->id, 'contentmods' => $contentmods]
         );
     }
 

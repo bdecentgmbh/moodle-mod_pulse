@@ -8,13 +8,11 @@ Feature: Pulse automation templates
       | name  | category | idnumber |
       | Cat 1 | 0        | CAT1     |
       | Cat 2 | 0        | CAT2     |
-      | Cat 3 | CAT1     | CAT3     |
     And the following "course" exist:
       | fullname    | shortname | category |
       | Course 1    | C1        | 0        |
       | Course 2    | C2        | CAT1     |
       | Course 3    | C3        | CAT2     |
-      | Course 4    | C4        | CAT3     |
     And the following "users" exist:
       | username | firstname | lastname | email |
       | student1 | student | User 1 | student1@test.com |

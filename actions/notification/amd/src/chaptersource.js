@@ -130,12 +130,34 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
             }).fail(failure);
         },
 
-        updateChapter: function() {
+        updateChapter: function(ctxID, contentMods) {
 
             const SELECTORS = {
                 chaperType: "#id_pulsenotification_contenttype",
                 mod: "#id_pulsenotification_dynamiccontent"
             };
+
+            // Disable the content type option for modules other than book and page.
+            if (contentMods !== null) {
+                var type = document.querySelector(SELECTORS.chaperType);
+                document.querySelector(SELECTORS.mod).addEventListener("change", (e) => {
+                    var target = e.currentTarget;
+                    var selected = target.value;
+                    if (contentMods.includes(selected.toString())) {
+                        Array.prototype.find.call(type.options, function(cmid) {
+                            if (cmid.value == '2') {
+                                cmid.disabled = false;
+                            }
+                        });
+                    } else {
+                        Array.prototype.find.call(type.options, function(cmid) {
+                            if (cmid.value == '2') {
+                                cmid.disabled = true;
+                            }
+                        });
+                    }
+                });
+            }
 
             document.querySelector(SELECTORS.chaperType).addEventListener("change", () => resetChapter());
             document.querySelector(SELECTORS.mod).addEventListener("change", () => resetChapter());

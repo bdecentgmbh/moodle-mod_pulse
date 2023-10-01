@@ -829,7 +829,7 @@ class notification {
             return '';
         }
 
-        if ($contenttype == self::DYNAMIC_CONTENT) {
+        if ($contenttype == self::DYNAMIC_CONTENT && in_array($cm->modname, ['book', 'page'])) {
 
             if ($cm->modname == 'book') {
                 $chapter = $DB->get_record('book_chapters', ['id' => $chapterid, 'bookid' => $cm->instance]);
@@ -838,7 +838,7 @@ class notification {
 
                 $content = format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true]);
                 $link = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $chapterid]);
-            } else {
+            } else if ($cm->modname == 'page') {
                 $page = $DB->get_record('page', array('id' => $cm->instance), '*', MUST_EXIST);
 
                 $content = file_rewrite_pluginfile_urls(
