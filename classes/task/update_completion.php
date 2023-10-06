@@ -65,7 +65,7 @@ class update_completion extends \core\task\scheduled_task {
 
         pulse_mtrace('Fetching pulse instance list - MOD-Pulse INIT');
 
-        $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
+        $rolesql = "SELECT rc.id, rc.roleid FROM {role_capabilities} rc
                 JOIN {capabilities} cap ON rc.capability = cap.name
                 JOIN {context} ctx on rc.contextid = ctx.id
                 WHERE rc.capability = :capability ";

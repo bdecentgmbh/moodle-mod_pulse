@@ -201,7 +201,7 @@ class sendinvitation extends \core\task\adhoc_task {
      */
     public static function get_sender($courseid) {
         global $DB;
-        $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
+        $rolesql = "SELECT rc.id, rc.roleid FROM {role_capabilities} rc
         JOIN {capabilities} cap ON rc.capability = cap.name
         JOIN {context} ctx on rc.contextid = ctx.id
         WHERE rc.capability = :capability ";
