@@ -177,8 +177,9 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, null, null, 'id');
         $table->add_field('triggercondition', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null, 'instanceid');
         $table->add_field('status', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'triggercondition');
+        $table->add_field('upcomingtime', XMLDB_TYPE_INTEGER, '18', null, null, null, null, 'status');
         $table->add_field('additional', XMLDB_TYPE_TEXT, null, null, null, null, null, 'status');
-        $table->add_field('isoverriden', XMLDB_TYPE_INTEGER, '2', null, null, null, '1', 'additional');
+        $table->add_field('isoverridden', XMLDB_TYPE_INTEGER, '8', null, null, null, '1', 'additional');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('unique', XMLDB_KEY_UNIQUE, array('instanceid', 'triggercondition'));
 
@@ -231,6 +232,26 @@ function xmldb_pulse_upgrade($oldversion) {
 
         upgrade_mod_savepoint(true, 2023051830, 'pulse');
     }
+
+    if ($oldversion < 2023100701) {
+        // Auto templates instance.
+        $instable = new xmldb_table('pulse_condition_overrides');
+        $reference = new xmldb_field('isoverriden', XMLDB_TYPE_INTEGER, '8', null, null, null, '1');
+        // Verify field exists.
+        if ($dbman->field_exists($instable, $reference)) {
+            // Change the field.
+            $dbman->rename_field($instable, $reference, 'isoverridden');
+        }
+
+        // Upcoming time.
+        $upcomingtime = new xmldb_field('upcomingtime', XMLDB_TYPE_INTEGER, '18', null, null, null, null, 'status');
+        if (!$dbman->field_exists($instable, $upcomingtime)) {
+            $dbman->add_field($instable, $upcomingtime);
+        }
+
+        upgrade_mod_savepoint(true, 2023100701, 'pulse');
+    }
+
 
     return true;
 }

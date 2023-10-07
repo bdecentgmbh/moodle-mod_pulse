@@ -138,7 +138,7 @@
         <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="upcomingtime" TYPE="int" LENGTH="18" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="additional" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="isoverridden" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="isoverridden" TYPE="int" LENGTH="8" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>
