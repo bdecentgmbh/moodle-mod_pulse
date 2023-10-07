@@ -119,12 +119,21 @@ class sendinvitation extends \core\task\adhoc_task {
                     // Rewrite the plugin file placeholders in the email text.
                     $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
                         $context->id, 'mod_pulse', $filearea, 0);
+
                     // Set current student as user, filtercodes plugin uses current User data.
                     \core\session\manager::set_user($student);
+                    if (isset($student->lang)) {
+                        $oldforcelang = force_current_language($student->lang); // Force the session lang to user lang.
+                    }
                     // Format filter supports. filter the enabled filters.
+                    $subject = format_text($subject, FORMAT_HTML);
                     $messagehtml = format_text($messagehtml, FORMAT_HTML);
-
                     $messageplain = html_to_text($messagehtml); // Plain text.
+                    // After format the message and subject return back to previous lang.
+                    if (isset($oldforcelang)) {
+                        force_current_language($oldforcelang);
+                    }
+
                     // Send message to user.
                     pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
 
