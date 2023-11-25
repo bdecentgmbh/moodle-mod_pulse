@@ -58,7 +58,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $completion = new \completion_info(get_course($courseid));
         $activities = $completion->get_activities();
         array_walk($activities, function(&$value) {
-            $value = $value->name;
+            $value = format_string($value->name);
         });
 
         $modules = $mform->addElement('autocomplete', 'condition[activity][modules]',

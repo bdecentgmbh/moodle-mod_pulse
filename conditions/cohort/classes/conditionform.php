@@ -59,7 +59,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $cohorts = $cohorts['cohorts'];
 
         array_walk($cohorts, function(&$value) {
-            $value = $value->name;
+            $value = format_string($value->name);
         });
 
         // TODO: double check all the config names and help icons.

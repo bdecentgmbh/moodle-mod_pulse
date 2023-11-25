@@ -504,7 +504,7 @@ class actionform extends \mod_pulse\automation\action_base {
         $completion = new \completion_info(get_course($courseid));
         $activities = $completion->get_activities();
         array_walk($activities, function(&$value) {
-            $value = $value->name;
+            $value = format_string($value->name);
         });
 
         $suppress = $mform->createElement('autocomplete', 'pulsenotification_suppress',

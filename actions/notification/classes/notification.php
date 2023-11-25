@@ -716,9 +716,10 @@ class notification {
      *
      * @param array $roles Role ids to fetch
      * @param \context $context
+     * @param int $childuserid
      * @return array List of the users.
      */
-    protected function get_users_withroles(array $roles, $context) {
+    protected function get_users_withroles(array $roles, $context, $childuserid=null) {
         global $DB;
 
         // TODO: Cache the role users.
@@ -732,8 +733,17 @@ class notification {
         $rolesql = "SELECT DISTINCT u.id, u.*, ra.roleid FROM {role_assignments} ra
         JOIN {user} u ON u.id = ra.userid
         JOIN {role} r ON ra.roleid = r.id
-        LEFT JOIN {role_names} rn ON (rn.contextid = :ctxid AND rn.roleid = r.id)
-        WHERE (ra.contextid = :ctxid2 ) AND ra.roleid $insql ORDER BY u.id";
+        LEFT JOIN {role_names} rn ON (rn.contextid = :ctxid AND rn.roleid = r.id) ";
+
+        // Fetch the parent users related to the child user.
+        $childcontext = '';
+        if ($childuserid) {
+            $rolesql .= " JOIN {context} uctx ON uctx.instanceid=:childuserid AND contextlevel=" . CONTEXT_USER . " ";
+            $childcontext = " OR ra.contextid = uctx.id ";
+            $inparams['childuserid'] = $childuserid;
+        }
+
+        $rolesql .= " WHERE (ra.contextid = :ctxid2 $childcontext) AND ra.roleid $insql ORDER BY u.id";
 
         $params = array('ctxid' => $context->id, 'ctxid2' => $context->id) + $inparams;
 
@@ -881,11 +891,13 @@ class notification {
      * @return stdclass Basic details to send notification.
      */
     public function generate_notification_details($moddata, $user, $context, $notificationoverrides=[]) {
+        global $USER;
 
         // Find the cc and bcc users for this schedule.
         $roles = array_merge($this->notificationdata->cc, $this->notificationdata->bcc);
+
         // Get the users for this bcc and cc roles.
-        $roleusers = $this->get_users_withroles($roles, $context);
+        $roleusers = $this->get_users_withroles($roles, $context, $user->id);
 
         // Filter the cc users for this instance.
         $cc = $this->notificationdata->cc;
@@ -899,6 +911,15 @@ class notification {
             return in_array($value->roleid, $bcc);
         });
 
+        // Set the recepient as session user for format content.
+        $olduser = $USER;
+        \core\session\manager::set_user($user);
+
+        // Use the current user language to filter content.
+        if ($user->lang != current_language()) {
+            $oldforcelang = force_current_language($user->lang);
+        }
+
         $result = [
             'recepient' => (object) $user,
             'cc'        => implode(',', array_column($ccusers, 'email')),
@@ -906,6 +927,14 @@ class notification {
             'subject'   => format_string($this->notificationdata->subject),
             'content'   => $this->build_notification_content($moddata, $context, $notificationoverrides),
         ];
+
+        // After format the message and subject return back to previous lang.
+        if (isset($oldforcelang)) {
+            force_current_language($oldforcelang);
+            unset($oldforcelang);
+        }
+        // Return to normal current session user.
+        \core\session\manager::set_user($olduser);
 
         return (object) $result;
     }

@@ -307,22 +307,34 @@ class instances extends templates {
      * @return moodle_url The URL to the report.
      */
     public function get_report_url() {
+
+        $reportid = self::get_reportid();
+        $url = new moodle_url('/reportbuilder/view.php', ['id' => $reportid, 'instanceid' => $this->instanceid]);
+        return $url;
+    }
+
+    /**
+     * Get the id of the instance report builder.
+     *
+     * @return int
+     */
+    public static function get_reportid() {
         global $DB;
 
         $data = [
             'source' => 'pulseaction_notification\reportbuilder\datasource\notification',
             'component' => 'pulseaction_notification'
         ];
+
         if ($report = $DB->get_record('reportbuilder_report', $data)) {
-            $url = new moodle_url('/reportbuilder/view.php', ['id' => $report->id, 'instanceid' => $this->instanceid]);
+            return $report->id;
         } else {
             $data['name'] = get_string('automationreportname', 'pulse');
             $instance = reporthelper::create_report((object) $data, (bool) 1);
-            $id = $instance->get('id');
-            $url = new moodle_url('/reportbuilder/view.php', ['id' => $id, 'instanceid' => $this->instanceid]);
+            $reportid = $instance->get('id');
         }
 
-        return $url;
+        return $reportid;
     }
 
     /**

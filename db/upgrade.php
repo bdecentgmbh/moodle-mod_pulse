@@ -252,6 +252,5 @@ function xmldb_pulse_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023100701, 'pulse');
     }
 
-
     return true;
 }

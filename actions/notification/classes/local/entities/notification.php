@@ -131,6 +131,15 @@ class notification extends base {
             return userdate($value);
         });
 
+        // Instance id.
+        $columns[] = (new column(
+            'instanceid',
+            new lang_string('instanceid', 'pulseaction_notification'),
+            $this->get_entity_name()
+        ))
+        ->set_is_sortable(true)
+        ->add_field("{$notificationschalias}.instanceid");
+
         // Message type field.
         $columns[] = (new column(
             'messagetype',

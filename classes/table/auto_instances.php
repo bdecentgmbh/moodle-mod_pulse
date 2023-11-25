@@ -31,6 +31,8 @@ require_once($CFG->dirroot.'/lib/tablelib.php');
 use table_sql;
 use moodle_url;
 use html_writer;
+use core_reportbuilder\manager;
+use core_reportbuilder\permission;
 
 /**
  * Automation instances table handler.
@@ -198,11 +200,13 @@ class auto_instances extends table_sql {
         );
 
         // Instance reports builder view.
-        $actions[] = array(
-            'url' => new \moodle_url($listurl, ['action' => 'report']),
-            'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
-            'attributes' => array('class' => 'action-report', 'target' => '_blank')
-        );
+        if ($this->can_view_reports()) {
+            $actions[] = array(
+                'url' => new \moodle_url($listurl, ['action' => 'report']),
+                'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
+                'attributes' => array('class' => 'action-report', 'target' => '_blank')
+            );
+        }
 
         // Show/Hide.
         $checked = ($row->status) ? ['checked' => 'checked'] : [];
@@ -240,6 +244,18 @@ class auto_instances extends table_sql {
             );
         }
         return html_writer::span(join('', $actionshtml), 'menu-item-actions item-actions mr-0');
+    }
+
+    /**
+     * Verify the current user can able to view the reports.
+     *
+     * @return bool
+     */
+    public function can_view_reports() {
+        // Create template instance. Actions are performed in template instance.
+        $reportid = \mod_pulse\automation\instances::get_reportid();
+        $report = manager::get_report_from_id($reportid);
+        return permission::can_view_report($report->get_report_persistent());
     }
 
 }

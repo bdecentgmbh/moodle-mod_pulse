@@ -641,7 +641,6 @@ function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
     }
 }
 
-
 /**
  * Add the link in course secondary navigation menu to open the automation instance list page.
  *

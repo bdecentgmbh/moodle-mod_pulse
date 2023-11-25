@@ -69,7 +69,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $list = [];
         $activities = get_all_instances_in_courses(static::MODNAME, [$courseid => $courseid]);
         array_map(function($value) use (&$list) {
-            $list[$value->id] = $value->name;
+            $list[$value->id] = format_string($value->name);
         }, $activities);
 
         $mform->addElement('autocomplete', 'condition[session][modules]',

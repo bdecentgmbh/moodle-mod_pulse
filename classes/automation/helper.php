@@ -271,7 +271,7 @@ class helper {
      * @return string Form with templates list and manage templates button.
      */
     public static function get_addtemplate_instance($courseid) {
-        global $OUTPUT, $CFG;
+        global $OUTPUT, $CFG, $PAGE;
 
         require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
 
@@ -286,9 +286,13 @@ class helper {
         }
 
         // Button to access the manage the automation templates list.
-        $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php');
-        $html .= \html_writer::link($manageurl->out(true),
-            get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary', 'target' => '_blank']);
+        // Verify the user capability.
+        $context = $PAGE->context;
+        if (has_capability('mod/pulse:viewtemplateslist', $context)) {
+            $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php');
+            $html .= \html_writer::link($manageurl->out(true),
+                get_string('managetemplate', 'pulse'), ['class' => 'btn btn-primary', 'target' => '_blank']);
+        }
 
         $tdir = optional_param('tdir', null, PARAM_INT);
         $tdir = ($tdir == SORT_ASC) ? SORT_DESC : SORT_ASC;
@@ -297,6 +301,7 @@ class helper {
         $manageurl = new moodle_url('/mod/pulse/automation/instances/list.php', [
             'courseid' => $courseid, 'tsort' => 'idnumber', 'tdir' => $tdir
         ]);
+
         if (!empty($templates)) {
             $html .= \html_writer::link($manageurl->out(false),
                 $dirimage.get_string('sort'), ['class' => 'sort-autotemplates btn btn-primary ml-2']);

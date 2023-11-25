@@ -253,6 +253,9 @@
     display: inline-block;
     margin-right: 10px;
 }
+.mod-pulse-automation-table table.generaltable tbody td .menu-item-actions.item-actions .pulse-instance-status-switch .custom-control-label {
+    display: block;
+}
 .mod-pulse-automation-table .automation-instruction {
     margin-top: 70px;
 }

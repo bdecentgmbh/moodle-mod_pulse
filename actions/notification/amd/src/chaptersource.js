@@ -175,6 +175,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
         },
 
         previewNotification: function(contextid) {
+
             var btn = document.querySelector('[name="pulsenotification_preview"]');
 
             if (btn === null) {
@@ -188,7 +189,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
 
         reportModal: function(contextID) {
             // View content.
-            var btn = document.querySelectorAll('[data-target="view-content"]');
+            /* var btn = document.querySelectorAll('[data-target="view-content"]');
 
             if (btn === null) {
                 return;
@@ -205,6 +206,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/
                     notificationModal(contextID, instance, userid); // Notification modal.
                 });
             });
+ */
+
+            document.addEventListener('click', function(e) {
+
+                if (e.target.closest('[data-target="view-content"]') !== null) {
+
+                    var target = e.target.closest('a');
+
+                    var instance = target.dataset.instanceid;
+                    var userid = target.dataset.userid;
+
+                    notificationModal(contextID, instance, userid); // Notification modal.
+                }
+
+            })
         }
     };
 

@@ -49,7 +49,7 @@ class template_addinstance_form extends \moodleform {
         // List of templates to create instance.
         $templates = mod_pulse\automation\helper::get_templates_forinstance($courseid);
         if (!empty($templates)) {
-            $mform->addElement('select', 'templateid', '', $templates);
+            $mform->addElement('autocomplete', 'templateid', '', $templates);
         }
 
         $this->add_action_buttons(false, get_string('addtemplatebtn', 'pulse'));

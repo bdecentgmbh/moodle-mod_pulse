@@ -195,8 +195,9 @@ class schedule {
             $pulse = (object) ['course' => $this->course->id];
             // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
             // Send the notification to user.
-            $messagesend = email_to_user($detail->recepient, $sender, $subject,
-                $messageplain, $messagehtml, '', '', true, $sender->from ?? '');
+            $messagesend = \mod_pulse\helper::messagetouser(
+                $detail->recepient, $subject, $messageplain, $messagehtml, $pulse, $sender
+            );
 
             if ($messagesend) {
                 // Update the current time as lastrun.
@@ -406,25 +407,31 @@ class schedule {
      * @return mixed Returns either a string with the custom sender email, or an object representing the sender user.
      */
     protected function find_sender_user() {
+        global $CFG;
+
         // Find the sender for this schedule.
         if ($this->notificationdata->sender == notification::SENDERCUSTOM) {
             // Find the user from moodle for this custom email.
-            $emailuser = \core_user::get_user_by_email($this->notificationdata->senderemail);
+            $sender = \core_user::get_user_by_email($this->notificationdata->senderemail);
             // Use the custom sender email as the support user email.
-            $sender = $this->notificationdata->senderemail;
+            $senderemail = $this->notificationdata->senderemail;
 
             // SEnder is not found and is a custom email. then create dummy user data with custom email.
-            if (is_string($sender)) {
-                $replyto = $sender;
-                $expsender = explode('@', $sender);
+            if (empty($sender)) {
+                $replyto = $senderemail;
+                $expsender = explode('@', $senderemail);
+
                 $sender = (object) [
+                    'id' => $CFG->siteguest, // Send the notification as guest user.
+                    'email' => $senderemail,
                     'from' => $replyto,
-                    'firstname' => $expsender[0] ?? $sender, // Use the first part of the email as firstname of the user.
+                    'firstname' => $expsender[0] ?? $senderemail, // Use the first part of the email as firstname of the user.
                     'lastname' => '',
                     'firstnamephonetic' => '',
                     'lastnamephonetic' => '',
                     'middlename' => '',
                     'alternatename' => '',
+                    'maildisplay' => \core_user::MAILDISPLAY_EVERYONE
                 ];
             }
 

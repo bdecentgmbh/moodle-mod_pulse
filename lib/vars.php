@@ -577,4 +577,3 @@ if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
         }
     }
 }
-
