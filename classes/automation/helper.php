@@ -267,18 +267,16 @@ class helper {
     /**
      * Create instance from templates.
      *
+     * @param moodleform $form
      * @param int $courseid
      * @return string Form with templates list and manage templates button.
      */
-    public static function get_addtemplate_instance($courseid) {
+    public static function get_addtemplate_instance($form, $courseid) {
         global $OUTPUT, $CFG, $PAGE;
 
         require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
 
         // Form to add automation template as instance for the course.
-        $url = (new moodle_url('/mod/pulse/automation/instances/edit.php', ['course' => $courseid]))->out(false);
-        $form = new \template_addinstance_form($url, ['courseid' => $courseid], 'get');
-
         $html = \html_writer::start_tag('div', ['class' => 'template-add-form']);
         $templates = self::get_templates_forinstance($courseid);
         if (!empty($templates)) {

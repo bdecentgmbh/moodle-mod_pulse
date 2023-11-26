@@ -20,7 +20,7 @@ Feature: Activity trigger event.
       | student1 | C1     | student |
 
   @javascript
-  Scenario: Check the pluse condition activity trigger workflow.
+  Scenario: Check the pluse condition activity trigger workflow
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
       | Title     | WELCOME MESSAGE 01 |
@@ -33,7 +33,8 @@ Feature: Activity trigger event.
       | Trigger operator | All                 |
     And I am on "Course 1" course homepage
     And I follow "Automation"
-    And I set the field "templateid" to "WELCOME MESSAGE 01"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 01" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage   |
@@ -45,7 +46,8 @@ Feature: Activity trigger event.
     Then I should see "TestPage 01" in the "#fitem_id_condition_activity_modules .form-autocomplete-suggestions" "css_element"
     Then I should see "TestPage 02" in the "#fitem_id_condition_activity_modules .form-autocomplete-suggestions" "css_element"
     And I press "Save changes"
-    And I set the field "templateid" to "WELCOME MESSAGE 02"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 02" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage2   |

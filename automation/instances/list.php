@@ -26,6 +26,7 @@ use mod_pulse\automation\helper;
 
 // Require config.
 require(__DIR__.'/../../../../config.php');
+require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
 
 require_login();
 
@@ -62,6 +63,15 @@ require_capability('mod/pulse:addtemplateinstance', $context);
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $courseid]));
 $PAGE->set_course($course);
+
+// Add instance template form submitted.
+$instanceaddform = new \template_addinstance_form(null, ['courseid' => $courseid]);
+if ($data = $instanceaddform->get_data()) {
+    $url = (new moodle_url('/mod/pulse/automation/instances/edit.php',
+        ['courseid' => $courseid, 'templateid' => $data->templateid, 'sesskey' => sesskey()]))->out(false);
+
+    redirect($url);
+}
 
 // Process actions.
 if ($action !== null && confirm_sesskey()) {
@@ -135,7 +145,7 @@ echo get_string('autoinstance_desc', 'pulse');
 
 // Prepare 'Create smart menu' button. // TODO Review.
 $createbutton = $OUTPUT->box_start();
-$createbutton .= mod_pulse\automation\helper::get_addtemplate_instance($courseid);
+$createbutton .= mod_pulse\automation\helper::get_addtemplate_instance($instanceaddform, $courseid);
 $createbutton .= $OUTPUT->box_end();
 
 // If there aren't any smart menus yet.

@@ -42,7 +42,8 @@ Feature: Session trigger event.
       | Trigger operator | All                 |
     And I am on "Course 1" course homepage
     And I follow "Automation"
-    And I set the field "templateid" to "WELCOME MESSAGE 01"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 01" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage   |
@@ -52,7 +53,8 @@ Feature: Session trigger event.
     And I should see "Session module"
     Then I should see "FaceFace 01" in the "#fitem_id_condition_session_modules" "css_element"
     And I press "Save changes"
-    And I set the field "templateid" to "WELCOME MESSAGE 02"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 02" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage2   |

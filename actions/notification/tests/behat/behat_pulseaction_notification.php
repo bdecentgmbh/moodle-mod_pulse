@@ -71,7 +71,8 @@ class behat_pulseaction_notification extends behat_base {
      */
     public function i_create_pulsenotification_instance_with_general($title, $reference, TableNode $notificationdata) {
 
-        $this->execute('behat_forms::i_set_the_field_to', ["templateid", $title]);
+        $this->execute('behat_forms::i_open_the_autocomplete_suggestions_list', []);
+        $this->execute('behat_forms::i_click_on_item_in_the_autocomplete_list', [$title]);
         $this->execute("behat_general::i_click_on", ["Add automation instance", "button"]);
         $this->execute('behat_forms::i_set_the_field_to', ["Reference", $reference]);
         $this->execute("behat_general::i_click_on_in_the", ["Notification", "link", "#automation-tabs", "css_element"]);
@@ -88,7 +89,8 @@ class behat_pulseaction_notification extends behat_base {
      */
     public function i_set_pulsenotification_instance_with_general($title, TableNode $generaldata) {
 
-        $this->execute('behat_forms::i_set_the_field_to', ["templateid", $title]);
+        $this->execute('behat_forms::i_open_the_autocomplete_suggestions_list', []);
+        $this->execute('behat_forms::i_click_on_item_in_the_autocomplete_list', [$title]);
         $this->execute("behat_general::i_click_on", ["Add automation instance", "button"]);
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$generaldata]);
     }

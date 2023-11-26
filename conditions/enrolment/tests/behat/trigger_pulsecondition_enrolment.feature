@@ -31,7 +31,8 @@ Feature: Course Enrolment trigger event.
       | Trigger operator | All                 |
     And I am on "Course 1" course homepage
     And I follow "Automation"
-    And I set the field "templateid" to "WELCOME MESSAGE 01"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 01" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage   |
@@ -39,7 +40,8 @@ Feature: Course Enrolment trigger event.
     Then I should see "User enrolment"
     Then the field "User enrolment" matches value "All"
     And I press "Save changes"
-    And I set the field "templateid" to "WELCOME MESSAGE 02"
+    When I open the autocomplete suggestions list
+    And I click on "WELCOME MESSAGE 02" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
       | insreference | Welcomemessage2   |
