@@ -28,5 +28,5 @@ $plugin->component = 'mod_pulse';
 $plugin->version = 2023051801;
 $plugin->requires = 2020061500; // Requires Moodle 3.90.
 $plugin->release = 'v1.3';
-$plugin->maturity = MATURITY_RC;
+$plugin->maturity = MATURITY_STABLE;
 $plugin->supported = [39, 401];
