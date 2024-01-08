@@ -71,7 +71,7 @@ class notify_users extends \core\task\scheduled_task {
             return true;
         }
 
-        $rolesql = "SELECT  rc.roleid FROM {role_capabilities} rc
+        $rolesql = "SELECT rc.id, rc.roleid FROM {role_capabilities} rc
                 JOIN {capabilities} cap ON rc.capability = cap.name
                 JOIN {context} ctx on rc.contextid = ctx.id
                 WHERE rc.capability = :capability ";
@@ -88,7 +88,7 @@ class notify_users extends \core\task\scheduled_task {
             JOIN {modules} md ON md.id = cm.module
             JOIN {course} cu ON cu.id = nt.course
             RIGHT JOIN {context} ctx ON ctx.instanceid = cm.id and contextlevel = 70
-            WHERE md.name = 'pulse' AND cm.visible = 1 AND cu.visible = 1
+            WHERE md.name = 'pulse' AND cm.visible = 1 AND cu.visible = 1 AND nt.pulse = 1
             AND cu.startdate <= :startdate AND  (cu.enddate = 0 OR cu.enddate >= :enddate)";
 
         $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
@@ -129,19 +129,21 @@ class notify_users extends \core\task\scheduled_task {
             $usersql = "SELECT u.*
                     FROM {user} u
                     JOIN (SELECT DISTINCT eu1_u.id
-                    FROM {user} eu1_u
-                    JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
-                    JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
-                    JOIN (SELECT DISTINCT userid
-                            FROM {role_assignments}
-                            WHERE contextid $insql
-                            AND roleid $roleinsql GROUP BY userid
-                        ) ra ON ra.userid = eu1_u.id
-                WHERE 1 = 1 AND ej1_ue.status = 0
-                AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ?)
-                AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > ?)
-                AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0) je ON je.id = u.id
-                WHERE u.deleted = 0 AND u.suspended = 0 ORDER BY u.lastname, u.firstname, u.id";
+                        FROM {user} eu1_u
+                        JOIN {user_enrolments} ej1_ue ON ej1_ue.userid = eu1_u.id
+                        JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = ?)
+                        JOIN (SELECT DISTINCT userid
+                                FROM {role_assignments}
+                                WHERE contextid $insql
+                                AND roleid $roleinsql GROUP BY userid
+                            ) ra ON ra.userid = eu1_u.id
+                        WHERE 1 = 1 AND ej1_ue.status = 0
+                        AND (ej1_ue.timestart = 0 OR ej1_ue.timestart <= ?)
+                        AND (ej1_ue.timeend = 0 OR ej1_ue.timeend > ?)
+                        AND eu1_u.deleted = 0 AND eu1_u.id <> ? AND eu1_u.deleted = 0) je ON je.id = u.id
+                    WHERE u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (
+                        SELECT userid FROM {pulse_users} WHERE pulseid = ? AND status = 1
+                    ) ORDER BY u.lastname, u.firstname, u.id";
 
             $params[] = $course['id'];
             $params = array_merge($params, array_filter($inparams));
@@ -149,7 +151,9 @@ class notify_users extends \core\task\scheduled_task {
             $params[] = time();
             $params[] = time();
             $params[] = 1;
-            $students = $DB->get_records_sql($usersql, $params);
+            $params[] = $pulse['id'];
+            $limit = get_config('mod_pulse', 'schedulecount') ?: 100;
+            $students = $DB->get_records_sql($usersql, $params, 0, $limit);
 
             $courseid = $pulse['course'];
 
@@ -159,7 +163,10 @@ class notify_users extends \core\task\scheduled_task {
             $instance->context = (object) $context;
             $instance->cm = (object) $cm;
             $instance->students = $students;
-            self::pulse_set_notification_adhoc($instance);
+            // Students are available.
+            if (!empty($students)) {
+                self::pulse_set_notification_adhoc($instance);
+            }
         }
         pulse_mtrace('Pulse message sending completed....');
         return true;
