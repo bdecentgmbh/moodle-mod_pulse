@@ -35,7 +35,7 @@ Feature: Pulse appearance display modes
       | Display mode | Box         |
       | Box Type     | Success     |
       | Box Icon     | fa-clone    |
-    And I set the field "Send notification" to "0"
+    And I set the field "Send Pulse notification" to "0"
     And I press "Save and return to course"
     Then ".pulse-box" "css_element" should exist in the ".modtype_pulse" "css_element"
     And ".alert-success" "css_element" should exist in the ".pulse-box" "css_element"
@@ -57,7 +57,7 @@ Feature: Pulse appearance display modes
     And I follow "Expand all"
     And I set the following fields to these values:
       | CSS class | pulse-appearance-custom-class |
-    And I set the field "Send notification" to "0"
+    And I set the field "Send Pulse notification" to "0"
     And I press "Save and return to course"
     Then ".pulse-appearance-custom-class" "css_element" should exist in the "#section-1" "css_element"
     And I log out

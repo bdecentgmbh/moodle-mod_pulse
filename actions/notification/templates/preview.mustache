@@ -1,0 +1,17 @@
+<div class="notification-preview">
+    <div class="notification users b-1 mb-4">
+        {{#data.usersselector}}
+        <div class="row">
+            <div class="col-md-3">
+                {{#str}} users, core {{/str}}
+            </div>
+            <div class="col-md-9">
+                {{{data.usersselector}}}
+            </div>
+        </div>
+        {{/data.usersselector}}
+    </div>
+    <div class="notification-content">
+        {{{data.message}}}
+    </div>
+</div>

@@ -24,11 +24,23 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+$ADMIN->add('modsettings', new admin_category('modpulse', new lang_string('pluginname', 'mod_pulse')));
+$settings = new admin_settingpage('pulsegeneralsettings', get_string('generalsettings', 'pulse'), 'moodle/site:config', false);
+
 if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_heading('mod_pulse/general', '', get_string('configintro', 'pulse')));
-
     $settings->add(new admin_setting_configcheckbox('mod_pulse/detailedlog', get_string('showhide', 'pulse'),
             get_string('detailedlog', 'pulse'), false));
 
+    $settings->add(new admin_setting_configtext('mod_pulse/schedulecount', get_string('schedulecount', 'pulse'),
+    get_string('schedulecountdesc', 'pulse'), 500, PARAM_INT));
+
 }
+$ADMIN->add('modpulse', $settings);
+$settings = null; // Reset the settings.
+
+// Include the external page automation settings.
+$automation = new admin_externalpage('pulseautomation', get_string('autotemplates', 'pulse', null, true),
+    new moodle_url('/mod/pulse/automation/templates/list.php'), 'mod/pulse:viewtemplateslist');
+$ADMIN->add('modpulse', $automation);

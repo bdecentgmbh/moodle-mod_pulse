@@ -77,6 +77,45 @@ class eventobserver {
             $DB->delete_records_select('pulse_completion', $select, $inparams);
             $DB->delete_records_select('pulse_users', $select, $inparams);
         }
+
+        self::trigger_action_event('user_enrolment_deleted', $event);
+
         return true;
+    }
+
+    /**
+     * User enrolment trigger actions.
+     *
+     * @param [type] $event
+     * @return void
+     */
+    public static function user_enrolment_created($event) {
+        $userid = $event->relateduserid; // Unenrolled user id.
+        $courseid = $event->courseid;
+
+        $list = \mod_pulse\automation\helper::get_course_instances($courseid);
+        if (!empty($list)) {
+            foreach ($list as $instanceid => $instance) {
+                \mod_pulse\automation\instances::create($instanceid)->trigger_action($userid, null, true);
+            }
+        }
+    }
+
+    /**
+     * Trigger an action event for all instances in a course.
+     *
+     * @param string $method The method to trigger.
+     * @param stdClass $event The event object.
+     */
+    public static function trigger_action_event($method, $event) {
+
+        $courseid = $event->courseid;
+
+        $list = \mod_pulse\automation\helper::get_course_instances($courseid);
+        if (!empty($list)) {
+            foreach ($list as $instanceid => $instance) {
+                \mod_pulse\automation\instances::create($instanceid)->trigger_action_event($method, $event);
+            }
+        }
     }
 }

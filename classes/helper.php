@@ -30,12 +30,17 @@ use pulse_email_vars;
 use context_module;
 use moodle_url;
 use cm_info;
+use core_course_category;
 use stdclass;
+use context_course;
 
 /**
  * Commonly used method in pulse.
  */
 class helper {
+
+
+
 
     /**
      * Replace email template placeholders with dynamic datas.
@@ -50,9 +55,30 @@ class helper {
      */
     public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
         global $DB, $CFG;
+
+        // Include placholders handler and user profile library.
         require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+        require_once($CFG->dirroot.'/user/profile/lib.php');
+
+        // Load user profile field data.
+        $newuser = (object) ['id' => $user->id];
+        profile_load_data($newuser);
+        // Make the profile custom field data to separate element of the user object.
+        $newuserkeys = array_map(function($value) {
+            return str_replace('profile_field_', '', $value);
+        }, array_keys((array) $newuser));
+        $user->profilefield = (object) array_combine($newuserkeys, (array) $newuser);
+
+        $course = clone $course;
+        // Load course custom profuile fields.
+        $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
+
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
         $amethods = pulse_email_vars::vars(); // List of available placeholders.
+        // Get formatted name of the category.
+        $course->category = is_number($course->category)
+            ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
+
         $vars = new pulse_email_vars($user, $course, $sender, $mod);
 
         foreach ($amethods as $funcname) {
@@ -61,12 +87,12 @@ class helper {
             if (stripos($templatetext, $replacement) !== false) {
                 $val = $vars->$funcname;
                 // Placeholder found on the text, then replace with data.
-                $templatetext = str_replace($replacement, $val, $templatetext);
+                $templatetext = str_ireplace($replacement, $val, $templatetext);
             }
             // Replace message subject placeholder.
             if (stripos($subject, $replacement) !== false) {
                 $val = $vars->$funcname;
-                $subject = str_replace($replacement, $val, $subject);
+                $subject = str_ireplace($replacement, $val, $subject);
             }
         }
         return [$subject, $templatetext];
@@ -472,6 +498,10 @@ class helper {
      * @return void
      */
     public static function messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender=true) {
+        global $CFG;
+
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+
         $eventdata = new \core\message\message();
         $eventdata->name = 'mod_pulse';
         $eventdata->component = 'mod_pulse';
@@ -527,5 +557,7 @@ class helper {
         }
         return $result;
     }
+
+
 
 }

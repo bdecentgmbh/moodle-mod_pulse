@@ -15,12 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse instance libarary file. contains pro feature extended methods
+ * Pulse instance libarary file. Contains pro feature extended methods
  *
  * @package   mod_pulse
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+use core_user\output\myprofile\tree;
 
 defined( 'MOODLE_INTERNAL') || die(' No direct access ');
 
@@ -97,7 +98,6 @@ function pulse_update_instance($pulse) {
     $updates = $DB->update_record('pulse', $pulse);
     // Extend the updated module instance pro features.
     \mod_pulse\extendpro::pulse_extend_update_instance($pulse, $context);
-
     return $updates;
 }
 
@@ -268,7 +268,6 @@ function pulse_get_coursemodule_info($coursemodule) {
         $result->customdata['completionapprovalroles'] = $pulse->completionapprovalroles;
 
     }
-
     return $result;
 }
 
@@ -367,7 +366,6 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
             return COMPLETION_INCOMPLETE;
         }
     }
-
     return $status;
 }
 
@@ -431,8 +429,9 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     $course = $cm->get_course();
     $senderdata = \mod_pulse\task\sendinvitation::get_sender($course->id, $cm->context->id);
     $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
+    $user = clone $USER; // Prevent the cache issues.
     list($subject, $content) = \mod_pulse\helper::update_emailvars($content, '', $course,
-                            $USER, $pulse, $sender);
+                            $user, $pulse, $sender);
     $cm->set_content($content);
     if (isset($pulse->cssclass) && $pulse->cssclass) {
         $cm->set_extra_classes($pulse->cssclass);
@@ -503,7 +502,6 @@ function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
     $pageparams = $args['pageparams'];
     $external = new \mod_pulse\external();
     $result = $external->apply_presets($context->id, $formdata, $pageparams);
-
     return $result;
 }
 
@@ -536,7 +534,7 @@ function mod_pulse_output_fragment_completionbuttons($args) {
     $modules = json_decode($args['modules']);
     list($insql, $inparams) = $DB->get_in_or_equal($modules);
     $sql = "SELECT cm.*, nf.completionapproval, nf.completionapprovalroles, nf.completionself FROM {course_modules} cm
-    JOIN {modules} AS md ON md.id = cm.module
+    JOIN {modules} md ON md.id = cm.module
     JOIN {pulse} nf ON nf.id = cm.instance WHERE cm.id $insql AND md.name = 'pulse'";
     $records = $DB->get_records_sql($sql, $inparams);
 
@@ -595,6 +593,113 @@ function mod_pulse_output_fragment_completionbuttons($args) {
             }
         }
     }
-
     return json_encode($html);
+}
+
+
+/**
+ * Update the automation templates and instance title during edited directly on table using inplace editable.
+ *
+ * @param  string $itemtype Template or Instance which is edited.
+ * @param  int $itemid ID of the edited template or instance
+ * @param  string $newvalue New value to updated
+ * @return string Updated title of template or instance.
+ */
+function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $DB, $PAGE;
+    $context = \context_system::instance();
+    $PAGE->set_context($context);
+    require_login();
+
+    if ($itemtype === 'templatetitle') {
+
+        $record = $DB->get_record('pulse_autotemplates', array('id' => $itemid), '*', MUST_EXIST);
+        // Check permission of the user to update this item.
+        require_capability('mod/pulse:addtemplate', context_system::instance());
+        // Clean input and update the record.
+        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
+        $DB->update_record('pulse_autotemplates', array('id' => $itemid, 'title' => $newvalue));
+        // Prepare the element for the output.
+        $record->title = $newvalue;
+        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
+            format_string($record->title), $record->title, 'Edit template title',
+            'New value for ' . format_string($record->title));
+
+    } else if ($itemtype === 'instancetitle') {
+
+        $record = $DB->get_record('pulse_autotemplates_ins', array('instanceid' => $itemid), '*', MUST_EXIST);
+        // Check permission of the user to update this item.
+        require_capability('mod/pulse:addtemplateinstance', context_system::instance());
+        // Clean input and update the record.
+        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
+        $DB->update_record('pulse_autotemplates_ins', array('id' => $record->id, 'title' => $newvalue));
+        // Prepare the element for the output.
+        $record->title = $newvalue;
+        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
+            format_string($record->title), $record->title, 'Edit template title',
+            'New value for ' . format_string($record->title));
+    }
+}
+
+/**
+ * Add the link in course secondary navigation menu to open the automation instance list page.
+ *
+ * @param  navigation_node $navigation
+ * @param  stdClass $course
+ * @param  context_course $context
+ * @return void
+ */
+function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
+    global $PAGE;
+
+    $addnode = $context->contextlevel === CONTEXT_COURSE;
+    $addnode = $addnode && has_capability('gradereport/grader:view', $context); // TODO: Custom capability.
+    if ($addnode) {
+        $id = $context->instanceid;
+        $url = new moodle_url('/mod/pulse/automation/instances/list.php', [
+            'courseid' => $id,
+        ]);
+        $node = $navigation->create(get_string('automation', 'pulse'), $url, navigation_node::TYPE_SETTING, null, null);
+        $node->add_class('automation-templates');
+        $node->set_force_into_more_menu(false);
+        $node->set_show_in_secondary_navigation(true);
+        $node->key = 'automation-templates';
+        $navigation->add_node($node, 'gradebooksetup');
+        $PAGE->requires->js_call_amd('mod_pulse/automation', 'instanceMenuLink', []);
+    }
+}
+
+/**
+ * Defines pulse automation template list nodes for my profile navigation tree.
+ *
+ * @param \core_user\output\myprofile\tree $tree Tree object
+ * @param stdClass $user user object
+ * @param bool $iscurrentuser is the user viewing profile, current user ?
+ * @param stdClass $course course object
+ *
+ * @return bool
+ */
+function mod_pulse_myprofile_navigation(tree $tree, $user, $iscurrentuser, $course) {
+    global $USER;
+
+    // Get the pulse category.
+    if (!array_key_exists('pulse', $tree->__get('categories'))) {
+        // Create the category.
+        $categoryname = get_string('pluginname', 'mod_pulse');
+        $category = new core_user\output\myprofile\category('pulse', $categoryname, 'privacyandpolicies');
+        $tree->add_category($category);
+    } else {
+        // Get the existing category.
+        $category = $tree->__get('categories')['pulse'];
+    }
+
+    if ($iscurrentuser) {
+        $systemcontext = \context_system::instance();
+        if (has_capability('mod/pulse:viewtemplateslist', $systemcontext)) {
+            $automationtemplate = new moodle_url('/mod/pulse/automation/templates/list.php');
+            $pulsenode = new core_user\output\myprofile\node('pulse', 'pulse',
+                get_string('pulsetemplink', 'mod_pulse'), null, $automationtemplate);
+            $tree->add_node($pulsenode);
+        }
+    }
 }

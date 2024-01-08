@@ -1,0 +1,6 @@
+{
+    "plugintypes": {
+        "pulseaction": "mod\/pulse\/actions",
+        "pulsecondition": "mod\/pulse\/conditions"
+    }
+}
