@@ -94,12 +94,12 @@ class conditionform extends \mod_pulse\automation\condition_base {
         global $DB;
 
         // Get the notification suppres module ids.
-        $additional = $instancedata->conditions['session'] ?? [];
+        $additional = $instancedata->condition['session'] ?? [];
         $modules = $additional['modules'] ?? '';
         if (!empty($modules)) {
             $result = [];
 
-            $sql = "SELECT * FROM {facetoface_signups} f2f_su
+            $sql = "SELECT count(*) FROM {facetoface_signups} f2f_su
             JOIN {facetoface_sessions} f2f_ss ON f2f_ss.id = f2f_su.sessionid
             WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid";
 
