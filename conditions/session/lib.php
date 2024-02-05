@@ -46,7 +46,8 @@ function pulsecondition_session_extend_navigation_course(navigation_node $naviga
 
     // Verify the page is facetoface edit attendees page and the admin/teachers added user to signup from backend.
     // Trigger the pulse to get the list of new user signup in this session and create a schedule for those users.
-    if (optional_param('add', false, PARAM_BOOL) && confirm_sesskey()) {
+    $addselect = optional_param_array('addselect', array(), PARAM_INT);
+    if (optional_param('add', false, PARAM_BOOL) && !empty($addselect)) {
 
         if ($PAGE->pagetype == PULSE_SESSION_MOD_EDITPAGEID && $PAGE->cm->modname == PULSE_SESSION_MOD) {
             \pulsecondition_session\conditionform::prepare_session_signup_schedule($PAGE->cm->instance);
@@ -58,14 +59,15 @@ function pulsecondition_session_extend_navigation_course(navigation_node $naviga
         // Throw exception resets the PAGE urls, cm info, for the reason.
         // In this case the page is set as site index and the course is not frontpage but the current file path is facetoface.
         if ($PAGE->pagetype == 'site-index' && $PAGE->course->id != SITEID && $SCRIPT == '/mod/facetoface/editattendees.php') {
-            \pulsecondition_session\conditionform::prepare_session_signup_schedule($PAGE->cm->instance);
+            \pulsecondition_session\conditionform::prepare_session_signup_schedule();
             return true;
         }
     }
 
     // Verify the page is facetoface edit attendees page and the admin/teachers added user to signup from backend.
     // Trigger the pulse to get the list of new user signup in this session and create a schedule for those users.
-    if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
+    $removeusers = optional_param_array('removeselect', array(), PARAM_INT);
+    if (optional_param('remove', false, PARAM_BOOL) && !empty($removeusers)) {
 
         if ($PAGE->pagetype == PULSE_SESSION_MOD_EDITPAGEID && $PAGE->cm->modname == PULSE_SESSION_MOD) {
             \pulsecondition_session\conditionform::remove_session_signup_schedule($PAGE->cm->instance);
@@ -73,7 +75,7 @@ function pulsecondition_session_extend_navigation_course(navigation_node $naviga
         }
 
         if ($PAGE->pagetype == 'site-index' && $PAGE->course->id != SITEID && $SCRIPT == '/mod/facetoface/editattendees.php') {
-            \pulsecondition_session\conditionform::remove_session_signup_schedule($PAGE->cm->instance);
+            \pulsecondition_session\conditionform::remove_session_signup_schedule();
             return true;
         }
 

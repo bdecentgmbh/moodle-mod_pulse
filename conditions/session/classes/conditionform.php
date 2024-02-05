@@ -103,10 +103,12 @@ class conditionform extends \mod_pulse\automation\condition_base {
             JOIN {facetoface_sessions} f2f_ss ON f2f_ss.id = f2f_su.sessionid
             JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
             WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid
-            AND f2f_sts.superceded != 1 AND f2f_sts.statuscode = :booked";
+            AND f2f_sts.superceded != 1
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode";
 
             $existingsignup = $DB->count_records_sql($sql, array(
-                    'f2fid' => $modules, 'userid' => $userid, 'booked' => MDL_F2F_STATUS_BOOKED));
+                    'f2fid' => $modules, 'userid' => $userid,
+                    'code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW));
 
             return ($existingsignup) ? true : false;
         }
@@ -244,17 +246,21 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $session = facetoface_get_session($sessionid);
         $instanceid = $instanceid ?: $session->facetoface;
 
-        $potentialuserselector = new \facetoface_candidate_selector('addselect', array('sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        $potentialuserselector = new \facetoface_candidate_selector('addselect', array(
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        // Users to signup to the session.
         $addusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
 
         list($insql, $inparams) = $DB->get_in_or_equal($addusers, SQL_PARAMS_NAMED, 'f2fu');
-        $params = ['booked' => MDL_F2F_STATUS_BOOKED, 'sessionid' => $sessionid];
+        $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
 
         // Filter the users based on the signup status.
         $users = $DB->get_fieldset_sql("
             SELECT DISTINCT f2f_su.userid FROM {facetoface_signups} f2f_su
             JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
-            WHERE f2f_su.sessionid=:sessionid AND f2f_sts.statuscode = :booked AND f2f_su.userid $insql
+            WHERE f2f_su.sessionid=:sessionid
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode
+            AND f2f_su.userid $insql
             GROUP BY f2f_su.userid
         ", $params + $inparams);
 
@@ -279,6 +285,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             }
 
         }
+
     }
 
     /**
@@ -302,17 +309,20 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $session = facetoface_get_session($sessionid);
         $instanceid = $instanceid ?: $session->facetoface;
 
-        $potentialuserselector = new \facetoface_candidate_selector('removeselect', array('sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        $potentialuserselector = new \facetoface_candidate_selector('removeselect', array(
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
         $removeusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
 
         list($insql, $inparams) = $DB->get_in_or_equal($removeusers, SQL_PARAMS_NAMED, 'f2fu');
-        $params = ['booked' => MDL_F2F_STATUS_BOOKED, 'sessionid' => $sessionid];
+        $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
 
         // Filter the users based on the signup status.
         $users = $DB->get_fieldset_sql("
             SELECT DISTINCT f2f_su.userid FROM {facetoface_signups} f2f_su
             JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
-            WHERE f2f_su.sessionid=:sessionid AND f2f_sts.statuscode = :booked AND f2f_su.userid $insql
+            WHERE f2f_su.sessionid=:sessionid
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode
+            AND f2f_su.userid $insql
             GROUP BY f2f_su.userid
         ", $params + $inparams);
 
