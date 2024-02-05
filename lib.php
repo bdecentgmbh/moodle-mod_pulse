@@ -646,14 +646,14 @@ function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
  *
  * @param  navigation_node $navigation
  * @param  stdClass $course
- * @param  context_course $context
+ * @param  \context $context
  * @return void
  */
 function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
     global $PAGE;
 
     $addnode = $context->contextlevel === CONTEXT_COURSE;
-    $addnode = $addnode && has_capability('gradereport/grader:view', $context); // TODO: Custom capability.
+    $addnode = $addnode && has_capability('mod/pulse:addtemplateinstance', $context);
     if ($addnode) {
         $id = $context->instanceid;
         $url = new moodle_url('/mod/pulse/automation/instances/list.php', [
