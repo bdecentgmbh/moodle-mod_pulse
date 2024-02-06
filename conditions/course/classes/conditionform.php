@@ -84,7 +84,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         $data = $eventdata->get_data();
         $courseid = $data['courseid'];
-        $relateduserid = $data['userid'];
+        // Use the related user id, instead of userid.
+        // When the course is completed via cron then the event uses the admin user as event user.
+        $relateduserid = $data['relateduserid'];
 
         // Trigger the instances, this will trigger its related actions for this user.
         $like = $DB->sql_like('pat.triggerconditions', ':value');
@@ -99,7 +101,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $instances = $DB->get_records_sql($sql, $params);
 
         foreach ($instances as $key => $instance) {
-            // TODO: Condition status check.
             $condition = (new self())->trigger_instance($instance->instanceid, $relateduserid);
         }
 
