@@ -730,7 +730,7 @@ class notification {
         list($insql, $inparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'rle');
 
         // TODO: Define user fields, never get entire fields.
-        $rolesql = "SELECT u.*, ra.id, ra.roleid FROM {role_assignments} ra
+        $rolesql = "SELECT ra.id as assignid, u.*, ra.roleid FROM {role_assignments} ra
         JOIN {user} u ON u.id = ra.userid
         JOIN {role} r ON ra.roleid = r.id
         LEFT JOIN {role_names} rn ON (rn.contextid = :ctxid AND rn.roleid = r.id) ";
