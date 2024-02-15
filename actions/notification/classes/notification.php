@@ -922,8 +922,8 @@ class notification {
 
         $result = [
             'recepient' => (object) $user,
-            'cc'        => implode(',', array_column($ccusers, 'email')),
-            'bcc'       => implode(',', array_column($bccusers, 'email')),
+            'cc'        => array_map(fn($user) => [$user->email, fullname($user)], $ccusers),
+            'bcc'       => array_map(fn($user) => [$user->email, fullname($user)], $bccusers),
             'subject'   => format_string($this->notificationdata->subject),
             'content'   => $this->build_notification_content($moddata, $context, $notificationoverrides),
         ];
