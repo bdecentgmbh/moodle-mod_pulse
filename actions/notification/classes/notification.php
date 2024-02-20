@@ -531,7 +531,7 @@ class notification {
         $users = $this->get_users_withroles($roles, $context);
         foreach ($users as $userid => $user) {
             $suppressreached = notify_users::is_suppress_reached(
-                $this->notificationdata, $userid, $this->instancedata->course, null);
+                $this->notificationdata, $user->id, $this->instancedata->course, null);
             if ($suppressreached) {
                 continue;
             }
@@ -730,7 +730,7 @@ class notification {
         list($insql, $inparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'rle');
 
         // TODO: Define user fields, never get entire fields.
-        $rolesql = "SELECT DISTINCT u.id, u.*, ra.roleid FROM {role_assignments} ra
+        $rolesql = "SELECT ra.id as assignid, u.*, ra.roleid FROM {role_assignments} ra
         JOIN {user} u ON u.id = ra.userid
         JOIN {role} r ON ra.roleid = r.id
         LEFT JOIN {role_names} rn ON (rn.contextid = :ctxid AND rn.roleid = r.id) ";
@@ -922,8 +922,8 @@ class notification {
 
         $result = [
             'recepient' => (object) $user,
-            'cc'        => implode(',', array_column($ccusers, 'email')),
-            'bcc'       => implode(',', array_column($bccusers, 'email')),
+            'cc'        => array_map(fn($user) => [$user->email, fullname($user)], $ccusers),
+            'bcc'       => array_map(fn($user) => [$user->email, fullname($user)], $bccusers),
             'subject'   => format_string($this->notificationdata->subject),
             'content'   => $this->build_notification_content($moddata, $context, $notificationoverrides),
         ];

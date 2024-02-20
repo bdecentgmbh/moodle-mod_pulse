@@ -33,5 +33,8 @@ $observers = [
         'eventname' => '\mod_facetoface\event\signup_failed',
         'callback' => '\pulsecondition_session\conditionform::signup_success',
     ),
-
+    array(
+        'eventname' => '\mod_facetoface\event\cancel_booking',
+        'callback' => '\pulsecondition_session\conditionform::signup_success',
+    ),
 ];

@@ -89,12 +89,12 @@ class pulsecondition extends base {
      * @return array $subplugins.
      */
     public function get_plugins_list() {
-        $actionplugins = \core_component::get_plugin_list('pulsecondition');
-        return $actionplugins;
+        $conditionplugins = \core_component::get_plugin_list('pulsecondition');
+        return $conditionplugins;
     }
 
     /**
-     * Get the list of action plugins woithj its base class.
+     * Get the list of condition plugins with its base class instance.
      */
     public function get_plugins_base() {
         $plugins = $this->get_plugins_list();
@@ -102,18 +102,18 @@ class pulsecondition extends base {
         if (!empty($plugins)) {
             foreach ($plugins as $componentname => $pluginpath) {
                 $instance = $this->get_plugin($componentname);
-                $actions[$componentname] = $instance;
+                $conditions[$componentname] = $instance;
             }
         }
 
-        return $actions ?? [];
+        return $conditions ?? [];
     }
 
     /**
-     * Get the action component actionform instance.
+     * Get the condtion component actionform instance.
      *
      * @param string $componentname
-     * @return \actionform
+     * @return \conditionform
      */
     public function get_plugin($componentname) {
 
@@ -143,13 +143,13 @@ class pulsecondition extends base {
      * @return stdclass
      */
     public static function get_list() {
-        static $actionplugins = null;
+        static $conditionplugins = null;
 
-        if (!$actionplugins) {
-            $actionplugins = new self();
+        if (!$conditionplugins) {
+            $conditionplugins = new self();
         }
 
-        $plugins = $actionplugins->get_plugins_base();
+        $plugins = $conditionplugins->get_plugins_base();
         return $plugins;
     }
 }

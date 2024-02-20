@@ -453,6 +453,9 @@ class helper {
 
         // Upcoming event dates.
         if ($var == 'eventdates') {
+            // Calender lib inclusion.
+            require_once($CFG->dirroot.'/calendar/lib.php');
+
             $calendar = \calendar_information::create(time(), $course->id, null);
             list($data, $template) = calendar_get_view($calendar, 'upcoming_mini');
             $final = isset($data->events) ? array_map(function($event) {

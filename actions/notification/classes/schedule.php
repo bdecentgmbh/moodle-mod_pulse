@@ -168,10 +168,8 @@ class schedule {
             $sender = $this->find_sender_user();
 
             // Add bcc and CC to sender user custom headers.
-            $sender->customheaders = [
-                "Bcc: $detail->bcc\r\n",
-                "Cc: $detail->cc\r\n",
-            ];
+            $cc = $detail->cc ?? [];
+            $bcc = $detail->bcc ?? [];
 
             // Prepare the module data. based on dynamic content and includ the session data.
             $mod = $this->prepare_moduledata_placeholders($modules, $cmdata);
@@ -195,8 +193,8 @@ class schedule {
             $pulse = (object) ['course' => $this->course->id];
             // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
             // Send the notification to user.
-            $messagesend = \mod_pulse\helper::messagetouser(
-                $detail->recepient, $subject, $messageplain, $messagehtml, $pulse, $sender
+            $messagesend = \pulseaction_notification\helper::messagetouser(
+                $detail->recepient, $subject, $messageplain, $messagehtml, $pulse, $sender, $cc, $bcc
             );
 
             if ($messagesend) {

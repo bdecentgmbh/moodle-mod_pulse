@@ -94,16 +94,22 @@ class conditionform extends \mod_pulse\automation\condition_base {
         global $DB;
 
         // Get the notification suppres module ids.
-        $additional = $instancedata->conditions['session'] ?? [];
+        $additional = $instancedata->condition['session'] ?? [];
         $modules = $additional['modules'] ?? '';
         if (!empty($modules)) {
             $result = [];
 
-            $sql = "SELECT * FROM {facetoface_signups} f2f_su
+            $sql = "SELECT count(*) FROM {facetoface_signups} f2f_su
             JOIN {facetoface_sessions} f2f_ss ON f2f_ss.id = f2f_su.sessionid
-            WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid";
+            JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
+            WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid
+            AND f2f_sts.superceded != 1
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode";
 
-            $existingsignup = $DB->count_records_sql($sql, array('f2fid' => $modules, 'userid' => $userid));
+            $existingsignup = $DB->count_records_sql($sql, array(
+                    'f2fid' => $modules, 'userid' => $userid,
+                    'code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW));
+
             return ($existingsignup) ? true : false;
         }
         // Not configured any session modules.
@@ -217,5 +223,135 @@ class conditionform extends \mod_pulse\automation\condition_base {
             'statuscode' => MDL_F2F_STATUS_NO_SHOW
         ), 0, 1);
         return $existingsignup;
+    }
+
+    /**
+     * Prepare the schedule for the user signup to the session.
+     *
+     * Gets the session from the param, and fetch the list of notification instance configured with this session.
+     * Filters the users list selected to signup to the session with signup users and its status code.
+     *
+     * Then all the notification instances are triggered for the filtered users.
+     *
+     * @param int|null $instanceid Face to face instance id.
+     * @return void
+     */
+    public static function prepare_session_signup_schedule(?int $instanceid=null) {
+        global $PAGE, $DB;
+
+        // Current session id.
+        $sessionid = required_param('s', PARAM_INT);
+
+        // Get the list of signup users.
+        $session = facetoface_get_session($sessionid);
+        $instanceid = $instanceid ?: $session->facetoface;
+
+        $potentialuserselector = new \facetoface_candidate_selector('addselect', array(
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        // Users to signup to the session.
+        $addusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
+
+        list($insql, $inparams) = $DB->get_in_or_equal($addusers, SQL_PARAMS_NAMED, 'f2fu');
+        $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
+
+        // Filter the users based on the signup status.
+        $users = $DB->get_fieldset_sql("
+            SELECT DISTINCT f2f_su.userid FROM {facetoface_signups} f2f_su
+            JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
+            WHERE f2f_su.sessionid=:sessionid
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode
+            AND f2f_su.userid $insql
+            GROUP BY f2f_su.userid
+        ", $params + $inparams);
+
+        // Self condition instance.
+        $condition = new self();
+
+        // Fetch the session notifications uses this session signup.
+        $notifications = self::get_session_notifications($instanceid);
+
+        foreach ($notifications as $notification) {
+            // Get the notification suppres module ids.
+            $additional = $notification->additional ? json_decode($notification->additional, true) : '';
+            $modules = $additional['modules'] ?? '';
+
+            if (!empty($modules)) {
+
+                $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
+                // Trigger all the instance for notifications.
+                foreach ($users as $userid) {
+                    $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * Remove the schedule for the user removed from the session.
+     *
+     * Gets the session from the param, and fetch the list of notification instance configured with this session.
+     * Filters the users list selected to remove signup from the session.
+     *
+     * Then all the notification instances are triggered for the filtered users. this will make the schedule on hold.
+     *
+     * @param int|null $instanceid Face to face instance id.
+     * @return void
+     */
+    public static function remove_session_signup_schedule(?int $instanceid=null) {
+        global $PAGE, $DB;
+
+        // Current session id.
+        $sessionid = required_param('s', PARAM_INT);
+
+        // Get the list of signup users.
+        $session = facetoface_get_session($sessionid);
+        $instanceid = $instanceid ?: $session->facetoface;
+
+        $potentialuserselector = new \facetoface_candidate_selector('removeselect', array(
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        $removeusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
+
+        list($insql, $inparams) = $DB->get_in_or_equal($removeusers, SQL_PARAMS_NAMED, 'f2fu');
+        $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
+
+        // Filter the users based on the signup status.
+        $users = $DB->get_fieldset_sql("
+            SELECT DISTINCT f2f_su.userid FROM {facetoface_signups} f2f_su
+            JOIN {facetoface_signups_status} f2f_sts ON f2f_su.id = f2f_sts.signupid
+            WHERE f2f_su.sessionid=:sessionid
+            AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode
+            AND f2f_su.userid $insql
+            GROUP BY f2f_su.userid
+        ", $params + $inparams);
+
+        // Self condition instance.
+        $condition = new self();
+
+        // Fetch the session notifications uses this session signup.
+        $notifications = self::get_session_notifications($instanceid);
+
+        foreach ($notifications as $notification) {
+            // Get the notification suppres module ids.
+            $additional = $notification->additional ? json_decode($notification->additional, true) : '';
+            $modules = $additional['modules'] ?? '';
+
+            if (!empty($modules)) {
+
+                $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
+                // Trigger all the instance for notifications.
+                foreach ($removeusers as $userid) {
+                    if (isset($users[$userid])) {
+                        continue;
+                    }
+                    // Trigger the instance will verify the user compleiton status of session signup.
+                    // In this case user is cancelled from the session, so the schedule status will be updated to on-hold.
+                    $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
+                }
+            }
+
+        }
+
     }
 }

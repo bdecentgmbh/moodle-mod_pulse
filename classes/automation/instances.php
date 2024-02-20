@@ -447,6 +447,7 @@ class instances extends templates {
             }
         }
 
+        // If one or more conditions are enabled then the result of completion condition should be same as enabled.
         return ($enabled == $result) ? true : false;
     }
 
