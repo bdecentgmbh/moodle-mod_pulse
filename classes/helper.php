@@ -418,12 +418,15 @@ class helper {
      *
      * @return array
      */
-    public static function get_editor_options() {
+    public static function get_editor_options($context=null) {
+        global $PAGE;
 
-        return array(
+        return [
+            'trusttext' => true,
+            'subdirs' => true,
             'maxfiles' => EDITOR_UNLIMITED_FILES,
-            'trusttext' => true
-        );
+            'context' => $context ?: $PAGE->context,
+        ];
     }
 
     /**

@@ -114,7 +114,7 @@ class notify_users extends \core\task\scheduled_task {
                     $cminfo = get_coursemodule_from_id('', $cmid);
                     $modulecompletion = (array) $completion->get_data($cminfo, false, $userid);
                 }
-                if ($modulecompletion['completionstate'] == COMPLETION_COMPLETE) {
+                if (isset($modulecompletion['completionstate']) == COMPLETION_COMPLETE) {
                     $result[] = true;
                 }
             }
