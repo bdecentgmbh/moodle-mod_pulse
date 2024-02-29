@@ -112,7 +112,7 @@ function xmldb_pulse_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2021110200, 'pulse');
     }
 
-    if ($oldversion < 2023051800) {
+    if ($oldversion < 2023051802) {
 
         // Define table pulse_autoinstances to be created.
         $table = new xmldb_table('pulse_autoinstances');
@@ -189,7 +189,7 @@ function xmldb_pulse_upgrade($oldversion) {
         }
 
         // Pulse savepoint reached.
-        upgrade_mod_savepoint(true, 2023051800, 'pulse');
+        upgrade_mod_savepoint(true, 2023051802, 'pulse');
 
     }
 
