@@ -17,7 +17,12 @@
 namespace pulseaction_notification\privacy;
 
 use core_privacy\local\metadata\collection;
+use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
+use core_privacy\local\request\userlist;
+use core_privacy\local\request\writer;
+ 
 /**
  * Privacy provider.
  *
@@ -59,17 +64,123 @@ class provider implements \core_privacy\local\metadata\provider, \core_privacy\l
 
         $sql = "SELECT c.id
             FROM {context} c
-            JOIN {course} co ON c.instanceid = co.id
+            JOIN {pulseaction_notification_sch} pl ON c.instanceid = pl.userid
             JOIN {user} u ON u.id = :userid
             WHERE c.contextlevel = :contextlevel";
 
         $params = [
-        'userid' => $userid,
-        'contextlevel' => CONTEXT_USER,
+            'userid' => $userid,
+            'contextlevel' => CONTEXT_USER,
         ];
 
         $contextlist->add_from_sql($sql, $params);
 
         return $contextlist;
     }
+      /**
+     * Get the list of users who have data within a context.
+     *
+     * @param userlist $userlist The userlist containing the list of users who have data in this context/plugin combination.
+     */
+
+    public static function get_users_in_context(userlist $userlist) {
+        $context = $userlist->get_context();
+
+        if (!$context instanceof \context_course) {
+            return;
+        }
+
+        $sql = "SELECT ts.userid
+            FROM {pulseaction_notification_sch} ts
+            WHERE ts.courseid = :courseid";
+
+        $params = [
+            'courseid' => $context->instanceid,
+        ];
+        $userlist->add_from_sql('userid', $sql, $params);
+    
+    }
+
+    /**
+     * Export all user data for the specified user, in the specified contexts, using the supplied exporter instance.
+     *
+     * @param approved_contextlist $contextlist The approved contexts to export information for.
+     */
+    public static function export_user_data(approved_contextlist $contextlist) {
+        global $DB;
+
+        $userid = $contextlist->get_user()->id;
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel != CONTEXT_COURSE) {
+                // Only support course context.
+                continue;
+            }
+
+            $data = $DB->get_record('pulseaction_notification_sch', ['userid' => $userid, 'courseid' => $context->instanceid]);
+            writer::with_context($context)->export_data(
+                [get_string('privacy:metadata:pulseaction_notification', 'pulseaction_notification'), 'pulseaction_notification'],
+                $data
+            );
+        }
+
+        return $contextlist;
+    }
+
+    /**
+     * Delete all personal data for all users in the specified context.
+     *
+     * @param context $context Context to delete data from.
+     */
+    public static function delete_data_for_all_users_in_context(\context $context) {
+        global $DB;
+
+        if ($context->contextlevel != CONTEXT_COURSE) {
+            return;
+        }
+
+        $DB->delete_records('pulseaction_notification_sch', ['courseid' => $context->instanceid]);
+    }
+
+    /**
+     * Delete user within a single context.
+     *
+     * @param approved_contextlist $contextlist The approved contexts to export information for.
+     */
+    public static function delete_data_for_user(approved_contextlist $contextlist) {
+        global $DB;
+
+        $userid = $contextlist->get_user()->id;
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel != CONTEXT_COURSE) {
+                // Only support course context.
+                continue;
+            }
+
+            $DB->delete_records('pulseaction_notification_sch', ['userid' => $userid, 'courseid' => $context->instanceid]);
+        }
+    }
+
+    /**
+     * Delete multiple users within a single context.
+     *
+     * @param approved_userlist $userlist The approved context and user information to delete information for.
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
+        global $DB;
+        $context = $userlist->get_context();
+
+        // Sanity check that context is at the course context level.
+        if ($context->contextlevel !== CONTEXT_COURSE) {
+            return;
+        }
+
+        list($userinsql, $userinparams) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
+        $params = array_merge(['courseid' => $context->instanceid], $userinparams);
+        $sql = "courseid = :courseid AND userid {$userinsql}";
+
+        $DB->delete_records_select('pulseaction_notification_sch', $sql, $params);
+    }
+
 }
