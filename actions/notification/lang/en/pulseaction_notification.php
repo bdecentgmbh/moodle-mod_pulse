@@ -147,3 +147,5 @@ $string['courseenddatereached'] = 'Course has ended. <span> Please set the cours
 // ...Reports filter string.
 $string['automationinstance'] = 'Automation instance';
 $string['automationtemplate'] = 'Automation template';
+
+$string['privacy:metadata:pulseaction_notification'] = 'Information about the user to send the notification';

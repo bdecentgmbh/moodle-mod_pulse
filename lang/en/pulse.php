@@ -182,12 +182,6 @@ $string['privacy:metadata:users:timecreated'] = 'Time of the invitation send to 
 $string['privacy:metadata:pulseusers'] = 'List of users invitation notified';
 $string['privacy:metadata:pulsemessageexplanation'] = 'Invitations are sent to students through the messaging system.';
 
-$string['privacy:metadata:pulseaction_notification'] = 'Information about the user to send the notification';
-$string['privacy:metadata:pulsecondition_activity'] = 'The plugin does not store any personal data.';
-$string['privacy:metadata:pulsecondition_cohort'] = 'The plugin does not store any personal data.';
-$string['privacy:metadata:pulsecondition_course'] = 'The plugin does not store any personal data.';
-$string['privacy:metadata:pulsecondition_enrolment'] = 'The plugin does not store any personal data.';
-$string['privacy:metadata:pulsecondition_session'] = 'The plugin does not store any personal data.';
 
 // Lang strings for the presets.
 $string['presets'] = "Pulse presets";
