@@ -149,3 +149,6 @@ $string['automationinstance'] = 'Automation instance';
 $string['automationtemplate'] = 'Automation template';
 
 $string['privacy:metadata:pulseaction_notification'] = 'Information about the user to send the notification';
+$string['privacy:metadata:pulseaction_notification_sch:userid'] = 'The ID of the user is tracked.';
+$string['privacy:metadata:pulseaction_notification_sch:status'] = 'The status of the user is tracked.';
+$string['privacy:metadata:pulseaction_notification_sch:timecreated'] = 'The created time of the user is tracked.';
