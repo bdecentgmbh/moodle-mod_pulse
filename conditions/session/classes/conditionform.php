@@ -106,9 +106,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
             AND f2f_sts.superceded != 1
             AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode";
 
-            $existingsignup = $DB->count_records_sql($sql, array(
+            $existingsignup = $DB->count_records_sql($sql, [
                     'f2fid' => $modules, 'userid' => $userid,
-                    'code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW));
+                    'code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW]);
 
             return ($existingsignup) ? true : false;
         }
@@ -147,7 +147,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $modules = $additional['modules'] ?? '';
 
             if (!empty($modules)) {
-                $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
+                $session = $DB->get_record('facetoface_sessions_dates', ['sessionid' => $sessionid], '*', IGNORE_MULTIPLE);
                 // Trigger all the instance for notifications.
                 $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
             }
@@ -218,10 +218,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
             WHERE f2f_ss.facetoface = :f2fid AND f2f_su.userid = :userid AND f2f_sd.timestart > :timestart
             AND f2f_sts.statuscode >= :code AND f2f_sts.statuscode < :statuscode";
 
-        $existingsignup = $DB->get_records_sql($sql, array(
+        $existingsignup = $DB->get_records_sql($sql, [
             'f2fid' => $face2faceid, 'userid' => $userid, 'timestart' => time(), 'code' => MDL_F2F_STATUS_REQUESTED,
-            'statuscode' => MDL_F2F_STATUS_NO_SHOW
-        ), 0, 1);
+            'statuscode' => MDL_F2F_STATUS_NO_SHOW,
+        ], 0, 1);
         return $existingsignup;
     }
 
@@ -246,10 +246,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $session = facetoface_get_session($sessionid);
         $instanceid = $instanceid ?: $session->facetoface;
 
-        $potentialuserselector = new \facetoface_candidate_selector('addselect', array(
-            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
+        $potentialuserselector = new \facetoface_candidate_selector('addselect', [
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id]);
         // Users to signup to the session.
-        $addusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
+        $addusers = optional_param_array($potentialuserselector->get_name(), [], PARAM_INT);
 
         list($insql, $inparams) = $DB->get_in_or_equal($addusers, SQL_PARAMS_NAMED, 'f2fu');
         $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
@@ -277,7 +277,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
             if (!empty($modules)) {
 
-                $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
+                $session = $DB->get_record('facetoface_sessions_dates', ['sessionid' => $sessionid], '*', IGNORE_MULTIPLE);
                 // Trigger all the instance for notifications.
                 foreach ($users as $userid) {
                     $condition->trigger_instance($notification->instanceid, $userid, $session->timestart);
@@ -309,9 +309,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $session = facetoface_get_session($sessionid);
         $instanceid = $instanceid ?: $session->facetoface;
 
-        $potentialuserselector = new \facetoface_candidate_selector('removeselect', array(
-            'sessionid' => $session->id, 'courseid' => $PAGE->course->id));
-        $removeusers = optional_param_array($potentialuserselector->get_name(), array(), PARAM_INT);
+        $potentialuserselector = new \facetoface_candidate_selector('removeselect', [
+            'sessionid' => $session->id, 'courseid' => $PAGE->course->id]);
+        $removeusers = optional_param_array($potentialuserselector->get_name(), [], PARAM_INT);
 
         list($insql, $inparams) = $DB->get_in_or_equal($removeusers, SQL_PARAMS_NAMED, 'f2fu');
         $params = ['code' => MDL_F2F_STATUS_REQUESTED, 'statuscode' => MDL_F2F_STATUS_NO_SHOW, 'sessionid' => $sessionid];
@@ -339,7 +339,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
             if (!empty($modules)) {
 
-                $session = $DB->get_record('facetoface_sessions_dates', array('sessionid' => $sessionid));
+                $session = $DB->get_record('facetoface_sessions_dates', ['sessionid' => $sessionid], '*', IGNORE_MULTIPLE);
                 // Trigger all the instance for notifications.
                 foreach ($removeusers as $userid) {
                     if (isset($users[$userid])) {

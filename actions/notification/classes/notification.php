@@ -318,7 +318,7 @@ class notification {
 
         if ($record = $DB->get_record_sql($sql, [
                 'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'disabledstatus' => self::STATUS_DISABLED,
-                'queued' => self::STATUS_QUEUED
+                'queued' => self::STATUS_QUEUED,
             ])) {
 
             $data['id'] = $record->id;
@@ -331,7 +331,7 @@ class notification {
         // Dont create new schedule for already notified users until is not new schedule.
         // It prevents creating new record for user during the update of instance interval.
         if (!$newschedule && $DB->record_exists('pulseaction_notification_sch', [
-            'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'status' => self::STATUS_SENT
+            'instanceid' => $data['instanceid'], 'userid' => $data['userid'], 'status' => self::STATUS_SENT,
         ])) {
             return false;
         }
@@ -353,7 +353,7 @@ class notification {
 
         $params = [
             'instanceid' => $this->notificationdata->instanceid, 'userid' => $userid, 'disabledstatus' => self::STATUS_DISABLED,
-            'queued' => self::STATUS_QUEUED
+            'queued' => self::STATUS_QUEUED,
         ];
 
         if ($record = $DB->get_record_sql($sql, $params)) {
@@ -375,7 +375,7 @@ class notification {
 
         $params = [
             'instanceid' => $this->notificationdata->instanceid, 'userid' => $userid, 'disabledstatus' => self::STATUS_DISABLED,
-            'queued' => self::STATUS_QUEUED
+            'queued' => self::STATUS_QUEUED,
         ];
 
         if ($record = $DB->get_record_sql($sql, $params)) {
@@ -393,7 +393,7 @@ class notification {
         global $DB;
 
         if ($record = $DB->get_record('pulseaction_notification_sch', [
-            'instanceid' => $data->instanceid, 'userid' => $data->userid
+            'instanceid' => $data->instanceid, 'userid' => $data->userid,
         ])) {
             return $record;
         }
@@ -413,7 +413,7 @@ class notification {
         $id = $this->notificationdata->instanceid;
 
         // Get last notified schedule for this instance to the user.
-        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT);
+        $condition = ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT];
         $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
 
         return !empty($records) ? current($records)->notifiedtime : '';
@@ -431,7 +431,7 @@ class notification {
         $id = $this->notificationdata->instanceid;
 
         // Get last notified schedule for this instance to the user.
-        $condition = array('instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT);
+        $condition = ['instanceid' => $id, 'userid' => $userid, 'status' => self::STATUS_SENT];
         $records = $DB->get_records('pulseaction_notification_sch', $condition, 'id DESC', '*', 0, 1);
 
         return !empty($records) ? current($records)->notifycount : '';
@@ -478,7 +478,7 @@ class notification {
 
         $params = [
             'instanceid' => $this->notificationdata->instanceid,
-            'status' => self::STATUS_QUEUED
+            'status' => self::STATUS_QUEUED,
         ];
 
         // Disable the queued schedules for this instance.
@@ -687,13 +687,28 @@ class notification {
 
         // Add limit of available.
         if ($data->notifydelay == self::DELAYAFTER) {
+
+            // QuickFIX - PLS-726.
+            // When the instances are created/updated, creates the schedules directly. 
+			// With is method expected run time are not included.
+            // Other conditions are not contains any specific usecases.
+            // Verify and include the expected runtime from sessions only.
+            if (!$expectedruntime && method_exists('\pulsecondition_session\conditionform', 'get_session_time')) {
+                // Confirm any f2f module added in condition.
+                $sessionstarttime = \pulsecondition_session\conditionform::get_session_time($data, $this->instancedata);
+                if (!empty($sessionstarttime)) {
+                    $nextrun->setTimestamp($sessionstarttime);
+                }
+            }
+
             $delay = $data->delayduration;
             $nextrun->modify("+ $delay seconds");
+
         } else if ($data->notifydelay == self::DELAYBEFORE) {
             $delay = $data->delayduration;
 
             if ($expectedruntime) {
-                // SEssion condition only send the expected runtime.
+                // Session condition only send the expected runtime.
                 // Reduce the delay directly from the expected runtime.
                 $nextrun->modify("- $delay seconds");
 
@@ -745,7 +760,7 @@ class notification {
 
         $rolesql .= " WHERE (ra.contextid = :ctxid2 $childcontext) AND ra.roleid $insql ORDER BY u.id";
 
-        $params = array('ctxid' => $context->id, 'ctxid2' => $context->id) + $inparams;
+        $params = ['ctxid' => $context->id, 'ctxid2' => $context->id] + $inparams;
 
         $users = $DB->get_records_sql($rolesql, $params);
 
@@ -849,7 +864,7 @@ class notification {
                 $content = format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true]);
                 $link = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $chapterid]);
             } else if ($cm->modname == 'page') {
-                $page = $DB->get_record('page', array('id' => $cm->instance), '*', MUST_EXIST);
+                $page = $DB->get_record('page', ['id' => $cm->instance], '*', MUST_EXIST);
 
                 $content = file_rewrite_pluginfile_urls(
                         $page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
@@ -1037,7 +1052,7 @@ class notification {
             'class' => 'pulse-automation-info-block',
             'data-target' => 'view-content',
             'data-instanceid' => $row->instanceid,
-            'data-userid' => $row->userid
+            'data-userid' => $row->userid,
         ]);
     }
 
