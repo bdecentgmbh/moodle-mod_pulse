@@ -425,6 +425,9 @@ class instances extends templates {
             if ($status <= 0 ) {
                 continue;
             }
+            
+            $enabled++; // Increase enabled condition count.
+
             // Condition is only configured to verify the future enrolment.
             if ($status == condition_base::FUTURE && !$isnewuser) {
                 $userenroltime = $this->get_user_enrolment_createtime($userid, $instancedata->course);
@@ -434,8 +437,6 @@ class instances extends templates {
                     continue;
                 }
             }
-
-            $enabled++; // Increase enabled condition count.
 
             if ($condition->is_user_completed($instancedata, $userid, $completion)) {
 

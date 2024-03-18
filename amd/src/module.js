@@ -45,7 +45,7 @@ define(['core_editor/events'], function() {
             var notificationheader = document.getElementById('admin-notificationheader');
             if (notificationheader !== null) {
                 notificationheader.addEventListener('click', function() {
-                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationheadereditable');
+                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationheader_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
@@ -53,24 +53,80 @@ define(['core_editor/events'], function() {
             var notificationfooter = document.getElementById('admin-notificationfooter');
             if (notificationfooter !== null) {
                 notificationfooter.addEventListener('click', function() {
-                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationfootereditable');
+                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationfooter_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
 
+            
             templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             if (templatevars) {
                 templatevars.forEach((elem) => {
                     elem.addEventListener('click', function(e) {
                         var target = e.currentTarget;
-                        var EditorInput = target.querySelector('[id*="_editoreditable"]');
+                        var EditorInput = target.querySelector('textarea[id*="_content_editor"]');
                         module.insertCaretActive(EditorInput);
                     });
                 });
             }
 
+
+            var headertargetNode = document.querySelector('#id_s_mod_pulse_notificationheader');
+            if (headertargetNode !== null) {
+                var observer = new MutationObserver(function() {
+                    if (headertargetNode.style.display == 'none') {
+                        var headeriframe = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                        if (headeriframe !== null) {
+                            headeriframe.addEventListener('click', function(e) {
+                                var currentFrame = e.target;    
+                                var headercontentBody = currentFrame.querySelector('body');
+                                if (headercontentBody !== null) {
+                                    headercontentBody.classList.add("insertatcaretactive");
+                                }
+
+                                var footer = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                                var footerBody = footer.querySelector('body');
+                                if (footerBody.classList.contains('insertatcaretactive')) {
+                                    footerBody.classList.remove("insertatcaretactive");
+                                }
+
+                            }) ;
+                        }
+                    }
+                });
+                observer.observe(headertargetNode, {attributes: true, childList: true});
+            }
+
+            var footertargetNode = document.querySelector('#id_s_mod_pulse_notificationfooter');
+            if (footertargetNode !== null) {
+                var observer = new MutationObserver(function() {
+                    if (footertargetNode.style.display == 'none') {
+                        var footeriframe = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                        if (footeriframe !== null) {
+                            footeriframe.addEventListener('click', function(e) {
+                                var currentFrame = e.target;
+                                var footercontentBody = currentFrame.querySelector('body');
+                                if (footercontentBody !== null) {
+                                    footercontentBody.classList.add("insertatcaretactive");
+                                }
+
+                                var header = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                                var headerBody = header.querySelector('body');
+                                if (headerBody.classList.contains('insertatcaretactive')) {
+                                    headerBody.classList.remove("insertatcaretactive");
+                                } 
+                               
+                            }) ;
+                        }
+                    }
+                });
+                observer.observe(footertargetNode, {attributes: true, childList: true});
+            }
+
+
             // Console.log(window.tinyMCE.get());
             var targetNode = document.querySelector('textarea[id$=_editor]');
+            
             if (targetNode !== null) {
                 var observer = new MutationObserver(function() {
                     if (targetNode.style.display == 'none') {
@@ -86,10 +142,8 @@ define(['core_editor/events'], function() {
                 if (iframes === null || !iframes.length) {
                     return false;
                 }
-
                 iframes.forEach((iframe) => {
                     iframe.contentDocument.addEventListener('click', function(e) {
-
                         var currentFrame = e.target;
                         iframes.forEach((frame) => {
                             var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
@@ -116,10 +170,36 @@ define(['core_editor/events'], function() {
 
                     var content = "{" + this.getAttribute('data-text') + "}";
                     var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
+                    
                     if (iframes === null || !iframes.length) {
-                        module.insertAtCaret(content);
-                        return true;
+
+                        // Header notification editor.
+                        var headerNode = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                        if (headerNode !== null) {
+                            var headercontentBody = headerNode.querySelector("body");
+                            if (headercontentBody.classList.contains("insertatcaretactive")) {
+                                headercontentBody.classList.add("insertatcaretactive");
+                                var id = headercontentBody.dataset.id;
+                                var headereditor = window.tinyMCE.get(id);
+                                headereditor.selection.setContent(content);
+                                return true;
+                            }
+                        }
+                        // Footer notification editor.
+                        var footerNode = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                        if (footerNode !== null) {
+                            var footercontentBody = footerNode.querySelector("body");
+                            if (footercontentBody.classList.contains("insertatcaretactive")) {
+                                footercontentBody.classList.add("insertatcaretactive");
+                                var id = footercontentBody.dataset.id;
+                                var footereditor = window.tinyMCE.get(id);
+                                footereditor.selection.setContent(content);
+                                return true;
+                            }
+                        }
+
                     }
+
                     var tinyEditor;
                     iframes.forEach(function(frame) {
                         var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
