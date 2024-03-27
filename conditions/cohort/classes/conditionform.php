@@ -55,7 +55,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $mform->addElement('select', 'condition[cohort][status]', $completionstr, $this->get_options());
         $mform->addHelpButton('condition[cohort][status]', 'condition', 'pulsecondition_cohort');
 
-        $cohorts = cohort_get_all_cohorts();
+        $cohorts = cohort_get_all_cohorts('0', '500', '', false);
         $cohorts = $cohorts['cohorts'];
 
         array_walk($cohorts, function(&$value) {
