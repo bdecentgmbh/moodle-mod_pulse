@@ -168,6 +168,11 @@ class automation_instance_form extends automation_template_form {
         $mform->insertElementBefore($referenceprefix, 'insreference');
 
         $this->load_default_override_elements(['insreference']);
+        
+        // Add element to disable instance override options.
+        $hasinstanceeditcapability = has_capability('mod/pulse:overridetemplateinstance', \context_course::instance($course));
+        $mform->addElement('hidden', 'hasinstanceeditcapability', $hasinstanceeditcapability);
+        $mform->setType('hasinstanceeditcapability', PARAM_INT);
 
         if (!empty($elements)) {
             // List of element type don't need to add the override option.
@@ -176,9 +181,15 @@ class automation_instance_form extends automation_template_form {
             foreach ($elements as $element) {
 
                 if (!in_array($element->getType(), $dontoverride) && $element->getName() !== 'buttonar') {
-                    // if (has_capability('mod/pulse:overridetemplateinstance', \context_course::instance($course))) {
+
+                    if ($hasinstanceeditcapability) {
+                        // Has capability add override element.
                         $this->add_override_element($element, $course);
-                    // }
+                    } else {
+                        $elementname = $element->getName();
+                        $orgelementname = $elementname;
+                        $mform->disabledIf($orgelementname, 'hasinstanceeditcapability', 'neq', 1);
+                    }
                 }
             }
         }
