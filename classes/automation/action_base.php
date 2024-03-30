@@ -313,10 +313,19 @@ abstract class action_base {
         $editors = ['headercontent', 'footercontent', 'staticcontent'];
         // Include the override data which is used in the form.
         foreach ($actioninstancedata as $configname => $configvalue) {
+            // Count the overrides.
+            if ($configvalue !== null && array_key_exists($configname, (array) $actiondata)
+                && $configname != 'id' && $configname != 'dynamiccontent') {
+                $instance->overridecount = $instance->overridecount + 1;
+            }
+
+            // Create a flag for override element to hide the switch.
             if ($configvalue !== null) {
                 $configname = in_array($configname, $editors) ? $configname.'_editor' : $configname;
                 $instance->override[$prefix . "_" . $configname] = 1;
             }
+
+
         }
         // Merge instance overrides with template data.
         $actiondata = \mod_pulse\automation\helper::merge_instance_overrides($actioninstancedata, $actiondata);

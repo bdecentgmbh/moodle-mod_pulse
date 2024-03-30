@@ -82,18 +82,18 @@ Feature: Pulse automation instances
   Scenario: Dupilcate the automation template instance.
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-    | Title     | WELCOME MESSAGE |
-    | Reference | Welcomemessage  |
-    | Visibility| Show            |
+    | Title             | WELCOME MESSAGE |
+    | Reference         | Welcomemessage  |
+    | Visibility        | Show            |
     And I am on "Course 1" course homepage
     And I follow "Automation"
     When I open the autocomplete suggestions list
     And I click on "WELCOME MESSAGE" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | override[title] | 1                  |
-      | Title     | WELCOME MESSAGE Instance |
-      | insreference| Welcomemessageinstance|
+      | override[title] | 1                        |
+      | Title           | WELCOME MESSAGE Instance |
+      | insreference    | Welcomemessageinstance   |
     And I press "Save changes"
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template tbody tr:nth-child(1)" "css_element"
     And I should not see "WELCOME MESSAGE" in the "#pulse_automation_template tbody tr:nth-child(2)" "css_element"
@@ -105,16 +105,16 @@ Feature: Pulse automation instances
   Scenario: Delete the automation template instance.
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-      | Title     | WELCOME MESSAGE |
-      | Reference | Welcomemessage  |
-      | Visibility| Show            |
+      | Title            | WELCOME MESSAGE         |
+      | Reference        | Welcomemessage          |
+      | Visibility       | Show                    |
     And I am on "Course 1" course homepage
     And I follow "Automation"
     When I open the autocomplete suggestions list
     And I click on "WELCOME MESSAGE" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | insreference | Welcomemessage   |
+      | insreference     | Welcomemessage   |
     And I press "Save changes"
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template" "css_element"
     Then I click on "#pulse_automation_template .action-delete" "css_element"
@@ -130,11 +130,11 @@ Feature: Pulse automation instances
   Scenario: Check the multiple automation template instance
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-      | Title     | WELCOME MESSAGE |
-      | Reference | Welcomemessage  |
+      | Title            | WELCOME MESSAGE |
+      | Reference        | Welcomemessage  |
     Then I create automation template with the following fields to these values:
-      | Title     | Notification |
-      | Reference | notification |
+      | Title            | Notification    |
+      | Reference        | notification    |
     And I am on "Course 1" course homepage
     And I follow "Automation"
     When I open the autocomplete suggestions list
@@ -145,7 +145,7 @@ Feature: Pulse automation instances
     Then I click on "Add automation instance" "button"
     Then the field "Title" matches value "WELCOME MESSAGE"
     And I set the following fields to these values:
-      | insreference | Welcomemessageinstance   |
+      | insreference     | Welcomemessageinstance   |
     And I press "Save changes"
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template tbody tr:nth-child(1)" "css_element"
     When I open the autocomplete suggestions list
@@ -153,7 +153,7 @@ Feature: Pulse automation instances
     Then I click on "Add automation instance" "button"
     Then the field "Title" matches value "Notification"
     And I set the following fields to these values:
-      | insreference | notificationinstance   |
+      | insreference      | notificationinstance    |
     And I press "Save changes"
     And I should see "Notification" in the "#pulse_automation_template tbody tr:nth-child(2)" "css_element"
     When I open the autocomplete suggestions list
@@ -161,8 +161,8 @@ Feature: Pulse automation instances
     Then I click on "Add automation instance" "button"
     Then the field "Title" matches value "WELCOME MESSAGE"
     And I set the following fields to these values:
-      | override[title] | 1                  |
-      | insreference | Welcomemessageinstance2   |
-      | Title     | WELCOME CONTENT |
+      | override[title]   | 1                       |
+      | insreference      | Welcomemessageinstance2 |
+      | Title             | WELCOME CONTENT         |
     And I press "Save changes"
     And I should see "WELCOME CONTENT"

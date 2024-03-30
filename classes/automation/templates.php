@@ -172,10 +172,12 @@ class templates {
         $autotemplateins = $DB->get_record('pulse_autotemplates_ins', ['instanceid' => $instance->id], '*', MUST_EXIST);
         $autotemplate = $this->get_formdata();
 
+        $instance->overridecount  = 0; // Count the overrides for this instance.
         $overridedata = array_filter((array) $autotemplateins);
         foreach ($overridedata as $key => $value) {
-            if (!in_array($key, ['id', 'timemodified', 'instanceid'])) {
+            if (!in_array($key, ['id', 'timemodified', 'instanceid', 'insreference'])) {
                 $instance->override[$key] = 1;
+                $instance->overridecount += 1;
             }
         }
 

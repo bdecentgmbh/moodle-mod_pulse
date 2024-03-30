@@ -152,4 +152,6 @@ class pulsecondition extends base {
         $plugins = $conditionplugins->get_plugins_base();
         return $plugins;
     }
+
+
 }

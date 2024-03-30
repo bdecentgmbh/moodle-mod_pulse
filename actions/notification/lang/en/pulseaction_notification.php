@@ -147,3 +147,7 @@ $string['courseenddatereached'] = 'Course has ended. <span> Please set the cours
 // ...Reports filter string.
 $string['automationinstance'] = 'Automation instance';
 $string['automationtemplate'] = 'Automation template';
+$string['insreference'] = 'Instance reference';
+$string['tempreference'] = 'Template reference';
+$string['institle'] = 'Instance title';
+$string['templatetitle'] = 'Template title';

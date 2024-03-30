@@ -30,11 +30,92 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 
 use html_writer;
 use mod_pulse\automation\templates;
-
+use mod_pulse\automation\helper;
 /**
  * Define the automation instance form.
  */
 class automation_instance_form extends automation_template_form {
+
+    /**
+     * Define the form elements inside the definition function.
+     *
+     * @return void
+     */
+    public function definition() {
+        global $PAGE, $OUTPUT;
+
+        $mform = $this->_form; // Get the form instance.
+
+        // Set the id of template.
+        $mform->addElement('hidden', 'id', 0);
+        $mform->setType('id', PARAM_INT);
+
+        $mform->updateAttributes(['id' => 'pulse-automation-template' ]);
+        $tabs = [
+            ['name' => 'autotemplate-general', 'title' => get_string('tabgeneral', 'pulse'), 'active' => 'active'],
+            ['name' => 'pulse-condition-tab', 'title' => get_string('tabcondition', 'pulse')],
+        ];
+
+        $context = \context_system::instance();
+
+        // Load all actions forms.
+        // Define the lang key "formtab" in the action component it automatically includes it.
+        foreach (helper::get_actions() as $key => $action) {
+            $tabs[] = ['name' => 'pulse-action-'.$key, 'title' => get_string('formtab', 'pulseaction_'.$key)];
+        }
+
+        // Instance management tab.
+        if ($templateid = $this->get_customdata('id') && has_capability('mod/pulse:manageinstance', $context)) {
+            $tabs[] = ['name' => 'manage-instance-tab', 'title' => get_string('tabmanageinstance', 'pulse')];
+        }
+
+        $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
+        $mform->addElement('html', $tab);
+
+        // Pulse templates tab content.
+        $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">');
+
+        // Template options.
+        $this->load_template_options($mform);
+
+        // Template conditions.
+        $this->load_template_conditions($mform);
+
+        // Load template actions.
+        $this->load_template_actions($mform);
+
+        if ($templateid = $this->get_customdata('id')) {
+            list($overcount, $overinstances) = templates::create($templateid)->get_instances();
+
+            foreach ($mform->_elements as $key => $element) {
+
+                $elementname = $element->getName();
+                if (!isset($overcount[$elementname])) {
+                    continue;
+                }
+                $count = html_writer::tag('span', $overcount[$elementname].' '.get_string('overrides', 'pulse'), [
+                    'data-target' => "overridemodal",
+                    'data-templateid' => $templateid,
+                    'data-element' => $elementname,
+                    'class' => 'override-count-element badge mt-1',
+                    'id' => "override_$elementname"
+                ]);
+                $overrideelement = $mform->createElement('html', $count);
+                $mform->insertElementBefore($overrideelement, $elementname);
+
+                $mform->addElement('hidden', "overinstance_$elementname", json_encode($overinstances[$elementname]));
+                $mform->setType("overinstance_$elementname", PARAM_RAW);
+            }
+        }
+
+        $mform->addElement('html', html_writer::end_div());
+
+        // Show the list of overriden content.
+        $PAGE->requires->js_call_amd('mod_pulse/automation', 'init');
+
+        // Add standard form buttons.
+        $this->add_action_buttons(true);
+    }
 
     /**
      * After the instance form elements are defined, create its override options for all elemennts, include hidden instance data.
@@ -95,10 +176,15 @@ class automation_instance_form extends automation_template_form {
             foreach ($elements as $element) {
 
                 if (!in_array($element->getType(), $dontoverride) && $element->getName() !== 'buttonar') {
-                    $this->add_override_element($element);
+                    // if (has_capability('mod/pulse:overridetemplateinstance', \context_course::instance($course))) {
+                        $this->add_override_element($element, $course);
+                    // }
                 }
             }
         }
+        // Email placeholders.
+        $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
     }
 
     /**
@@ -106,7 +192,7 @@ class automation_instance_form extends automation_template_form {
      *
      * @param mixed $element The form element.
      */
-    protected function add_override_element($element) {
+    protected function add_override_element($element, $course) {
 
         $mform =& $this->_form;
         $elementname = $element->getName();
@@ -128,7 +214,8 @@ class automation_instance_form extends automation_template_form {
         array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
 
         // Insert the override checkbox before the element.
-        if (isset($mform->_elementIndex[$orgelementname]) && $mform->_elementIndex[$orgelementname]) {
+        if (isset($mform->_elementIndex[$orgelementname]) && $mform->_elementIndex[$orgelementname]
+            && has_capability('mod/pulse:overridetemplateinstance', \context_course::instance($course))) {
             $mform->insertElementBefore($overrideelement, $orgelementname);
         }
 

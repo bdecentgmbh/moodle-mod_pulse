@@ -543,4 +543,110 @@ class helper {
         return $upcomingmods;
     }
 
+    /**
+     * Bulk edit action buttons for the instance management page.
+     *
+     * @param int $templateid
+     * @return string $button.
+     */
+    public static function bulkaction_buttons($filtered = true) {
+        global $OUTPUT;
+
+        $button = '';
+        $button .= \html_writer::start_div('box py-3 generalbox');
+
+        // Select all bulk action button.
+        $button .= \html_writer::link('javascript:void(0);', get_string('selectall', 'pulse'), [
+            'id' => 'selectall-btn',
+            'class' => 'selectall-pulse-bulkaction btn btn-secondary ml-2',
+        ]);
+
+        // De-select all bulk action button.
+        $button .= \html_writer::link('javascript:void(0);', get_string('deselectall', 'pulse'), [
+            'id' => 'deselectall-btn',
+            'class' => 'deselectall-pulse-bulkaction btn btn-secondary ml-2',
+        ]);
+
+        // Select without instance bulk action button.
+        $button .= \html_writer::link('javascript:void(0);', get_string('selectwithoutins', 'pulse'), [
+            'id' => 'selectwithoutins-btn',
+            'class' => 'selectwithoutins-pulse-bulkaction btn btn-secondary ml-2',
+        ]);
+
+        $button .= \mod_pulse\automation\helper::get_filter_button($filtered ?? false);
+
+        $button .= \html_writer::end_div();
+
+        return $button;
+    }
+
+    /**
+     * Return the bulk action buttons on the instance management tab.
+     *
+     * @return string $button
+     */
+    public static function bulkreaction_buttons() {
+        global $OUTPUT;
+
+        $button = '';
+        $button .= html_writer::start_div('box py-3 generalbox', ['id' => 'bulk-action']);
+        $button .= html_writer::start_div('bulkaction-group hide');
+        $button .= html_writer::span(get_string('withselect', 'pulse'), '', array('id' => 'withselect'));
+
+        $button .= \html_writer::link('javascript:void(0);',
+            get_string('bulkaction:deleteinstance', 'pulse'). $OUTPUT->pix_icon('t/delete', \get_string('delete')), [
+            'id' => 'bulkdelete-btn',
+            'class' => 'bulkdeleteinstance-btn btn btn-secondary ml-2',
+        ]);
+
+        $button .= \html_writer::link('javascript:void(0);', get_string('bulkaction:addinstance', 'pulse').
+            $OUTPUT->pix_icon('t/add', \get_string('addinstance', 'pulse')), [
+            'id' => 'bulkadd-btn',
+            'class' => 'bulkaddinstance-btn btn btn-secondary ml-2',
+        ]);
+
+        $button .= \html_writer::link('javascript:void(0);',
+            get_string('bulkaction:disableinstance', 'pulse').
+            \html_writer::tag('div', '<input type="checkbox" class="custom-control-input">
+            <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]), [
+            'id' => 'bulkdisable-btn',
+            'class' => 'bulkdisableinstance-btn btn btn-secondary ml-2',
+        ]);
+
+        $button .= \html_writer::link('javascript:void(0);', get_string('bulkaction:enableinstance', 'pulse').
+            \html_writer::tag('div', '<input type="checkbox" class="custom-control-input" checked>
+            <span class="custom-control-label"></span>', ['class' => "custom-control custom-switch"]), [
+            'id' => 'bulkenable-btn',
+            'class' => 'bulkenableinstance-btn btn btn-secondary ml-2',
+        ]);
+
+        $button .= \html_writer::end_div();
+        $button .= \html_writer::end_div();
+        return $button;
+    }
+
+    public static function get_filter_button($filtered) {
+        global $CFG, $OUTPUT;
+
+        require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
+
+        // Filter button.
+        $button = '';
+        $button .= \html_writer::start_div('filter-form-container');
+        $button .= \html_writer::link('javascript:void(0);', $OUTPUT->pix_icon('i/filter', 'Filter'), [
+            'id' => 'pulse-manageinstance-filter',
+            'class' => 'sort-autotemplates btn btn-secondary ml-2 filtered' . ($filtered ? 'filtered' : '')
+        ]);
+
+        $templateid = optional_param('id', 0, PARAM_INT) ?? 0;
+
+        $url = new moodle_url('/mod/pulse/automation/templates/edit.php', ['id' => $templateid, 'sesskey' => sesskey()]);
+
+        $filter = new \manage_instance_table_filter($url->out(false).'#manage-instance-tab', ['id' => $templateid, 'numberofinstance' => null]);
+
+        $button .= \html_writer::tag('div', $filter->render(), ['id' => 'pulse-automation-filterform', 'class' => 'hideinstance hide']);
+        $button .= \html_writer::end_div();
+
+        return $button;
+    }
 }

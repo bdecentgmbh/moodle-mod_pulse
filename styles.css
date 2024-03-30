@@ -283,16 +283,16 @@
 .mod-pulse-automation-table table.generaltable tbody td .badge.pulseaction_notification {
     background-color: #7b61ff;
 }
-.mod-pulse-automation-table .box.generalbox {
+.mod-pulse-automation-filter .box.generalbox {
     position: relative;
 }
-.mod-pulse-automation-table .filter-form-container {
+.mod-pulse-automation-filter .filter-form-container {
     float: right;
 }
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filter i.icon {
+.mod-pulse-automation-filter .filter-form-container #pulse-automation-filter i.icon {
     margin-right: 0;
 }
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform {
+.mod-pulse-automation-filter .filter-form-container #pulse-automation-filterform {
     background-color: #fff;
     border: 1px solid #ccc;
     box-shadow: 0 0 0 0.1px;
@@ -302,10 +302,10 @@
     right: 0;
     z-index: 2;
 }
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform form .form-group {
+.mod-pulse-automation-filter .filter-form-container #pulse-automation-filterform form .form-group {
     margin-left: 0;
 }
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform form .form-group .col-form-label {
+.mod-pulse-automation-filter .filter-form-container #pulse-automation-filterform form .form-group .col-form-label {
     padding-left: 0;
 }
 
@@ -355,4 +355,113 @@
 body.behat-site .pulse-instance-status-switch input.custom-control-input {
     position: relative;
     z-index: -1;
+}
+
+/* Pulse 2.1 */
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+    width: 400px;
+    height: 25px;
+    overflow: hidden;
+}
+.manage-instance h6.numofinstance.emptycount {
+    color: red;
+}
+#manage-instance-tab .filter-form-container {
+    float: right;
+}
+#manage-instance-tab #manage-instance-table input.custom-control-input:not(:checked) ~ .badge {
+    display: none;
+}
+#manage-instance-tab .generalbox .bulkdisableinstance-btn .custom-control,
+#manage-instance-tab .generalbox .bulkenableinstance-btn .custom-control {
+    display: inline-block;
+    vertical-align: middle;
+}
+#manage-instance-table .table-dynamic .generaltable .menu-item-actions a {
+    color: #000;
+    display: inline-block;
+    vertical-align: middle;
+}
+#manage-instance-table .table-dynamic .generaltable .menu-item-actions a .custom-control .badge {
+    margin-right: 5px;
+}
+
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders li {
+    margin-bottom: 10px;
+}
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-head .title,
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-head .help-text {
+    display: inline-block;
+}
+.mod-pulse-emailvars-toggle .emailvars-body {
+    background-color: #f1f1f1;
+    border-radius: 5px;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head {
+    width: 100%;
+    text-decoration: none;
+    display: inline-block;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head a {
+    font-weight: bold;
+    color: #000;
+    padding: 20px;
+    text-decoration: none;
+    box-shadow: none;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head .email-vars-button {
+    display: flex;
+    align-items: center;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head .email-vars-button i {
+    width: 100%;
+    text-align: right;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .card-body {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding-top: 0;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .pulse-email-placeholders {
+    padding: 0;
+    margin-bottom: 0;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-head .title h6 {
+    font-size: 14px;
+    font-weight: normal;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .placeholders a {
+    font-size: 14px;
+    color: #000;
+    text-decoration: none;
+    border-radius: 5px;
+    background-color: #ffe99C;
+    padding: 1px 5px;
+    margin-right: 5px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .showmore {
+    margin-bottom: 5px;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .showmore a {
+    text-decoration: none;
+    box-shadow: none;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholders-document h6 {
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
+#manage-instance-tab.show + .femptylabel,
+#manage-instance-tab.show ~ .required  {
+    display: none;
+}
+
+div#pulsetemplates-tab-content .tab-pane.active {
+    display: block;
+}
+div#pulsetemplates-tab-content .tab-pane {
+    display: none;
 }

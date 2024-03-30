@@ -85,4 +85,101 @@ class external extends \external_api {
     public static function apply_presets_returns() {
         return new \external_value(PARAM_RAW, 'Count of Page user notes');
     }
+
+    /**
+     * Bulk delete instances on the instance managemente table.
+     *
+     * @return array bulk actions parameters.
+     */
+    public static function delete_instances_parameters() {
+
+        return new \external_function_parameters(
+            [
+                'templateid' => new \external_value(PARAM_INT, 'The automation template id'),
+                'courseids' => new \external_multiple_structure(new \external_value(PARAM_INT, 'course ID',
+                        VALUE_REQUIRED, '', NULL_NOT_ALLOWED), 'Array of Course IDs', VALUE_DEFAULT, array()),
+                'action' => new \external_value(PARAM_TEXT, 'The bulk action'),
+            ]
+        );
+    }
+
+    /**
+     * Deleted the instance on the selected courses use the bulk deleted action in the instance management table.
+     * 
+     * @param int $templateid Automation template ID.
+     * @param array $courseids Course ID.
+     * 
+     * @return array $message
+     */
+    public static function delete_instances(int $templateid, array $courseids, string $action) {
+        global $DB;
+
+        $vaildparams = self::validate_parameters(self::delete_instances_parameters(), 
+        ['templateid' => $templateid, 'courseids' => $courseids, 'action' => $action]);
+        
+        $message = '';
+        switch ($vaildparams['action']) {
+
+            case 'delete':
+                if (!empty($vaildparams['courseids'])) {
+                    foreach ($vaildparams['courseids'] as $courseid) {
+                        $management = \mod_pulse\automation\manage::create($templateid, $courseid);
+                        if ($management->delete_course_instance()) {
+                            $message = get_string('templatedeleted', 'pulse');
+                        }
+                    }
+                }
+            break;
+
+            case 'add':
+                if (!empty($vaildparams['courseids'])) {
+                    foreach ($vaildparams['courseids'] as $courseid) {
+                        $management = \mod_pulse\automation\manage::create($templateid, $courseid);
+                        if ($management->add_course_instance()) {
+                            $message = get_string('templateinsertsuccess', 'pulse');
+                        }
+                    }
+                }
+            break;
+
+            case 'disable':
+                if (!empty($vaildparams['courseids'])) {
+                    foreach ($vaildparams['courseids'] as $courseid) {
+                        $management = \mod_pulse\automation\manage::create($templateid, $courseid);
+                        if ($management->update_instance_status(false)) {
+                            $message = get_string('templatedisablesuccess', 'pulse');
+                        }
+                    }
+                }
+            break;
+
+            case 'enable':
+                if (!empty($vaildparams['courseids'])) {
+                    foreach ($vaildparams['courseids'] as $courseid) {
+                        $management = \mod_pulse\automation\manage::create($templateid, $courseid);
+                        if ($management->update_instance_status(true)) {
+                            $message = get_string('templateenablesuccess', 'pulse');
+                        }
+                    }
+                }
+            break;
+        }
+        return [
+            'message' => $message
+        ];
+    }
+
+    /**
+     * Retuns the redirect course url and created pulse id for save method.
+     *
+     * @return array message.
+     */
+    public static function delete_instances_returns() {
+        return new \external_single_structure(
+            [
+                'message' => new \external_value(PARAM_TEXT, 'Return status message'),
+            ]
+        );
+    }
+
 }

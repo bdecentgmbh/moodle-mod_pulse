@@ -605,6 +605,7 @@ class actionform extends \mod_pulse\automation\action_base {
         global $CFG, $PAGE;
 
         require_once($CFG->dirroot.'/course/lib.php');
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
 
         // Sender Group.
         $senderoptions = array(
@@ -727,7 +728,8 @@ class actionform extends \mod_pulse\automation\action_base {
             $this->get_editor_options($context)
         );
         $mform->addHelpButton('pulsenotification_headercontent_editor', 'headercontent', 'pulseaction_notification');
-        $forminstance->pulse_email_placeholders($mform);
+        $placeholders = pulse_email_placeholders('header');
+        $mform->addElement('html', $placeholders);
 
         // Statecontent editor.
         $mform->addElement('editor', 'pulsenotification_staticcontent_editor',
@@ -736,21 +738,22 @@ class actionform extends \mod_pulse\automation\action_base {
             $this->get_editor_options($context)
         );
         $mform->addHelpButton('pulsenotification_staticcontent_editor', 'staticcontent', 'pulseaction_notification');
-        $forminstance->pulse_email_placeholders($mform);
+        $placeholders = pulse_email_placeholders('static');
+        $mform->addElement('html', $placeholders);
 
         // Footer Content.
         $mform->addElement('editor', 'pulsenotification_footercontent_editor',
             get_string('footercontent', 'pulseaction_notification'),
             ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
         $mform->addHelpButton('pulsenotification_footercontent_editor', 'footercontent', 'pulseaction_notification');
-        $forminstance->pulse_email_placeholders($mform);
+        $placeholders = pulse_email_placeholders('footer');
+        $mform->addElement('html', $placeholders);
 
         // Preview Button.
         $test = $mform->addElement('button', 'pulsenotification_preview', get_string('preview', 'pulseaction_notification'));
         $mform->addHelpButton('pulsenotification_preview', 'preview', 'pulseaction_notification');
 
         // Email tempalte placholders.
-        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
         $contextid = $PAGE->context->id;
         $PAGE->requires->js_call_amd('pulseaction_notification/chaptersource', 'previewNotification', ['contextid' => $contextid]);
     }
@@ -778,5 +781,74 @@ class actionform extends \mod_pulse\automation\action_base {
         }
 
         return $timelist;
+    }
+
+    /**
+     * Get a email placeholders data fields.
+     *
+     * @return array
+     */
+    public function get_email_placeholders() {
+
+        $result = [
+            'Assignment' => $this->assignment_data_fields(),
+        ];
+
+        return $result;
+    }
+
+    /**
+     * Assignment extension data fields.
+     *
+     * @return array
+     */
+    public function assignment_data_fields() {
+        return [ 'Assignment_Extensions'];
+    }
+
+    /**
+     * Get the assignment extenstion placeholders values.
+     *
+     * @param int $courseid Course ID.
+     * @param int $userid User ID.
+     * @return array
+     */
+    public function get_assignment_extension($courseid, $userid) {
+        global $DB, $CFG;
+        require_once($CFG->libdir . '/completionlib.php');
+
+        // Get only assignments from the course of the instance shall be included.
+        $assignments = $DB->get_records('assign', ['course' => $courseid]);
+        $extension = '';
+
+        // Get a course completeion.
+        $completion = new \completion_info(get_course($courseid));
+
+        foreach ($assignments as $assignment) {
+            // Get the assignments only not completed by the user.
+            $cmid = $DB->get_record('course_modules', ['module' => 1, 'instance' => $assignment->id]);
+            $cm = get_coursemodule_from_id('assign', $cmid->id, 0, false, MUST_EXIST);
+            $cminfo = \cm_info::create($cm, $userid);
+            $assigncompletion = $completion->get_data($cminfo, true, $userid);
+
+            if ($assigncompletion->completionstate != COMPLETION_COMPLETE) {
+                // Get only assignments where the assignment submission deadline was extended.
+                if ($DB->record_exists('assign_user_flags', ['assignment' => $assignment->id, 'userid' => $userid])) {
+                    $extensionassignments = $DB->get_records('assign_user_flags', ['assignment' => $assignment->id,
+                    'userid' => $userid]);
+                    foreach ($extensionassignments as $extensionassign) {
+                        if ($extensionassign->extensionduedate != 0) {
+                            $extensionduedate = userdate($extensionassign->extensionduedate) ?? '';
+                            $extension .= html_writer::tag('h6', $assignment->name.": ". $extensionduedate .'('.
+                            get_string('previously', 'pulse').': '.userdate($assignment->duedate).')');
+                        }
+                    }
+                }
+            }
+        }
+
+        return (object) [
+            'extensions' => (!empty($extension)) ? $extension : get_string('noextensiongranted', 'pulse'),
+        ];
     }
 }

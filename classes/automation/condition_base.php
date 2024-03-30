@@ -156,7 +156,7 @@ abstract class condition_base {
             return true;
         }
 
-         // Get the 'status' or set it to an empty string if not present.
+        // Get the 'status' or set it to an empty string if not present.
         $status = $data['status'] ?? '';
 
         // Future enrolment is disabled then make the upcoming time to null.
@@ -180,6 +180,22 @@ abstract class condition_base {
         unset($data['status']);
         // Encode additional data as JSON.
         $record['additional'] = json_encode($data);
+
+         if ($this->component == 'events' && array_key_exists('event', $data)) {
+            $eventrecord = [
+                'instanceid' => $instanceid,
+                'eventname' => stripslashes($data['event']),
+                'notifyuser' => $data['notifyuser'],
+            ];
+            if ($event = $DB->get_record('pulsecondition_events', ['instanceid' => $instanceid])) {
+                $eventrecord['id'] = $event->id;
+                // Update the record.
+                $DB->update_record('pulsecondition_events', $eventrecord);
+            } else {
+                // Insert the record.
+                $DB->insert_record('pulsecondition_events', $eventrecord);
+            }
+        }
 
         // Check if a record already exists for this instance and trigger condition.
         if ($condition = $DB->get_record('pulse_condition_overrides',
@@ -207,8 +223,10 @@ abstract class condition_base {
     public function include_data_forinstance(&$instance, $data, $prefix=true) {
         // Decode additional data.
         $additional = $data->additional ? json_decode($data->additional, true) : [];
+
         // Add overrides to instance.
         foreach ($additional as $key => $value) {
+            // NEEDTOOVERVIEW: For the wrong count of overrides in the list, removed this additional.
             $instance->override["condition_".$this->component."_".$key] = 1;
         }
 
@@ -216,11 +234,43 @@ abstract class condition_base {
         if ($data->isoverridden) {
             $instance->condition[$this->component]['status'] = $data->status;
             $instance->override["condition_".$this->component."_status"] = 1;
+            $count = isset($instance->overridecount) ? $instance->overridecount + 1 : 1;
+            $instance->overridecount = $count;
         }
         // If component condition is set, merge additional data and set 'upcomingtime'.
         if (isset($instance->condition[$this->component]) && $instance->condition[$this->component] != null) {
             $instance->condition[$this->component] = array_merge($instance->condition[$this->component], $additional);
             $instance->condition[$this->component]['upcomingtime'] = $data->upcomingtime ?: 0;
         }
+    }
+
+    /**
+     * List of placeholders rendered form the events.
+     *
+     * @return array
+     */
+    public function get_email_placeholders() {
+        return [];
+    }
+
+    /**
+     * Include the conditions var values for the placeholders.
+     *
+     * @param int $userid
+     * @param stdClass $instancedata
+     * @param stdClass $schedulerecord
+     * @return array
+     */
+    public function update_email_customvars($userid, $instancedata, $schedulerecord) {
+        return [];
+    }
+
+    /**
+     * Include the conditions join query with the sql used to fetch the schedule record.
+     *
+     * @return string
+     */
+    public function schedule_override_join() {
+        return '';
     }
 }

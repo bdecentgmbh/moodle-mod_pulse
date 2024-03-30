@@ -147,43 +147,52 @@ class auto_templates extends table_sql {
 
         $baseurl = new \moodle_url('/mod/pulse/automation/templates/edit.php', [
             'id' => $row->id,
-            'sesskey' => \sesskey()
+            'sesskey' => \sesskey(),
         ]);
-        $actions = array();
+        $actions = [];
 
         // Edit.
-        $actions[] = array(
+        $actions[] = [
             'url' => $baseurl,
             'icon' => new \pix_icon('t/edit', \get_string('edit')),
-            'attributes' => array('class' => 'action-edit')
-        );
+            'attributes' => ['class' => 'action-edit'],
+        ];
 
         list($totalcount, $disabledcount) = $this->get_instance_count($row);
         $actions[] = html_writer::tag('label', $totalcount . "(" . $disabledcount . ")", [
                     'class' => 'overrides badge badge-secondary pl-10']);
         $listurl = new \moodle_url('/mod/pulse/automation/templates/list.php', [
             'id' => $row->id,
-            'sesskey' => \sesskey()
+            'sesskey' => \sesskey(),
         ]);
 
         // Show/Hide.
         if ($row->visible) {
-            $actions[] = array(
-                'url' => new \moodle_url($listurl, array('action' => 'hidemenu')),
+            $actions[] = [
+                'url' => new \moodle_url($listurl, ['action' => 'hidemenu']),
                 'icon' => new \pix_icon('t/hide', \get_string('hide')),
-                'attributes' => array('data-action' => 'hide', 'class' => 'action-hide')
-            );
+                'attributes' => ['data-action' => 'hide', 'class' => 'action-hide'],
+            ];
         } else {
-            $actions[] = array(
-                'url' => new \moodle_url($listurl, array('action' => 'showmenu')),
+            $actions[] = [
+                'url' => new \moodle_url($listurl, ['action' => 'showmenu']),
                 'icon' => new \pix_icon('t/show', \get_string('show')),
-                'attributes' => array('data-action' => 'show', 'class' => 'action-show')
-            );
+                'attributes' => ['data-action' => 'show', 'class' => 'action-show'],
+            ];
         }
 
         // List of items.
         $actions[] = $this->edit_switch($row);
-        $actionshtml = array();
+
+        // Delete.
+        $actions[] = [
+            'url' => new \moodle_url($listurl, ['action' => 'delete']),
+            'icon' => new \pix_icon('t/delete', \get_string('delete')),
+            'attributes' => ['class' => 'action-delete'],
+            'action' => new \confirm_action(get_string('confirmdeletetemplate', 'pulse')),
+        ];
+
+        $actionshtml = [];
         foreach ($actions as $action) {
             if (!is_array($action)) {
                 $actionshtml[] = $action;
@@ -194,7 +203,7 @@ class auto_templates extends table_sql {
                 $action['url'],
                 $action['icon'],
                 ($action['action'] ?? null),
-                $action['attributes']
+                $action['attributes'],
             );
         }
         return html_writer::div(join('', $actionshtml), 'menu-item-actions item-actions mr-0');
@@ -212,13 +221,13 @@ class auto_templates extends table_sql {
         $temp = (object) [
             'legacyseturl' => (new moodle_url('/mod/pulse/automation/templates/list.php', [
                 'id' => $row->id,
-                'sesskey' => sesskey()
+                'sesskey' => sesskey(),
                 ]))->out(false),
             'pagecontextid' => $PAGE->context->id,
             'pageurl' => $PAGE->url,
             'sesskey' => sesskey(),
             'checked' => $row->status,
-            'id' => $row->id
+            'id' => $row->id,
         ];
         return $OUTPUT->render_from_template('pulse/status_switch', $temp);
     }

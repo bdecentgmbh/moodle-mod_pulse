@@ -110,3 +110,45 @@ class mod_pulse_context_course extends \context_course {
         return \context::create_instance_from_record($data);
     }
 }
+
+/**
+ * Filter form for the instance management table.
+ */
+class manage_instance_table_filter extends \moodleform {
+
+    /**
+     * Filter form elements defined.
+     *
+     * @return void
+     */
+    public function definition() {
+        global $DB;
+        $mform =& $this->_form;
+
+        // Set the id of template.
+        $mform->addElement('hidden', 'id', $this->_customdata['id'] ?? 0);
+        $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('html', html_writer::tag('h3', get_string('filter')));
+        $list = [0 => get_string('all')] + core_course_category::make_categories_list();
+        $mform->addElement('autocomplete', 'category', get_string('category'), $list);
+
+        $courses = $DB->get_records_sql('SELECT id, fullname FROM {course} WHERE id <> 1 AND visible != 0', []);
+        foreach ($courses as $id => $course) {
+            $courselist[$id] = $course->fullname;
+        }
+        $courselists = [0 => get_string('all')] + $courselist;
+        $mform->addElement('autocomplete', 'course', get_string('coursename', 'pulse'), $courselists);
+
+        $mform->addElement('text', 'numberofinstance', get_string('numberofinstance', 'pulse'));
+        $mform->setType('numberofinstance', PARAM_ALPHANUM); // To use 0 for filter not used param_int.
+        $mform->setDefault('numberofinstace', '');
+
+        // Number of overrides.
+        $mform->addElement('text', 'numberofoverrides', get_string('numberofoverrides', 'pulse'));
+        $mform->setType('numberofoverrides', PARAM_ALPHANUM); // To use 0 for filter not used param_int.
+        $mform->setDefault('numberofoverrides', '');
+
+        $this->add_action_buttons(false, get_string('filter'));
+    }
+}

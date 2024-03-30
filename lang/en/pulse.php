@@ -207,7 +207,7 @@ $string['presetcreated'] = 'Pulse presets created successfully';
 $string['presetupdated'] = 'Pulse presets updated successfully';
 $string['update_preset'] = 'Update Preset Template';
 $string['deletepreset'] = 'Delete pulsepro preset template';
-$string['confirmdeletetemplate'] = 'Are you sure! do you want to delete the preset';
+$string['confirmdeletetemplate'] = 'Are you sure! do you want to delete the automation template';
 $string['presetdeleted'] = 'Preset deleted successfully';
 $string['apply_customize'] = 'Apply and Customize';
 $string['apply_save'] = 'Apply and Save';
@@ -378,3 +378,75 @@ $string['pulsetemplink'] = "Pulse Automation Template";
 $string['completionenrolled'] = 'enrolled';
 // ...Automation template error.
 $string['errortemplatenotavailable'] = 'This automation template is not available for this course';
+
+// Override instance capability.
+$string['pulse:overridetemplateinstance'] = 'Override the automation instance';
+
+// Email placeholders category.
+$string['User_vars'] = 'User Profile';
+$string['Course_vars'] = 'Course Information';
+$string['Sender_vars'] = 'Sender';
+$string['Enrolment_vars'] = 'Enrolments & Completion';
+$string['Calendar_vars'] = 'Calendar';
+$string['Site_vars'] = 'Site';
+$string['Mod_vars'] = 'Course activities';
+$string['Mod_session_vars'] = 'Face to Face';
+$string['Assignment_vars'] = "Assignments";
+
+// Email placeholders category help text.
+$string['User_vars_help'] = 'User Profile placeholders';
+$string['Course_vars_help'] = 'Course Information placeholders';
+$string['Sender_vars_help'] = 'Sender information placeholders';
+$string['Enrolment_vars_help'] = 'Enrolments & Completion information placeholders';
+$string['Calendar_vars_help'] = 'Calendar information placeholders';
+$string['Site_vars_help'] = 'Site information placeholders';
+$string['Mod_vars_help'] = 'Course activities information placeholders';
+$string['Mod_session_vars_help'] = 'Face to Face module placeholders';
+$string['Assignment_vars_help'] = "Email placeholder for the assignment extension";
+
+// Manage Instance tab.
+$string['tabmanageinstance'] = 'Instance Management';
+$string['manageinstance'] = 'Manage Instance';
+$string['numberofinstance'] = 'Number of instance';
+$string['numberofoverrides'] = 'Number of overrides';
+$string['coursename'] = 'Course name';
+$string['coursecategory'] = 'Course category';
+$string['suspended'] = 'Suspended';
+$string['addinstance'] = 'Add Instance';
+$string['courseinsreport'] = 'Instances for this template';
+$string['selectall'] = 'Select all';
+$string['deselectall'] = 'De-select all';
+$string['selectwithoutins'] = 'Select all without instances';
+$string['filterlang'] = 'Filter';
+$string['bulkaction:deleteinstance'] = 'Delete instances ';
+$string['bulkaction:addinstance'] = 'Add instances ';
+$string['bulkaction:disableinstance'] = "Disable instances ";
+$string['bulkaction:enableinstance'] = "Enable instances ";
+$string['withselect'] = 'With selection:';
+$string['instancedataempty'] = 'Instance data empty';
+$string['confirmation'] = 'Confirmation';
+$string['confirmdeleteinstance'] = 'Are you sure! do you want to delete all instance for this selected courses.';
+$string['confirmaddinstance'] = 'Are you sure! do you want to add a instances for this selected courses.';
+$string['confirmenableinstance'] = 'Are you sure! do you want to enable the instances for this selected courses.';
+$string['confirmdisableinstance'] = 'Are you sure! do you want to disable the instances for this selected courses.';
+$string['templatedisablesuccess'] = 'Automation template instances disabled successfully';
+$string['templateenablesuccess'] = 'Automation template instances enabled successfully';
+$string['mixed'] = 'Mixed';
+$string['instanceslist'] = 'Course Instances List';
+
+// Manage Instance capability.
+$string['pulse:manageinstance'] = 'Access to the instance management';
+
+// Assignment Extension.
+$string['previously'] = 'Previously';
+$string['noextensiongranted'] = 'No extensions have been granted for upcoming assignments.';
+
+// Event Condition vars.
+$string['Event_vars'] = 'Logs';
+$string['Event_vars_help'] = 'Events conditions vars';
+
+$string['showmore'] = "Show more";
+$string['showless'] = "Show less";
+$string['vardocstr'] = "The full list of available placeholders can be found in the ";
+$string['placeholder'] = "Placeholders";
+$string['documentation'] = "documentation";

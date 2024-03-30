@@ -51,9 +51,10 @@ class helper {
      * @param  mixed $user User data object.
      * @param  mixed $mod Pulse module data object.
      * @param  mixed $sender Sender user data object. - sender is the first enrolled teacher in the course of module.
+     * @param array $conditionvars Condition variables.
      * @return array Updated subject and message body content.
      */
-    public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
+    public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender, $conditionvars=[]) {
         global $DB, $CFG;
 
         // Include placholders handler and user profile library.
@@ -68,10 +69,21 @@ class helper {
             return str_replace('profile_field_', '', $value);
         }, array_keys((array) $newuser));
         $user->profilefield = (object) array_combine($newuserkeys, (array) $newuser);
+        $user->fullname = fullname($user);
 
         $course = clone $course;
         // Load course custom profuile fields.
         $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
+        // Load the course URL.
+        if (!empty($course->id)) {
+            $courseURL = new moodle_url($CFG->wwwroot .'/course/view.php', array('id' => $course->id));
+        }
+        if (empty($CFG->allowthemechangeonurl)) {
+            $courseurl =  $courseURL;
+        } else {
+            $courseurl = new moodle_url($courseURL);
+        }
+        $course->courseurl = $courseurl;
 
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
         $amethods = pulse_email_vars::vars(); // List of available placeholders.
@@ -79,20 +91,22 @@ class helper {
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
 
-        $vars = new pulse_email_vars($user, $course, $sender, $mod);
+        $vars = new pulse_email_vars($user, $course, $sender, $mod, $conditionvars);
 
-        foreach ($amethods as $funcname) {
-            $replacement = "{" . $funcname . "}";
-            // Message text placeholder update.
-            if (stripos($templatetext, $replacement) !== false) {
-                $val = $vars->$funcname;
-                // Placeholder found on the text, then replace with data.
-                $templatetext = str_ireplace($replacement, $val, $templatetext);
-            }
-            // Replace message subject placeholder.
-            if (stripos($subject, $replacement) !== false) {
-                $val = $vars->$funcname;
-                $subject = str_ireplace($replacement, $val, $subject);
+        foreach ($amethods as $varscat => $placeholders) {
+            foreach($placeholders as $funcname) {
+                $replacement = "{" . $funcname . "}";
+                // Message text placeholder update.
+                if (stripos($templatetext, $replacement) !== false) {
+                    $val = $vars->$funcname;
+                    // Placeholder found on the text, then replace with data.
+                    $templatetext = str_ireplace($replacement, $val, $templatetext);
+                }
+                // Replace message subject placeholder.
+                if (stripos($subject, $replacement) !== false) {
+                    $val = $vars->$funcname;
+                    $subject = str_ireplace($replacement, $val, $subject);
+                }
             }
         }
         return [$subject, $templatetext];

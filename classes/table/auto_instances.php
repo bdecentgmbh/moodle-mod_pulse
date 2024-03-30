@@ -84,16 +84,29 @@ class auto_instances extends table_sql {
      * @return void
      */
     public function query_db($pagesize, $useinitialsbar = true) {
-        global $PAGE;
+        global $PAGE, $DB;
 
         $courseid = $PAGE->course->id;
-        // Fetch all avialable records from smart menu table.
+        // Fetch all automation instances in this course .
+        $params = [];
+        $condition = 'courseid=:courseid ';
+        $params += ['courseid' => $courseid];
+
+        // Filter the particular template instances in this course.
+        if ($this->filterset->has_filter('templateid')) {
+
+            $values = $this->filterset->get_filter('templateid')->get_filter_values();
+            $templateid = isset($values[0]) ? current($values) : '';
+            $condition .= 'AND templateid=:templateid';
+            $params += ['templateid' => $templateid];
+        }
+
         $this->set_sql(
             "ai.*, ati.*, ai.id as id, ati.insreference as idnumber",
             '{pulse_autoinstances} ai
             JOIN {pulse_autotemplates_ins} ati ON ati.instanceid=ai.id
             JOIN {pulse_autotemplates} pat ON pat.id=ai.templateid',
-            'courseid=:courseid', ['courseid' => $courseid]
+            $condition, $params
         );
 
         parent::query_db($pagesize, $useinitialsbar);

@@ -182,9 +182,17 @@ class schedule {
                 $this->include_session_data($mod, $sessionconditiondata, $this->user->id);
             }
 
+            // Include the conditions vars for placeholder replace.
+            $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
+            $conditionvars = [];
+            foreach ($plugins as $component => $pluginbase) {
+                $vars = $pluginbase->update_email_customvars($this->user->id, $this->instancedata, $this->schedulerecord);
+                $conditionvars += $vars ?: [];
+            }
+
             // Update the email placeholders.
             list($subject, $messagehtml) = pulsehelper::update_emailvars(
-                $detail->content, $detail->subject, $this->course, $this->user, $mod, $sender);
+                $detail->content, $detail->subject, $this->course, $this->user, $mod, $sender, array_filter($conditionvars));
 
             // Plain message.
             $messageplain = html_to_text($messagehtml);
@@ -262,8 +270,6 @@ class schedule {
 
             $select = array_merge($select, $columns);
         }
-        // Final list of select columns, convert to sql mode.
-        $select = implode(', ', $select);
 
         // Number of notification to send in this que.
         $limit = get_config('pulse', 'schedulecount') ?: 100;
@@ -271,6 +277,20 @@ class schedule {
         // Trigger the schedules for sepecied users.
         $userwhere = $userid ? ' AND ns.userid =:userid ' : '';
         $userparam = $userid ? ['userid' => $userid] : [];
+
+        $conditionleftjoins = '';
+        $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
+        foreach ($plugins as $component => $pluginbase) {
+            list($fields, $join) = $pluginbase->schedule_override_join();
+            if (empty($fields)) {
+                continue;
+            }
+            $conditionleftjoins .= $join;
+            $select[] = $fields;
+        }
+
+        // Final list of select columns, convert to sql mode.
+        $select = implode(', ', $select);
 
         // Fetch the schedule which is status as 1 and nextrun not empty and not greater than now.
         $sql = "SELECT $select FROM {pulseaction_notification_sch} ns
@@ -284,6 +304,7 @@ class schedule {
             JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = 50
             LEFT JOIN {pulse_condition_overrides} con ON con.instanceid = pati.instanceid AND con.triggercondition = 'session'
             LEFT JOIN {course_modules} cm ON cm.id = ni.dynamiccontent
+            $conditionleftjoins
             LEFT JOIN {modules} md ON md.id = cm.module
             JOIN (
                 SELECT DISTINCT eu1_u.id, ej1_e.courseid, COUNT(ej1_ue.enrolid) AS activeenrolment

@@ -155,8 +155,7 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '18', null, XMLDB_NOTNULL, null, null, 'id');
         $table->add_field('title', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'instanceid');
         $table->add_field('insreference', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'title');
-        $table->add_field('visible', XMLDB_TYPE_INTEGER, '9', null, null, null, null, 'insreference');
-        $table->add_field('notes', XMLDB_TYPE_TEXT, null, null, null, null, null, 'visible');
+        $table->add_field('notes', XMLDB_TYPE_TEXT, null, null, null, null, null, 'insreference');
         $table->add_field('tags', XMLDB_TYPE_TEXT, null, null, null, null, null, 'notes');
         $table->add_field('tenants', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tags');
         $table->add_field('categories', XMLDB_TYPE_TEXT, null, null, null, null, null, 'tenants');

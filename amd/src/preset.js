@@ -1,6 +1,6 @@
 define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/events', 'core/str',
-'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events'],
-    function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification, ModalEvents) {
+    'core/fragment', 'core/ajax', 'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events', 'mod_pulse/presetmodal'],
+    function ($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon, Notification, ModalEvents, PresetModal) {
 
     var SELECTOR = {
         presetAvailability: '.preset-config-params .availability-field'
@@ -50,12 +50,23 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             var params = {'presetid': presetid, 'courseid': THIS.courseid, 'section': THIS.section};
 
             document.body.prepend(attachmentPoint);
-            Modal.create({
-                type: ModalPreset.TYPE,
-                title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
-                body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
-                large: true,
-            }).then(modal => {
+
+            if (typeof Modal.createFromType === 'function') {
+                var modalFn = Modal.create({
+                    type: ModalPreset.TYPE,
+                    title: Str.get_string('presetmodaltitle', 'pulse', { 'title': presettitle }),
+                    body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
+                    large: true,
+                });
+            } else {
+                var modalFn = PresetModal.create({
+                    title: Str.get_string('presetmodaltitle', 'pulse', { 'title': presettitle }),
+                    body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
+                    large: true,
+                });
+            }
+
+            modalFn.then(modal => {
                 // Make the modal attachment point to overcome the restriction access condition.
                 modal.attachmentPoint = attachmentPoint;
                 modal.show();

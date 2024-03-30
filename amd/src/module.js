@@ -170,7 +170,10 @@ define(['core_editor/events'], function() {
 
                     var content = "{" + this.getAttribute('data-text') + "}";
                     var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
-                    
+                        
+                    // Copy the placeholder field.
+                    navigator.clipboard.writeText(content);
+
                     if (iframes === null || !iframes.length) {
 
                         // Header notification editor.

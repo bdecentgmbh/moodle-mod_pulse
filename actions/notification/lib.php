@@ -103,6 +103,14 @@ function pulseaction_notification_output_fragment_preview_instance_content($args
             schedule::instance()->include_session_data($mod, $sessionconditiondata, $user->id);
         }
 
+        // Include the conditions vars for placeholder replace.
+        /* $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
+        $conditionvars = [];
+        foreach ($plugins as $component => $pluginbase) {
+            $vars = $pluginbase->update_email_customvars($args['userid'], $formdata);
+            $conditionvars += $vars ?: [];
+        } */
+
         list($subject, $messagehtml) = mod_pulse\helper::update_emailvars($content, '', $course, $user, $mod, $sender);
         $selector = "";
 

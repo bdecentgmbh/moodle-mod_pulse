@@ -27,12 +27,15 @@ namespace mod_pulse\forms;
 defined('MOODLE_INTERNAL') || die('No direct access!');
 
 require_once($CFG->dirroot.'/lib/formslib.php');
-require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+require_once($CFG->dirroot.'/mod/pulse/classes/table/manage_instance.php');
+require_once($CFG->dirroot.'/mod/pulse/classes/table/manage_instance_filterset.php');
 
 use moodleform;
 use html_writer;
 use mod_pulse\automation\helper;
 use mod_pulse\automation\templates;
+use mod_pulse\table\manageinstance_filterset;
+use mod_pulse\table\manage_instance;
 
 /**
  * Define the automation template form.
@@ -48,23 +51,35 @@ class automation_template_form extends moodleform {
         global $PAGE, $OUTPUT;
 
         $mform = $this->_form; // Get the form instance.
+
+        // Set the id of template.
+        $mform->addElement('hidden', 'id', 0);
+        $mform->setType('id', PARAM_INT);
+
         $mform->updateAttributes(['id' => 'pulse-automation-template' ]);
         $tabs = [
             ['name' => 'autotemplate-general', 'title' => get_string('tabgeneral', 'pulse'), 'active' => 'active'],
-            ['name' => 'pulse-condition-tab', 'title' => get_string('tabcondition', 'pulse')]
+            ['name' => 'pulse-condition-tab', 'title' => get_string('tabcondition', 'pulse')],
         ];
+
+        $context = \context_system::instance();
+
         // Load all actions forms.
         // Define the lang key "formtab" in the action component it automatically includes it.
         foreach (helper::get_actions() as $key => $action) {
             $tabs[] = ['name' => 'pulse-action-'.$key, 'title' => get_string('formtab', 'pulseaction_'.$key)];
         }
 
-        $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
-        $mform->addElement('html', $tab);
+        // Instance management tab.
+        if ($templateid = $this->get_customdata('id') && has_capability('mod/pulse:manageinstance', $context)) {
+            $tabs[] = ['name' => 'manage-instance-tab', 'title' => get_string('tabmanageinstance', 'pulse')];
+        }
 
-        // Set the id of template.
-        $mform->addElement('hidden', 'id', 0);
-        $mform->setType('id', PARAM_INT);
+        $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
+        // $mform->addElement('html', $tab);
+
+        // Pulse templates tab content.
+        // $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">');
 
         // Template options.
         $this->load_template_options($mform);
@@ -74,6 +89,7 @@ class automation_template_form extends moodleform {
 
         // Load template actions.
         $this->load_template_actions($mform);
+
 
         if ($templateid = $this->get_customdata('id')) {
             list($overcount, $overinstances) = templates::create($templateid)->get_instances();
@@ -99,9 +115,15 @@ class automation_template_form extends moodleform {
             }
         }
 
+        // $mform->addElement('html', html_writer::end_div());
+
         // Show the list of overriden content.
         $PAGE->requires->js_call_amd('mod_pulse/automation', 'init');
 
+        // Email placeholders.
+        $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+        
         // Add standard form buttons.
         $this->add_action_buttons(true);
     }
@@ -116,8 +138,7 @@ class automation_template_form extends moodleform {
 
         $mform =& $this->_form;
 
-        $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">
-                            <div class="tab-pane fade show active" id="autotemplate-general">');
+        $mform->addElement('html', '<div class="tab-pane fade show active" id="autotemplate-general">');
 
         // Add the Title element.
         $mform->addElement('text', 'title', get_string('title', 'pulse'), ['size' => '50']);
@@ -180,7 +201,7 @@ class automation_template_form extends moodleform {
     }
 
     /**
-     * Includ the template action trigger element to the templates form.
+     * Include the template action trigger element to the templates form.
      *
      * @return void
      */
@@ -214,6 +235,43 @@ class automation_template_form extends moodleform {
     }
 
     /**
+     * Include the manage instance table to the templates form.
+     *
+     * @return void
+     */
+    public function load_template_manageinstance($manageinstancetable) {
+        global $OUTPUT, $PAGE, $DB, $CFG, $COURSE;
+
+        require_once($CFG->dirroot. '/mod/pulse/automation/automationlib.php');
+
+        // Get the template id.
+        $templateid = optional_param('id', 0, PARAM_INT) ?? 0;
+
+        echo html_writer::start_div('tab-pane fade', ['id' => 'manage-instance-tab']);
+
+        echo helper::bulkaction_buttons($templateid);
+
+        echo html_writer::start_div('manage-instance', ['id' => 'manage-instance-table']);
+
+        // Instance management table added in the template form.
+        $manageinstancetable->out(20, true);
+
+        // E.o of instance manage table.
+        echo html_writer::end_div();
+
+        // Bulk reaction buttons.
+        echo helper::bulkreaction_buttons();
+
+        // E.o of manage instance tab.
+        echo html_writer::end_div();
+
+        $params = ['templateid' => $templateid];
+        // Bulk actions.
+        $PAGE->requires->js_call_amd('mod_pulse/bulkaction', 'init', $params);
+
+    }
+
+    /**
      * Load template actions.
      *
      * @return void
@@ -232,35 +290,6 @@ class automation_template_form extends moodleform {
             $plugin->load_global_form($mform, $this);
             $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
         }
-    }
-
-    /**
-     * Add email placeholder fields in form fields.
-     *
-     * @param  mixed $mform
-     * @return void
-     */
-    public function pulse_email_placeholders(&$mform) {
-        $vars = \pulse_email_vars::vars();
-
-        static $htmlvars;
-        if ($htmlvars === null) {
-            $htmlvars = html_writer::start_tag('div', ['class' => 'form-group row fitem']);
-            $htmlvars .= html_writer::div('', 'col-md-3');
-            $htmlvars .= html_writer::start_div('col-md-9');
-            $htmlvars .= html_writer::start_div('emailvars');
-
-            $optioncount = 0;
-            foreach ($vars as $option) {
-                $htmlvars .= "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>";
-                $optioncount++;
-            }
-
-            $htmlvars .= html_writer::end_div();
-            $htmlvars .= html_writer::end_div();
-            $htmlvars .= html_writer::end_div();
-        }
-        $mform->addElement('html', $htmlvars);
     }
 
     /**

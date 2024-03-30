@@ -130,7 +130,13 @@ $PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/vi
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), new moodle_url('/mod/pulse/automation/instances/list.php'));
 
 // Build automation templates table.
-$filterset = new mod_pulse\table\automation_filterset;
+$filterset = new mod_pulse\table\automation_instance_filterset;
+
+if ($templateid = optional_param('templateid', null, PARAM_INT)) {
+    $template = new \core_table\local\filter\integer_filter('templateid');
+    $template->add_filter_value($templateid);
+    $filterset->add_filter($template);
+}
 
 $table = new mod_pulse\table\auto_instances($context->id);
 $table->define_baseurl($PAGE->url);

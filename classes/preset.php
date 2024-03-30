@@ -230,6 +230,7 @@ class preset extends \moodleform {
      * @return void
      */
     public function load_forms(): void {
+        global $OUTPUT;
 
         $configparams = (isset($this->preset->configparams)) ? json_decode($this->preset->configparams, true) : [];
         self::js_collection_requirement(); // End js collection.
@@ -271,6 +272,14 @@ class preset extends \moodleform {
                     $this->_form->addElement('hidden', $attributename.'_changed', false);
                 }
             }
+            // Availability loading indicator.
+            $loadingcontainer = $OUTPUT->container(
+                $OUTPUT->render_from_template('core/loading', []),
+                'd-flex justify-content-center py-5 icon-size-5',
+                'availabilityconditions-loading'
+            );
+            $this->_form->addElement('html', $loadingcontainer);
+
             $this->add_action_buttons(false, 's');
         }
         // Start to collect the javascripts.

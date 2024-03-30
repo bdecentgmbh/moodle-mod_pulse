@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 
-require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+require_once($CFG->dirroot.'/mod/pulse/lib.php');
 
 /**
  * Pulse module form.
@@ -111,7 +111,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         $section = optional_param('section', 0, PARAM_INT);
         $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id, $section]);
 
-        $this->pulse_email_placeholders($mform);
+        $placeholders = pulse_email_placeholders('content', false);
+        $mform->addElement('html', $placeholders);
         // Show intro on course page always.
         $mform->addElement('hidden', 'showdescription', 1);
         $mform->setType('showdescription', PARAM_INT);
@@ -150,26 +151,12 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->hideIf('boxicon', 'displaymode', 'neq', 1);
 
         $this->standard_coursemodule_elements();
+
+        // Email placeholders.
+        $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
+
         // Form submit and cancek buttons.
         $this->add_action_buttons(true, false, null);
-    }
-
-    /**
-     * Add email placeholder fields in form fields.
-     *
-     * @param  mixed $mform
-     * @return void
-     */
-    public function pulse_email_placeholders(&$mform) {
-        $vars = \pulse_email_vars::vars();
-        $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars'>");
-        $optioncount = 0;
-        foreach ($vars as $option) {
-            $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
-            $optioncount++;
-        }
-        $mform->addElement('html', "</div></div></div>");
     }
 
     /**

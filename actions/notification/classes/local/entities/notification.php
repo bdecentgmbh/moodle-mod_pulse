@@ -107,6 +107,58 @@ class notification extends base {
 
         $notificationinsalias = $this->get_table_alias('pulseaction_notification_ins');
 
+        // Title of instance.
+        $columns[] = (new column(
+            'title',
+            new lang_string('institle', 'pulseaction_notification'),
+            $this->get_entity_name()
+        ))
+        ->set_is_sortable(true)
+        ->add_field("{$templatesinsalias}.title", 'institle')
+        ->add_callback(static function ($value, $row): string {
+            $val = $row->institle ?: '';
+            return format_string($val);
+        });
+
+        // Reference of instance.
+        $columns[] = (new column(
+            'insreference',
+            new lang_string('insreference', 'pulseaction_notification'),
+            $this->get_entity_name()
+        ))
+        ->set_is_sortable(true)
+        ->add_field("{$templatesinsalias}.insreference")
+        ->add_callback(static function ($value, $row): string {
+            $val = $row->insreference ?: '';
+            return format_string($val);
+        });
+
+        // Title of templates.
+        $columns[] = (new column(
+            'templatetitle',
+            new lang_string('templatetitle', 'pulseaction_notification'),
+            $this->get_entity_name()
+        ))
+        ->set_is_sortable(true)
+        ->add_field("{$templatesalias}.title", 'templatetitle')
+        ->add_callback(static function ($value, $row): string {
+            $val = $row->templatetitle ?: '';
+            return format_string($val);
+        });
+
+        // Reference of templates.
+        $columns[] = (new column(
+            'tempreference',
+            new lang_string('tempreference', 'pulseaction_notification'),
+            $this->get_entity_name()
+        ))
+        ->set_is_sortable(true)
+        ->add_field("{$templatesalias}.reference", 'tempreference')
+        ->add_callback(static function ($value, $row): string {
+            $val = $row->tempreference ?: '';
+            return format_string($val);
+        });
+
         // Time the schedule is created.
         $columns[] = (new column(
             'timecreated',

@@ -31,6 +31,8 @@ global $PAGE;
 
 require_once($CFG->libdir."/completionlib.php");
 require_once($CFG->dirroot.'/lib/filelib.php');
+require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+require_once($CFG->dirroot.'/mod/pulse/classes/table/manage_instance.php');
 
 /**
  * Add pulse instance.
@@ -646,14 +648,14 @@ function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
  *
  * @param  navigation_node $navigation
  * @param  stdClass $course
- * @param  \context $context
+ * @param  context_course $context
  * @return void
  */
 function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
     global $PAGE;
 
     $addnode = $context->contextlevel === CONTEXT_COURSE;
-    $addnode = $addnode && has_capability('mod/pulse:addtemplateinstance', $context);
+    $addnode = $addnode && has_capability('mod/pulse:addtemplateinstance', $context); // TODO: Custom capability.
     if ($addnode) {
         $id = $context->instanceid;
         $url = new moodle_url('/mod/pulse/automation/instances/list.php', [
@@ -702,4 +704,67 @@ function mod_pulse_myprofile_navigation(tree $tree, $user, $iscurrentuser, $cour
             $tree->add_node($pulsenode);
         }
     }
+}
+
+/**
+ * Add email placeholder fields in form fields.
+ *
+ * @param string $editor
+ * @param bool $visible
+ * @return void
+ */
+function pulse_email_placeholders($editor, $visible=true) {
+    global $OUTPUT;
+
+    $vars = \pulse_email_vars::vars($visible);
+
+    $i = 0;
+    foreach ($vars as $key => $var)  {
+
+        $label = str_replace($key.'_', '', $var);
+
+        // Help text added.
+        $alt = get_string('description');
+        $data = [
+            'text' => get_string($key.'_vars_help', 'mod_pulse'),
+            'alt' => $alt,
+            'icon' => (new \pix_icon('help', $alt, 'core', ['class' => 'iconhelp']))->export_for_template($OUTPUT),
+            'ltr' => !right_to_left(),
+        ];
+        $helptext = $OUTPUT->render_from_template('core/help_icon', $data);
+
+        $list[] = [
+            'key' => $key.'_',
+            'name' => get_string($key.'_vars', 'mod_pulse'),
+            'helptext' => $helptext,
+            'vars' => $label,
+            'showmore' => (count($label) > 6) ? true : false,
+            'active' => $i,
+        ];
+        $i++;
+    }
+
+    $templatecontext['emailvars'] = $list ?? [];
+    $templatecontext['editor'] = $editor;
+
+    return $OUTPUT->render_from_template('mod_pulse/vars', $templatecontext);
+}
+
+/**
+ * Get the management instance table form the manageinstable table and return to the fragment.
+ *
+ * @param array $params
+ * @return void
+ */
+function mod_pulse_output_fragment_get_manageinstance_table(array $params) {
+    global $OUTPUT;
+
+    $templateid = $params['templateid'];
+    ob_start();
+    $table = new \mod_pulse\table\manage_instance($templateid);
+    $table->out(20, true);
+    $tablehtml = ob_get_contents();
+    ob_end_clean();
+
+    return $OUTPUT->render_from_template('mod_pulse/manageinstance_table', ['tablehtml' => $tablehtml]);
 }

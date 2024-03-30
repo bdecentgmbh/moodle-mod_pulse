@@ -101,6 +101,8 @@ if ($action !== null && confirm_sesskey()) {
 }
 
 $PAGE->add_body_class('mod-pulse-automation-table');
+$PAGE->add_body_class('mod-pulse-automation-filter');
+
 
 // Further prepare the page.
 $PAGE->set_heading(get_string('autotemplates', 'pulse'));
@@ -164,10 +166,9 @@ if ($countmenus < 1) {
     echo helper::get_templates_tablehelps();
 }
 
-
 $PAGE->requires->js_amd_inline("
-require(['jquery', 'core/modal_factory', 'core/str', 'mod_pulse/modal_preset', 'mod_pulse/events'],
-    function($, ModalFactory, Str, ModalPreset, PresetEvents) {
+require(['jquery', 'core/modal_factory', 'core/str', 'mod_pulse/modal_preset', 'mod_pulse/events', 'mod_pulse/presetmodal'],
+    function($, ModalFactory, Str, ModalPreset, PresetEvents, PresetModal) {
 
     var form = document.querySelectorAll('.updatestatus-switch-form');
     form.forEach((switche) => {
@@ -186,12 +187,23 @@ require(['jquery', 'core/modal_factory', 'core/str', 'mod_pulse/modal_preset', '
                 statusElem.value = 'disable';
             }
 
-            ModalFactory.create({
-                type: ModalPreset.TYPE,
-                title: Str.get_string('updatetemplate', 'pulse'),
-                body: Str.get_string('templatestatusudpate', 'pulse'),
-                large: true
-            }).then(function(modal) {
+            if (typeof ModalFactory.createFromType === 'function') {
+                 var modalFn = ModalFactory.create({
+                    type: ModalPreset.TYPE,
+                    title: Str.get_string('updatetemplate', 'pulse'),
+                    body: Str.get_string('templatestatusudpate', 'pulse'),
+                    large: true
+                });
+            } else {
+                var modalFn = PresetModal.create({
+                    title: Str.get_string('updatetemplate', 'pulse'),
+                    body: Str.get_string('templatestatusudpate', 'pulse'),
+                    large: true
+                });
+            }
+
+            modalFn.then(function(modal) {
+
                 modal.setButtonText('customize', Str.get_string('updateinstance', 'pulse'));
                 modal.setButtonText('save', Str.get_string('updatetemplate', 'pulse'));
                 modal.show();
