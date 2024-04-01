@@ -126,6 +126,20 @@ class pulse_email_vars {
     public $condition = null;
 
     /**
+     * Event data.
+     * 
+     * @var object
+     */
+    public $event = null;
+
+    /**
+     * Traning data.
+     * 
+     * @var object
+     */
+    public $training = null;
+
+    /**
      * Sets up and retrieves the API objects.
      *
      * @param  mixed $user User data record
@@ -164,6 +178,8 @@ class pulse_email_vars {
         $this->enrolment = $this->get_user_enrolment();
 
         $this->calendar = $this->get_calendar();
+
+        $this->training = $this->training_data();
 
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
         $plugins = $actionplugins->get_plugins_base();
@@ -243,6 +259,11 @@ class pulse_email_vars {
             'Site' => self::site_data_fields(),
             // Course activities data fields.
             'Mod' => self::course_activities_data_fields(),
+            // Meta fields.
+            'Mod_Metadata' => self::module_meta_fields(),
+            // Training fields.
+            "Training" => self::training_data_fields(),
+
         ];
 
         $actionplugins = new \mod_pulse\plugininfo\pulseaction();
@@ -264,6 +285,22 @@ class pulse_email_vars {
                 'Mod_session'=> self::session_fields(),
             ];
         }
+
+        // // List of methods which doesn't used as placeholders.
+        // $novars = ['get_user_enrolment', 'user_profile_fields', 'course_fields',
+        //     'module_meta_fields', 'session_fields', 'training_data_fields', 'training'];
+
+        // // Add all methods of this class that are ok2call to the $result array as well.
+        // // This means you can add extra methods to this class to cope with values that don't fit in objects mentioned above.
+        // // Or to create methods with specific formatting of the values (just don't give those methods names starting with
+        // // 'User_', 'Course_', etc).
+        // foreach ($amethods as $method) {
+        //     if (self::ok2call($method->name) && !in_array($method->name, $result) && !in_array($method->name, $novars) ) {
+        //         $result += [
+        //             'Others' => $method->name,
+        //         ];
+        //     }
+        // }
 
         return $result ?? [];
     }
@@ -287,7 +324,7 @@ class pulse_email_vars {
                     return $this->$object($property); // Call the method.
                 } else if (array_key_exists($object, $this->condition)) {
                     return $this->condition[$object][$property] ?? $this->blank;
-                } else if (!isset($this->$object) || $this->$object == null) {
+                } else if ($this->$object == null) {
                     return $this->blank;
                 }
 
@@ -408,20 +445,27 @@ class pulse_email_vars {
     /**
      * Fetch the traning data.
      *
-     * @param string $key
-     * @return string
+     * @return array
      */
-    public function training($key) {
+    public function training_data() {
         // Course user progress in percentage.
-        if ($key == 'courseprogress') {
-            $progress = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
-            return round($progress) .'%';
-        }
+        $progress = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
+        $eventdates = helper::create()->timemanagement_details(
+            'eventdates', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
+        $Upcomingmods = helper::create()->timemanagement_details(
+                'upcomingmods', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
+        $courseduedate = helper::create()->timemanagement_details(
+            'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
+        $activityduedate = helper::create()->timemanagement_details(
+            'activityduedate', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
 
-        $data = helper::create()->timemanagement_details(
-            $key, $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-
-        return $data ?? '';
+        return (object) [
+            'upcomingmods' => $Upcomingmods,
+            'courseprogress' => round($progress) .'%',
+            'eventdates' => $eventdates,
+            'coursedue' => $courseduedate,
+            'activityduedate' =>  $activityduedate,
+        ];
     }
 
     /**
@@ -624,6 +668,19 @@ class pulse_email_vars {
             // Activities Fields.
             'Mod_Type', 'Mod_Name', 'Mod_Intro','Mod_Url', 'Mod_Duedate',
 
+        ];
+    }
+
+    /**
+     * Training fields. Timemanagement ltools support.
+     *
+     * @return string
+     */
+    public static function training_data_fields() {
+        return [
+            'Training_Upcomingmods', 'Training_Courseprogress','Training_Eventdates',
+            'Training_Coursedue', 'Training_Activityduedate',
+            
         ];
     }
 

@@ -87,11 +87,11 @@ class external extends \external_api {
     }
 
     /**
-     * Bulk delete instances on the instance managemente table.
+     * Bulk manage instances on the instance managemente table.
      *
      * @return array bulk actions parameters.
      */
-    public static function delete_instances_parameters() {
+    public static function manage_instances_parameters() {
 
         return new \external_function_parameters(
             [
@@ -104,17 +104,17 @@ class external extends \external_api {
     }
 
     /**
-     * Deleted the instance on the selected courses use the bulk deleted action in the instance management table.
+     * Manage the instance on the selected courses use the bulk action in the instance management table.
      * 
      * @param int $templateid Automation template ID.
      * @param array $courseids Course ID.
      * 
      * @return array $message
      */
-    public static function delete_instances(int $templateid, array $courseids, string $action) {
+    public static function manage_instances(int $templateid, array $courseids, string $action) {
         global $DB;
 
-        $vaildparams = self::validate_parameters(self::delete_instances_parameters(), 
+        $vaildparams = self::validate_parameters(self::manage_instances_parameters(), 
         ['templateid' => $templateid, 'courseids' => $courseids, 'action' => $action]);
         
         $message = '';
@@ -170,11 +170,11 @@ class external extends \external_api {
     }
 
     /**
-     * Retuns the redirect course url and created pulse id for save method.
+     * Retuns the redirect message for manage instances.
      *
      * @return array message.
      */
-    public static function delete_instances_returns() {
+    public static function manage_instances_returns() {
         return new \external_single_structure(
             [
                 'message' => new \external_value(PARAM_TEXT, 'Return status message'),

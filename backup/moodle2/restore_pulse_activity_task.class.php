@@ -42,7 +42,10 @@ class restore_pulse_activity_task extends restore_activity_task {
      * Define restore structure steps to restore to database from pulse.xml.
      */
     protected function define_my_steps() {
+
         $this->add_step(new restore_pulse_activity_structure_step('pulse_structure', 'pulse.xml'));
+
+        $this->add_step(new restore_pulse_course_structure_step('pulse_automation', 'pulseautomation.xml'));
     }
 
     /**

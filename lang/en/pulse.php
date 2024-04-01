@@ -450,3 +450,7 @@ $string['showless'] = "Show less";
 $string['vardocstr'] = "The full list of available placeholders can be found in the ";
 $string['placeholder'] = "Placeholders";
 $string['documentation'] = "documentation";
+$string['templatesorphanederror'] = 'Instance is orphaned';
+$string['templateorphaned'] = 'Orphaned';
+$string['Training_vars'] = "Training";
+$string['Training_vars_help'] = "Training information vars";

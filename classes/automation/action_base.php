@@ -24,6 +24,7 @@
 
 namespace mod_pulse\automation;
 
+use backup_nested_element;
 use moodle_exception;
 
 /**
@@ -366,6 +367,39 @@ abstract class action_base {
         }
 
         return [];
+    }
+
+    /**
+     * Define the stutures of actions for the backup.
+     *
+     * @param object $instances
+     * @return void
+     */
+    public function backup_define_structure(&$instances) {
+        global $DB;
+
+        $templatecolumns = $DB->get_columns($this->get_tablename());
+        $inscolumns = $DB->get_columns($this->get_instance_tablename());
+
+        // NOtification action template.
+        $action = new \backup_nested_element('action'.$this->component);
+        $actionfields = new \backup_nested_element($this->get_tablename(), array('id'), array(
+            array_keys($templatecolumns)
+        ));
+
+        $actionins = new \backup_nested_element('actionins'.$this->component);
+        $actioninsfields = new \backup_nested_element($this->get_instance_tablename(), array('id'), array(
+            array_keys($inscolumns)
+        ));
+
+        $instances->add_child($action);
+        $action->add_child($actionfields);
+
+        $instances->add_child($actionins);
+        $actionins->add_child($actioninsfields);
+
+        $actionfields->set_source_table($this->get_tablename(), ['instanceid' => \backup::VAR_PARENTID]);
+        $actioninsfields->set_source_table($this->get_tablename(), ['instanceid' => \backup::VAR_PARENTID]);
     }
 
 }

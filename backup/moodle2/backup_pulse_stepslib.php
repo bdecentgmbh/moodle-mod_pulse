@@ -22,10 +22,62 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_pulse\automation\action_base;
+use mod_pulse\plugininfo\pulseaction;
+use mod_pulse\plugininfo\pulsecondition;
+
 /**
  * Define the complete pulse structure for backup, with file and id annotations.
  */
 class backup_pulse_activity_structure_step extends backup_activity_structure_step {
+
+
+    protected function define_course_plugin_structure(&$pulse) {
+
+        $automationinstance = new backup_nested_element('automationinstance');
+        $instances = new backup_nested_element('pulse_autoinstances', array('id'), array(
+            'templateid', 'courseid', 'status', 'timemodified'
+        ));
+
+        // Automation templates.
+        $automation = new backup_nested_element('automationtemplates');
+        $templates = new backup_nested_element('pulse_autotemplates', array('id'), array(
+            'title', 'reference', 'visible', 'notes', 'status', 'tags', 'tenants',
+            'categories', 'triggerconditions', 'triggeroperator', 'timemodified',
+        ));
+
+        $automationtempinstance = new backup_nested_element('automationtemplateinstance');
+        $tempinstances = new backup_nested_element('pulse_autotemplates_ins', array('id'), array(
+            'instanceid', 'title', 'insreference', 'notes', 'tags', 'tenants',
+            'categories', 'triggerconditions', 'triggeroperator', 'timemodified'
+        ));
+
+        $pulseconditionoverrides = new backup_nested_element('pulseconditionoverrides');
+        $overrides = new backup_nested_element('pulse_condition_overrides', array('id'), array(
+            'instanceid', 'triggercondition', 'status', 'upcomingtime', 'additional', 'isoverridden'
+        ));
+
+        // Automation template.
+        $pulse->add_child($automation);
+        $automation->add_child($templates);
+
+        // Automation instance.
+        $pulse->add_child($automationinstance);
+        $automationinstance->add_child($instances);
+
+        // Automation template instance.
+        $pulse->add_child($automationtempinstance);
+        $automationtempinstance->add_child($tempinstances);
+
+        // Condition overrides.
+        $pulse->add_child($pulseconditionoverrides);
+        $pulseconditionoverrides->add_child($overrides);
+
+
+        $pulse->set_source_table('pulse_autoinstances', ['courseid' => backup::VAR_COURSEID]);
+
+        // return $instances;
+    }
 
     /**
      * Define backup steps structure.
@@ -77,9 +129,93 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
 
+        // $this->define_course_plugin_structure($pluse);
+
         $pulse = \mod_pulse\extendpro::pulse_extend_backup_steps($pulse, $userinfo);
 
         // Return the root element (data), wrapped into standard activity structure.
         return $this->prepare_activity_structure($pulse);
+    }
+}
+
+
+
+/**
+ * Define the complete pulse structure for backup, with file and id annotations.
+ */
+class backup_pulse_course_structure_step extends backup_activity_structure_step {
+
+
+    protected function define_structure() {
+
+        $automationinstance = new backup_nested_element('automationinstance');
+        $instances = new backup_nested_element('pulse_autoinstances', array('id'), array(
+            'templateid', 'courseid', 'status', 'timemodified'
+        ));
+
+        // Automation templates.
+        $automation = new backup_nested_element('automationtemplates');
+        $templates = new backup_nested_element('pulse_autotemplates', array('id'), array(
+            'title', 'reference', 'visible', 'notes', 'status', 'tags', 'tenants',
+            'categories', 'triggerconditions', 'triggeroperator', 'timemodified',
+        ));
+
+        $automationtempinstance = new backup_nested_element('automationtemplateinstance');
+        $tempinstances = new backup_nested_element('pulse_autotemplates_ins', array('id'), array(
+            'instanceid', 'title', 'insreference', 'notes', 'tags', 'tenants',
+            'categories', 'triggerconditions', 'triggeroperator', 'timemodified'
+        ));
+
+        $pulseconditionoverrides = new backup_nested_element('pulseconditionoverrides');
+        $overrides = new backup_nested_element('pulse_condition_overrides', array('id'), array(
+            'instanceid', 'triggercondition', 'status', 'upcomingtime', 'additional', 'isoverridden'
+        ));
+
+
+
+        // Automation template.
+        $instances->add_child($automation);
+        $automation->add_child($templates);
+
+        /*  // Automation instance.
+        $pulse->add_child($automationinstance);
+        $automationinstance->add_child($instances);
+        */
+
+        // Automation template instance.
+        $instances->add_child($automationtempinstance);
+        $automationtempinstance->add_child($tempinstances);
+
+        // Condition overrides.
+        $instances->add_child($pulseconditionoverrides);
+        $pulseconditionoverrides->add_child($overrides);
+
+        // Actions and conditions
+        // $instances->add_child($actions);
+        // $instances->add_child($conditions);
+
+        // Pulse instance.
+        $instances->set_source_table('pulse_autoinstances', ['courseid' => backup::VAR_COURSEID]);
+        $tempinstances->set_source_table('pulse_autotemplates_ins', ['instanceid' => backup::VAR_PARENTID]);
+        $overrides->set_source_table('pulse_condition_overrides', ['instanceid' => backup::VAR_PARENTID]);
+
+        // Pulse autotemplates.
+        $templates->set_source_sql('
+            SELECT *
+            FROM {pulse_autotemplates} at
+            WHERE at.id IN (
+                SELECT templateid
+                FROM {pulse_autoinstances}
+                WHERE courseid = :courseid
+            )
+        ', ['courseid' => backup::VAR_COURSEID]);
+
+
+        // Include the backup steps for actions and conditions.
+        $this->add_subplugin_structure('pulseaction', $instances, true);
+        $this->add_subplugin_structure('pulsecondition', $instances, true);
+
+        // Return the root element (data), wrapped into standard activity structure.
+        return $this->prepare_activity_structure($instances);
     }
 }

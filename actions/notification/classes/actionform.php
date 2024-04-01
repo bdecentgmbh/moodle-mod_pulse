@@ -283,7 +283,7 @@ class actionform extends \mod_pulse\automation\action_base {
     public function get_data_forinstance($instanceid) {
         global $DB;
         $instancedata = $DB->get_record('pulseaction_notification_ins', ['instanceid' => $instanceid]);
-        return $instancedata;
+        return $instancedata ?: [];
     }
 
     /**
@@ -333,7 +333,9 @@ class actionform extends \mod_pulse\automation\action_base {
 
         foreach ($instances as $instanceid => $instance) {
             $notification = $DB->get_field('pulseaction_notification_ins', 'id', ['instanceid' => $instanceid]);
-            notification::instance($notification)->recreate_schedule_forinstance();
+            if ($notification) {
+                notification::instance($notification)->recreate_schedule_forinstance();
+            }
         }
 
     }
@@ -838,9 +840,10 @@ class actionform extends \mod_pulse\automation\action_base {
                     'userid' => $userid]);
                     foreach ($extensionassignments as $extensionassign) {
                         if ($extensionassign->extensionduedate != 0) {
-                            $extensionduedate = userdate($extensionassign->extensionduedate) ?? '';
-                            $extension .= html_writer::tag('h6', $assignment->name.": ". $extensionduedate .'('.
-                            get_string('previously', 'pulse').': '.userdate($assignment->duedate).')');
+                            $extensionduedate = !empty($extensionassign->extensionduedate) ? 
+                            userdate($extensionassign->extensionduedate) : '';
+                            $extension .= $assignment->name.": ". $extensionduedate .'('.
+                            get_string('previously', 'pulse').': '.userdate($assignment->duedate).')'."<br>";
                         }
                     }
                 }

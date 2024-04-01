@@ -10,11 +10,16 @@ Feature: Pulse automation instances
       | Cat 2 | 0        | CAT2     |
       | Cat 3 | CAT1     | CAT3     |
     And the following "course" exist:
-      | fullname    | shortname | category |
-      | Course 1    | C1        | 0        |
-      | Course 2    | C2        | CAT1     |
-      | Course 3    | C3        | CAT2     |
-      | Course 4    | C4        | CAT3     |
+      | fullname    | shortname | category | enablecompletion |
+      | Course 1    | C1        | 0        | 1                |
+      | Course 2    | C2        | CAT1     | 1                |
+      | Course 3    | C3        | CAT2     | 1                |
+      | Course 4    | C4        | CAT3     | 1                |
+    And the following "activities" exist:
+      | activity | name       | course | idnumber  |  intro           | section |completion|
+      | assign   | Assign1    | C1     | assign1   | Page description | 1       | 1 |
+      | assign   | Assign2    | C1     | assign2   | Page description | 2       | 1 |
+      | assign   | Assign3    | C1     | assign3   | Page description | 3       | 1 |
     And the following "users" exist:
       | username | firstname | lastname | email |
       | student1 | student | User 1 | student1@test.com |
@@ -25,15 +30,26 @@ Feature: Pulse automation instances
       | student1 | C1     | student |
 
     And I log in as "admin"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Enable completion tracking" to "Yes"
+    And I press "Save and display"
+    And I click on "More" "link" in the ".secondary-navigation" "css_element"
+    And I click on "Course completion" "link" in the ".secondary-navigation" "css_element"
+    And I expand all fieldsets
+    And I set the field "Assign1" to "1"
+    And I press "Save changes"
+
     Then I create automation template with the following fields to these values:
-      | Title             | Template 1     |
-      | Reference         | temp1          |
+      | Title             | Template1     |
+      | Reference         | temp1         |
     And I click on "Create new template" "button"
     Then I set the following fields to these values:
       | Title             | Notification1  |
       | Reference         | notification1  |
     And I press "Save changes"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "Course 1" in the "Category 1" "table_row"
     And I should see "0" in the "Course 1" "table_row"
@@ -43,13 +59,13 @@ Feature: Pulse automation instances
   Scenario: Add instances in the Instance Management
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > Automation templates" in site administration
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on ".action-add-instance" "css_element" in the "Course 1" "table_row"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "1(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
 
@@ -58,14 +74,14 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "2(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "2" in the "Course 1" "table_row"
 
     And I click on ".action-add-instance" "css_element" in the "Course 2" "table_row"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "3(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 2" "table_row"
 
@@ -74,20 +90,20 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "5(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 3" "table_row"
     And I should see "1" in the "Course 4" "table_row"
 
     And I click on ".fa-calendar" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    Then I should see "Template 1" in the "temp1C2" "table_row"
+    Then I should see "Template1" in the "temp1C2" "table_row"
 
   @javascript
   Scenario: Modify the instances with bulk action group
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > Automation templates" in site administration
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
@@ -95,7 +111,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "4(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I should see "1" in the "Course 2" "table_row"
@@ -106,7 +122,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "3(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 2" "table_row"
 
@@ -115,7 +131,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "2(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
 
@@ -153,12 +169,12 @@ Feature: Pulse automation instances
 
     And I click on ".action-edit" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    And I should see "Template 1" in the "temp1C1" "table_row"
+    And I should see "Template1" in the "temp1C1" "table_row"
     And I should see "Notification1" in the "notification1C1" "table_row"
     And I close all opened windows
     And I click on ".action-report" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    Then "Template 1" "table_row" should not exist
+    Then "Template1" "table_row" should not exist
     And I should see "Notification1" in the "notification1C1" "table_row"
     And I close all opened windows
 
@@ -192,11 +208,11 @@ Feature: Pulse automation instances
     And I click on ".quickeditlink" "css_element" in the "temp1C1" "table_row"
     And I wait "5" seconds
     And I set the following fields to these values:
-      | Template 1 | Mixed Template |
+      | Template1 | Mixed Template |
     And I press enter
     And I should see "Mixed Template" in the "temp1C1" "table_row"
     And I wait "2" seconds
-    And I should see "Template 1" in the ".generaltable tbody tr:nth-child(2) td" "css_element"
+    And I should see "Template1" in the ".generaltable tbody tr:nth-child(2) td" "css_element"
     And I click on ".pulse-instance-status-switch " "css_element" in the ".menu-item-actions " "css_element"
     And I close all opened windows
     And I reload the page
@@ -216,7 +232,7 @@ Feature: Pulse automation instances
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "1(0)" in the "notification1" "table_row"
 
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
@@ -224,7 +240,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "4(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I should see "1" in the "Course 2" "table_row"
@@ -276,14 +292,14 @@ Feature: Pulse automation instances
     # Number of override: 1
     And I click on ".action-edit" "css_element" in the "Category 1" "table_row"
     And I switch to a second window
-    And I should see "Template 1" in the "temp1C1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I should see "Template1" in the "temp1C1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_title" "css_element"
     And I set the following fields to these values:
-      | Title | Template 01 |
+      | Title | Template01 |
     And I wait "2" seconds
     And I press "Save changes"
-    And I should see "Template 01" in the "temp1C1" "table_row"
+    And I should see "Template01" in the "temp1C1" "table_row"
     And I close all opened windows
 
     And I click on "#pulse-manageinstance-filter" "css_element" in the "#manage-instance-tab" "css_element"
@@ -311,13 +327,13 @@ Feature: Pulse automation instances
 
     And I click on ".action-edit" "css_element" in the "Course 2" "table_row"
     And I switch to a second window
-    And I should see "Template 1" in the "temp1C2" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I should see "Template1" in the "temp1C2" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_title" "css_element"
     And I set the following fields to these values:
-      | Title | Template 02 |
+      | Title | Template02 |
     And I press "Save changes"
-    And I should see "Template 02" in the "temp1C2" "table_row"
+    And I should see "Template02" in the "temp1C2" "table_row"
     And I close all opened windows
 
     And I click on "#pulse-manageinstance-filter" "css_element" in the "#manage-instance-tab" "css_element"
@@ -331,10 +347,10 @@ Feature: Pulse automation instances
     # Number of override: 2
     And I click on ".action-edit" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    And I click on ".action-edit" "css_element" in the "Template 01" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template01" "table_row"
     And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_notes" "css_element"
     And I set the following fields to these values:
-      | Internal notes | Demo Template 01 |
+      | Internal notes | Demo Template01 |
     And I press "Save changes"
     And I close all opened windows
 
@@ -347,7 +363,7 @@ Feature: Pulse automation instances
 
     And I click on ".action-edit" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    And I click on ".action-edit" "css_element" in the "Template 01" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template01" "table_row"
     And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_notes" "css_element"
     And I press "Save changes"
     And I close all opened windows
@@ -379,7 +395,7 @@ Feature: Pulse automation instances
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "1(0)" in the "notification1" "table_row"
 
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
@@ -387,7 +403,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "4(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I should see "1" in the "Course 2" "table_row"
@@ -396,30 +412,36 @@ Feature: Pulse automation instances
     And I click on ".action-edit" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
     And I should see "Notification1" in the "notification1C1" "table_row"
-    And I should see "Template 1" in the "temp1C1" "table_row"
+    And I should see "Template1" in the "temp1C1" "table_row"
     And I click on ".form-autocomplete-downarrow" "css_element" in the "#fitem_id_templateid .align-items-start" "css_element"
-    And "Template 1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should be visible
+    And "Template1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should be visible
     And "Notification1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should be visible
     And I close all opened windows
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I click on ".action-delete" "css_element" in the "notification1" "table_row"
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And "Notification1" "table_row" should not exist
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I click on ".action-edit" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    And I should see "Template 1" in the "temp1C1" "table_row"
+    And I should see "Template1" in the "temp1C1" "table_row"
     And "notification1C1" "table_row" should not exist
     And I click on ".form-autocomplete-downarrow" "css_element" in the "#fitem_id_templateid .align-items-start" "css_element"
-    And "Template 1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should be visible
+    And "Template1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should be visible
     And "Notification1" "text" in the "#fitem_id_templateid .form-autocomplete-suggestions" "css_element" should not be visible
     And I wait "2" seconds
 
   @javascript
   Scenario: Additional column added for the report source
-    Given I log in as "admin"
+    Given I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I am on the "Assign1" "assign activity" page
+    And I press "Mark as done"
+    And I log out
+
+    And I log in as "admin"
     And I navigate to "Plugins > Activity modules > Automation templates" in site administration
     And I should see "0(0)" in the "notification1" "table_row"
     And I click on ".action-edit" "css_element" in the "Notification1" "table_row"
@@ -431,7 +453,7 @@ Feature: Pulse automation instances
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "1(0)" in the "notification1" "table_row"
 
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
@@ -439,13 +461,40 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "4(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I should see "1" in the "Course 2" "table_row"
     And I should see "1" in the "Course 3" "table_row"
     And I should see "1" in the "Course 4" "table_row"
 
+    And I click on ".action-report" "css_element" in the "Course 1" "table_row"
+    And I switch to a second window
+    And I should see "Template1" in the "temp1C1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
+    And I click on "#id_override_title" "css_element" in the "#fitem_id_title" "css_element"
+    And I set the field "Title" to "Template01"
+    And I click on "Condition" "link" in the "#automation-tabs" "css_element"
+    And I click on "#id_override_triggeroperator" "css_element" in the "#fitem_id_triggeroperator" "css_element"
+    And I set the field "Trigger operator" to "Any"
+    And I click on "#id_override_condition_activity_status" "css_element" in the "#fitem_id_condition_activity_status" "css_element"
+    And I set the field "Activity completion" to "All"
+    And I wait "2" seconds
+    And I set the field "Select activities" to "Assign1"
+    And I click on "Notification" "link" in the "#automation-tabs" "css_element"
+    And I click on "#id_override_pulsenotification_recipients" "css_element" in the "#fitem_id_pulsenotification_recipients" "css_element"
+    And I set the field "Recipients" to "Student"
+    And I click on "#id_override_pulsenotification_cc" "css_element" in the "#fitem_id_pulsenotification_cc" "css_element"
+    And I set the field "Cc" to "Teacher"
+    And I press "Save changes"
+
+    And I wait "3" seconds
+    And I click on ".action-report" "css_element" in the "Template01" "table_row"
+    And I switch to a third window
+    And I should see "student User 1" in the "Course 1" "table_row"
+    And I log out
+
+    And I log in as "admin"
     And I navigate to "Reports > Report builder > Custom reports" in site administration
     And I click on "New report" "button"
     And I set the following fields in the "New report" "dialogue" to these values:
@@ -456,13 +505,15 @@ Feature: Pulse automation instances
     And I wait until the page is ready
     Then I should see "My report"
     And I click on "Template title" "link" in the ".reportbuilder-sidebar-menu-cards .card-body" "css_element"
-    And I wait "2" seconds
+    And I should see "Template1" in the ".reportbuilder-table tbody tr td" "css_element"
     And I click on "Template reference" "link" in the ".reportbuilder-sidebar-menu-cards .card-body" "css_element"
-    And I wait "2" seconds
+    And I should see "temp1" in the "Template1" "table_row"
     And I click on "Instance title" "link" in the ".reportbuilder-sidebar-menu-cards .card-body" "css_element"
     And I wait "2" seconds
+    And I should see "Template01" in the "temp1" "table_row"
     And I click on "Instance reference" "link" in the ".reportbuilder-sidebar-menu-cards .card-body" "css_element"
     And I wait "2" seconds
+    And I should see "C1" in the "temp1" "table_row"
 
   @javascript
   Scenario: A feature to enable/disable overrides in instances
@@ -478,7 +529,7 @@ Feature: Pulse automation instances
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "1(0)" in the "notification1" "table_row"
 
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "0" in the "Course 1" "table_row"
     And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
@@ -486,7 +537,7 @@ Feature: Pulse automation instances
     And I click on "Yes" "button" in the "Confirmation" "dialogue"
     And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
     And I should see "4(0)" in the "temp1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
     And I click on "Instance Management" "link"
     And I should see "1" in the "Course 1" "table_row"
     And I should see "1" in the "Course 2" "table_row"
@@ -496,41 +547,92 @@ Feature: Pulse automation instances
 
     # Allow the instance override
     And I am on the "Course 1" course page logged in as teacher1
+    And I click on "Automation" "link" in the ".secondary-navigation" "css_element"
     And I click on ".action-edit" "css_element" in the "Notification1" "table_row"
-    And I click on "Instance Management" "link"
-    And I click on ".action-edit" "css_element" in the "Category 1" "table_row"
-    And I switch to a second window
-    And I should see "Template 1" in the "temp1C1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
     And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_title" "css_element"
     And I set the following fields to these values:
-      | Title | Template 01 |
+      | Title | Template01 |
     And I wait "2" seconds
     And I press "Save changes"
-    And I should see "Template 01" in the "temp1C1" "table_row"
+    And I wait "10" seconds
+    And I should see "Template01" in the "notification1C1" "table_row"
     And I close all opened windows
     And I log out
 
     # Allow the instance override
     And I log in as "admin"
-    And I navigate to "Users > Permissions > Define roles"
-    And I click on ".fa-cog" in the "tacher" "table_row"
-    And I set the field "Override the automation instance" to "0"
+    And I navigate to "Users > Permissions > Define roles" in site administration
+    And I click on ".fa-cog" "css_element" in the "teacher" "table_row"
+    And I set the field "mod/pulse:overridetemplateinstance" to "0"
     And I press "Save changes"
     And I log out
 
-    And I log in as "teacher1"
+    And I am on the "Course 1" course page logged in as teacher1
+    And I click on "Automation" "link" in the ".secondary-navigation" "css_element"
+    And I click on ".action-edit" "css_element" in the "Template01" "table_row"
+    And ".form-control[disabled='disabled']" "css_element" should exist in the "#fitem_id_title" "css_element"
+    And I wait "10" seconds
+    And I press "Save changes"
+    And I should see "Notification1" in the "notification1C1" "table_row"
+    And I close all opened windows
+
+  @javascript
+  Scenario: Placeholder for extending assignment submission deadlines
+    Given I log in as "admin"
+    And I am on "Course 1" course homepage
+    And I am on the "Assign1" "assign activity" page
+    And I click on "Settings" "link" in the ".secondary-navigation" "css_element"
+    And I set the following fields to these values:
+      | Due date | ##1 March 2024##   |
+    And I press "Save and display"
+
+    And I am on the "Assign2" "assign activity" page
+    And I click on "Settings" "link" in the ".secondary-navigation" "css_element"
+    And I set the following fields to these values:
+      | Due date | ##1 March 2024##   |
+    And I press "Save and display"
+
+    And I am on the "Assign3" "assign activity" page
+    And I click on "Settings" "link" in the ".secondary-navigation" "css_element"
+    And I set the following fields to these values:
+      | Due date | ##1 March 2024##   |
+    And I press "Save and display"
+
     And I navigate to "Plugins > Activity modules > Automation templates" in site administration
+    And I should see "0(0)" in the "notification1" "table_row"
     And I click on ".action-edit" "css_element" in the "Notification1" "table_row"
     And I click on "Instance Management" "link"
-    And I click on ".action-edit" "css_element" in the "Category 1" "table_row"
+    And I should see "0" in the "Course 1" "table_row"
+    And I click on ".action-add-instance" "css_element" in the "Course 1" "table_row"
+    And I click on "Instance Management" "link"
+    And I should see "1" in the "Course 1" "table_row"
+    And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
+    And I should see "1(0)" in the "notification1" "table_row"
+
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
+    And I click on "Instance Management" "link"
+    And I should see "0" in the "Course 1" "table_row"
+    And I click on "Select all" "link" in the "#manage-instance-tab" "css_element"
+    And I click on "#bulkadd-btn" "css_element" in the ".bulkaction-group" "css_element"
+    And I click on "Yes" "button" in the "Confirmation" "dialogue"
+    And I click on "Automation templates" "link" in the ".breadcrumb" "css_element"
+    And I should see "4(0)" in the "temp1" "table_row"
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
+    And I click on "Instance Management" "link"
+    And I should see "1" in the "Course 1" "table_row"
+    And I should see "1" in the "Course 2" "table_row"
+    And I should see "1" in the "Course 3" "table_row"
+    And I should see "1" in the "Course 4" "table_row"
+
+    And I click on ".action-report" "css_element" in the "Course 1" "table_row"
     And I switch to a second window
-    And I should see "Template 1" in the "temp1C1" "table_row"
-    And I click on ".action-edit" "css_element" in the "Template 1" "table_row"
-    And I click on ".checkboxgroupautomation" "css_element" in the "#fitem_id_title" "css_element"
-    And I set the following fields to these values:
-      | Title | Template 01 |
+    And I click on ".action-edit" "css_element" in the "Template1" "table_row"
+    And I click on "Notification" "link" in the "#automation-tabs" "css_element"
+    And I click on "#id_override_pulsenotification_headercontent_editor" "css_element" in the "#fitem_id_pulsenotification_headercontent_editor" "css_element"
+    And I click on "Placeholders" "link" in the "#fitem_id_pulsenotification_headercontent_editor" "css_element"
+    And I click on "Show more" "link" in the ".User_field-placeholders" "css_element"
     And I wait "2" seconds
+    And I click on "Show less" "link" in the ".User_field-placeholders" "css_element"
+    And I click on "#id_pulsenotification_headercontent_editor_ifr" "css_element" in the "#fitem_id_pulsenotification_headercontent_editor" "css_element"
+    And I click on "Extensions" "link" in the ".Assignment_field-placeholders .placeholders" "css_element"
     And I press "Save changes"
-    And I should see "Template 01" in the "temp1C1" "table_row"
-    And I close all opened windows

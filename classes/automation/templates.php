@@ -57,6 +57,12 @@ class templates {
     const STATUS_DISABLE = 0;
 
     /**
+     * Repersents the status of the instance is orphaned.
+     * @var int
+     */
+    const STATUS_ORPHANED = -1;
+
+    /**
      * ID of the automation template.
      *
      * @var int
@@ -248,6 +254,12 @@ class templates {
             foreach ($instances as $instanceid => $instance) {
                 $insobj = new \mod_pulse\automation\instances($instance->id);
                 $formdata = (object) $insobj->get_instance_formdata();
+
+                // Verify the override element is available.
+                if (!property_exists($formdata, 'override')) {
+                    continue;
+                }
+
                 foreach ($formdata->override as $key => $value) {
                     if (isset($overrides[$key])) {
                         $overrides[$key] += 1;

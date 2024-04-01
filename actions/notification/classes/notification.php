@@ -228,6 +228,10 @@ class notification {
     protected function create_instance_data() {
         global $DB;
 
+        if (empty($this->notificationid)) {
+            return [];
+        }
+
         $notification = $DB->get_record('pulseaction_notification_ins', ['id' => $this->notificationid]);
 
         if (empty($notification)) {

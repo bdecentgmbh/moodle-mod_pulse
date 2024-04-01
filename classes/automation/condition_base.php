@@ -238,7 +238,7 @@ abstract class condition_base {
             $instance->overridecount = $count;
         }
         // If component condition is set, merge additional data and set 'upcomingtime'.
-        if (isset($instance->condition[$this->component]) && $instance->condition[$this->component] != null) {
+        if (isset($instance->condition[$this->component]) && $instance->condition[$this->component] != null && is_array($additional)) {
             $instance->condition[$this->component] = array_merge($instance->condition[$this->component], $additional);
             $instance->condition[$this->component]['upcomingtime'] = $data->upcomingtime ?: 0;
         }
@@ -272,5 +272,15 @@ abstract class condition_base {
      */
     public function schedule_override_join() {
         return '';
+    }
+
+
+    /**
+     * Define the stutures of conditions for the backup.
+     *
+     * @param object $instances
+     * @return void
+     */
+    public function backup_define_structure(&$instances) {
     }
 }

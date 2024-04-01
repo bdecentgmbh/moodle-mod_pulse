@@ -158,3 +158,152 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         $this->add_related_files('mod_pulse', 'pulse_content', null);
     }
 }
+
+
+class restore_pulse_course_structure_step extends restore_activity_structure_step {
+
+    /**
+     * Restore steps structure definition.
+     */
+    protected function define_structure() {
+        static $cache;
+
+        $paths = array();
+        // Restore path.
+
+        if (isset($cache[$this->get_restoreid()]) && $cache[$this->get_restoreid()]) {
+            return $paths;
+        }
+
+        $instances = new restore_path_element('pulse_autoinstances',
+            '/activity/pulse_autoinstances');
+
+        $paths[] = $instances;
+
+        $paths[] = new restore_path_element('pulse_autotemplates',
+            '/activity/pulse_autoinstances/automationtemplates/pulse_autotemplates');
+        // $paths[] = new restore_path_element('pulse_autoinstances',
+        //     '/activity/pulse_autoinstances');
+        $paths[] = new restore_path_element('pulse_autotemplates_ins',
+            '/activity/pulse_autoinstances/automationtemplateinstance/pulse_autotemplates_ins');
+        $paths[] = new restore_path_element('pulse_condition_overrides',
+            '/activity/pulse_autoinstances/pulseconditionoverrides/pulse_condition_overrides');
+
+        // $actions = new restore_path_element('pulseaction',
+        //                                         '/activity/pulse_autoinstances/pulseaction');
+
+        // $paths[] = $actions;
+
+        $this->add_subplugin_structure('pulseaction', $instances);
+
+        $cache[$this->get_restoreid()] = true;
+
+        // Return the paths wrapped into standard activity structure.
+        return $paths;
+    }
+
+    /**
+     * Process activity pulse restore.
+     * @param mixed $data restore pulse table data.
+     */
+    protected function process_pulse_autoinstances($data) {
+        global $DB;
+
+        $data = (object) $data;
+        $oldid = $data->id;
+        $data->courseid = $this->get_courseid();
+        // All the status of the instance is disabled initialy
+        $data->status = \mod_pulse\automation\instances::STATUS_DISABLE;
+        // Use the new template id.
+        $data->templateid = $this->get_mappingid('templateid', $data->templateid);
+
+        // Insert instance into Database.
+        $newitemid = $DB->insert_record('pulse_autoinstances', $data);
+
+        // Create a mapping for the instance.
+        $this->set_mapping('pulse_autoinstances', $oldid, $newitemid);
+    }
+
+    /**
+     * Process pulse users records.
+     *
+     * @param object $data The data in object form
+     * @return void
+     */
+    protected function process_pulse_autotemplates($data) {
+        global $DB;
+
+        $data = (object) $data;
+        $oldtemplateid = $data->id;
+
+        $record = $DB->get_record('pulse_autotemplates', ['reference' => $data->reference]);
+        if (empty($record)) {
+            $templateid = $DB->insert_record('pulse_autotemplates', $data);
+        } else {
+            $templateid = $record->id;
+        }
+
+        // Update the parent instance templateid.
+        if ($DB->record_exists('pulse_autoinstances', ['id' => $this->get_new_parentid('pulse_autoinstances')])) {
+            $DB->set_field('pulse_autoinstances', 'templateid', $templateid, ['id' => $this->get_new_parentid('pulse_autoinstances')]);
+            $categories = json_decode($data->categories, true);
+
+            // In array of categories.
+            $category = get_course($this->get_courseid())->category;
+
+            if (!empty($categories) && !in_array($category, $categories)) {
+                $status = \mod_pulse\automation\instances::STATUS_ORPHANED;
+                $DB->set_field('pulse_autoinstances', 'status', $status, ['id' => $this->get_new_parentid('pulse_autoinstances')]);
+            }
+        }
+
+        $this->set_mapping('pulse_autotemplates', $oldtemplateid, $templateid);
+
+        print_r($templateid);
+    }
+
+    /**
+     * Process pulse users records.
+     *
+     * @param object $data The data in object form
+     * @return void
+     */
+    protected function process_pulse_autotemplates_ins($data) {
+        global $DB;
+
+        $data = (object) $data;
+
+        $data->instanceid = $this->get_mappingid('pulse_autoinstances', $data->instanceid);
+
+        $DB->insert_record('pulse_autotemplates_ins', $data);
+        // No need to save this mapping as far as nothing depend on it
+        // (child paths, file areas nor links decoder).
+    }
+
+    /**
+     * Process pulse pro features restore structures.
+     * Pro feature.
+     * @param  mixed $data
+     * @return void
+     */
+    protected function process_pulse_condition_overrides($data) {
+        global $DB;
+        $data = (object) $data;
+
+        $data->instanceid = $this->get_mappingid('pulse_autoinstances', $data->instanceid);
+
+        $DB->insert_record('pulse_condition_overrides', $data);
+    }
+
+
+    /**
+     * Update the files of editors after restore execution.
+     *
+     * @return void
+     */
+    protected function after_execute() {
+        // Add pulse related files.
+        /* $this->add_related_files('mod_pulse', 'intro', null);
+        $this->add_related_files('mod_pulse', 'pulse_content', null); */
+    }
+}

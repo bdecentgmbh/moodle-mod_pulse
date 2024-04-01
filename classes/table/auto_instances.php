@@ -191,48 +191,55 @@ class auto_instances extends table_sql {
             'instanceid' => $row->instanceid,
             'sesskey' => \sesskey()
         ]);
-        $actions = array();
-
-        // Edit.
-        $actions[] = array(
-            'url' => $baseurl,
-            'icon' => new \pix_icon('t/edit', \get_string('edit')),
-            'attributes' => array('class' => 'action-edit')
-        );
 
         $listurl = new \moodle_url('/mod/pulse/automation/instances/list.php', [
             'instanceid' => $row->instanceid,
             'sesskey' => \sesskey()
         ]);
 
-        // Make the instance duplicate.
-        $actions[] = array(
-            'url' => new \moodle_url($listurl, ['action' => 'copy']),
-            'icon' => new \pix_icon('t/copy', \get_string('instancecopy', 'pulse')),
-            'attributes' => array('class' => 'action-copy')
-        );
+        $actions = array();
 
-        // Instance reports builder view.
-        if ($this->can_view_reports()) {
+        if ($row->status == \mod_pulse\automation\templates::STATUS_ORPHANED) {
+
+            $actions[] = html_writer::tag('span', get_string('templateorphaned', 'mod_pulse'), ['class' => 'badge badge-danger']);
+
+        } else {
+            // Edit.
             $actions[] = array(
-                'url' => new \moodle_url($listurl, ['action' => 'report']),
-                'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
-                'attributes' => array('class' => 'action-report', 'target' => '_blank')
+                'url' => $baseurl,
+                'icon' => new \pix_icon('t/edit', \get_string('edit')),
+                'attributes' => array('class' => 'action-edit')
             );
-        }
 
-        // Show/Hide.
-        $checked = ($row->status) ? ['checked' => 'checked'] : [];
-        $checkbox = html_writer::div(
-            html_writer::empty_tag('input',
-                ['type' => 'checkbox', 'class' => 'custom-control-input'] + $checked
-            ) . html_writer::tag('span', '', ['class' => 'custom-control-label']),
-            'custom-control custom-switch'
-        );
-        $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
-        $statusclass = 'pulse-instance-status-switch ';
-        $statusclass .= $row->status ? 'action-hide' : 'action-show';
-        $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => $statusclass]);
+            // Make the instance duplicate.
+            $actions[] = array(
+                'url' => new \moodle_url($listurl, ['action' => 'copy']),
+                'icon' => new \pix_icon('t/copy', \get_string('instancecopy', 'pulse')),
+                'attributes' => array('class' => 'action-copy')
+            );
+
+            // Instance reports builder view.
+            if ($this->can_view_reports()) {
+                $actions[] = array(
+                    'url' => new \moodle_url($listurl, ['action' => 'report']),
+                    'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
+                    'attributes' => array('class' => 'action-report', 'target' => '_blank')
+                );
+            }
+
+            // Show/Hide.
+            $checked = ($row->status) ? ['checked' => 'checked'] : [];
+            $checkbox = html_writer::div(
+                html_writer::empty_tag('input',
+                    ['type' => 'checkbox', 'class' => 'custom-control-input'] + $checked
+                ) . html_writer::tag('span', '', ['class' => 'custom-control-label']),
+                'custom-control custom-switch'
+            );
+            $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
+            $statusclass = 'pulse-instance-status-switch ';
+            $statusclass .= $row->status ? 'action-hide' : 'action-show';
+            $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => $statusclass]);
+        }
 
         // Delete.
         $actions[] = array(

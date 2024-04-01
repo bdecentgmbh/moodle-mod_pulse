@@ -154,4 +154,5 @@ class pulseaction extends base {
         $plugins = $actionplugins->get_plugins_base();
         return $plugins;
     }
+
 }

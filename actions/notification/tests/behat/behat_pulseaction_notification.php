@@ -133,4 +133,21 @@ class behat_pulseaction_notification extends behat_base {
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$notificationdata]);
 
     }
+
+
+    /**
+     * Switches to a third window.
+     *
+     * @Given /^I switch to a third window$/
+     * @throws DriverException If there aren't exactly 3 windows open.
+     */
+    public function switch_to_third_window() {
+        $names = $this->getSession()->getWindowNames();
+
+        if (count($names) !== 3) {
+            throw new DriverException('Expected to see 3 windows open, found ' . count($names));
+        }
+
+        $this->getSession()->switchToWindow($names[2]);
+    }
 }

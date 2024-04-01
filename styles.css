@@ -359,7 +359,7 @@ body.behat-site .pulse-instance-status-switch input.custom-control-input {
 
 /* Pulse 2.1 */
 .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
-    width: 400px;
+    width: 520px;
     height: 25px;
     overflow: hidden;
 }

@@ -230,7 +230,7 @@ define("mod_pulse/bulkaction", ["jquery", "core/fragment", "core/modal_factory",
      */
     function SubmitFormData(params) {
         Ajax.call([{
-            methodname: 'mod_pulse_delete_instances',
+            methodname: 'mod_pulse_manage_instances',
             args: params,
             done: function(response) {
                 window.location.reload();

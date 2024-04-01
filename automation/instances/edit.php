@@ -111,6 +111,10 @@ if ($formdata = $templatesform->get_data()) {
 if ($instanceid !== null && $instanceid > 0) {
 
     if ($record = mod_pulse\automation\instances::create($instanceid)->get_instance_formdata()) {
+        if ($record['status'] == mod_pulse\automation\templates::STATUS_ORPHANED) {
+            \core\notification::error(get_string('templatesorphanederror', 'pulse'));
+            redirect($overviewurl);
+        }
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
     } else {

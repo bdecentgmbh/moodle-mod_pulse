@@ -442,4 +442,25 @@ class conditionform extends \mod_pulse\automation\condition_base {
         return $userfullname;
     }
 
+    /**
+     * Defined the strucure of tables for the backup.
+     *
+     * @param [type] $instances
+     * @return void
+     */
+    public function backup_define_structure(&$instances) {
+        global $DB;
+
+         // Automation templates.
+        $events = new \backup_nested_element('automationtemplates');
+        $eventsfields = new \backup_nested_element('pulse_autotemplates', array('id'), array(
+            "instanceid", "eventname", "notifyuser"
+        ));
+
+        $instances->add_child($events);
+        $events->add_child($eventsfields);
+
+        $eventsfields->set_source_table('pulsecondition_events', ['instanceid' => \backup::VAR_PARENTID]);
+    }
+
 }
