@@ -159,8 +159,8 @@ class helper {
             }
 
             // Verify all necessary data fields are present.
-            if (!isset($eventdata->userto->auth) or !isset($eventdata->userto->suspended)
-                or !isset($eventdata->userto->deleted) or !isset($eventdata->userto->emailstop)) {
+            if (!isset($eventdata->userto->auth) || !isset($eventdata->userto->suspended)
+                || !isset($eventdata->userto->deleted) || !isset($eventdata->userto->emailstop)) {
 
                 debugging('Necessary properties missing in userto object, fetching full record', DEBUG_DEVELOPER);
                 $eventdata->userto = core_user::get_user($eventdata->userto->id);
@@ -184,13 +184,13 @@ class helper {
                 }
             } else {
                 if (!$conversationid = \core_message\api::get_conversation_between_users([$eventdata->userfrom->id,
-                                                                                        $eventdata->userto->id])) {
+                    $eventdata->userto->id, ])) {
                     // It's a private conversation between users.
                     $conversation = \core_message\api::create_conversation(
                         \core_message\api::MESSAGE_CONVERSATION_TYPE_INDIVIDUAL,
                         [
                             $eventdata->userfrom->id,
-                            $eventdata->userto->id
+                            $eventdata->userto->id,
                         ]
                     );
                 }
@@ -281,8 +281,8 @@ class helper {
         }
 
         // Verify all necessary data fields are present.
-        if (!isset($eventdata->userto->auth) or !isset($eventdata->userto->suspended)
-                or !isset($eventdata->userto->deleted) or !isset($eventdata->userto->emailstop)) {
+        if (!isset($eventdata->userto->auth) || !isset($eventdata->userto->suspended)
+                || !isset($eventdata->userto->deleted) || !isset($eventdata->userto->emailstop)) {
 
             debugging('Necessary properties missing in userto object, fetching full record', DEBUG_DEVELOPER);
             $eventdata->userto = core_user::get_user($eventdata->userto->id);
@@ -330,7 +330,7 @@ class helper {
         $processors = get_message_processors(true);
 
         // Preset variables.
-        $processorlist = array();
+        $processorlist = [];
         // Fill in the array of processors to be used based on default and user preferences.
         foreach ($processors as $processor) {
             // Skip adding processors for internal user, if processor doesn't support sending message to internal user.
@@ -399,7 +399,5 @@ class helper {
             return false;
         }
     }
-
-
 
 }

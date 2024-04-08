@@ -26,7 +26,7 @@
 namespace mod_pulse\automation;
 
 use availability_completion\condition;
-use \mod_pulse\automation\action_base;
+use mod_pulse\automation\action_base;
 use moodle_url;
 use core_reportbuilder\local\helpers\report as reporthelper;
 use course_enrolment_manager;
@@ -66,7 +66,7 @@ class instances extends templates {
      * @throws moodle_exception If the instance does not exist.
      */
     public function __construct($instanceid) {
-        // TODO Check istance exists. throw exception if not available.
+        // ...TODO Check istance exists. throw exception if not available.
         $this->instanceid = $instanceid;
         $this->set_instance_actions();
     }
@@ -216,10 +216,10 @@ class instances extends templates {
 
     /**
      * Set the instance actions based on enable status.
-     * TODO: Fetch the actions based on the enable status for instances in future.
+     * ...TODO: Fetch the actions based on the enable status for instances in future.
      */
     public function set_instance_actions() {
-        // TODO: Fetch the actions based on the enable status for instances in future.
+        // ...TODO: Fetch the actions based on the enable status for instances in future.
         $this->actions = \mod_pulse\plugininfo\pulseaction::get_list();
     }
 
@@ -231,6 +231,17 @@ class instances extends templates {
      * @return bool True if the update was successful, false otherwise.
      */
     public function update_status(bool $status, bool $instance = false) {
+
+        // Verify the instance is available for the course category.
+        if ($instance) {
+            $instancedata = $this->get_instance_data();
+            $templatedata = $instancedata->template;
+            if (empty($templatedata->categories) || in_array($instancedata->course->category, $templatedata->categories)) {
+                $status = $instancedata->status == self::STATUS_ORPHANED ? self::STATUS_ENABLE : $instancedata->status;
+            } else {
+                $status = self::STATUS_ORPHANED;
+            }
+        }
 
         $result = $this->update_field('status', $status, ['id' => $this->instanceid]);
 
@@ -323,7 +334,7 @@ class instances extends templates {
 
         $data = [
             'source' => 'pulseaction_notification\reportbuilder\datasource\notification',
-            'component' => 'pulseaction_notification'
+            'component' => 'pulseaction_notification',
         ];
 
         if ($report = $DB->get_record('reportbuilder_report', $data)) {
@@ -425,7 +436,7 @@ class instances extends templates {
             if ($status <= 0 ) {
                 continue;
             }
-            
+
             $enabled++; // Increase enabled condition count.
 
             // Condition is only configured to verify the future enrolment.
@@ -508,8 +519,8 @@ class instances extends templates {
                 }
 
                 // Update the interval key to notify.
-                // TODO: Update the method to notification action.
-                // TODO: create hook to update the elements or add override element for groups.
+                // ...TODO: Update the method to notification action.
+                // ...TODO: create hook to update the elements or add override element for groups.
             });
 
             $overridenkeys = array_filter($override, function($value) {
@@ -531,6 +542,12 @@ class instances extends templates {
 
         // Fetch the related template data.
         $templatedata = parent::create($formdata->templateid)->get_formdata();
+
+        // Course.
+        $course = $DB->get_record('course', ['id' => $formdata->courseid], '*', IGNORE_MISSING);
+        if (!$course) {
+            return false;
+        }
         // Instance data to store in autoinstance table.
         $instancedata = (object) [
             'templateid' => $formdata->templateid,
@@ -541,6 +558,13 @@ class instances extends templates {
         // Check the isntance is already created. if created update the record otherwise create new instance.
         $instancedata->timemodified = time();
         if (isset($formdata->instanceid) && $DB->record_exists('pulse_autoinstances', ['id' => $formdata->instanceid])) {
+
+            if (!empty($templatedata->categories) || in_array($course->category, $templatedata->categories)) {
+                $instancedata->status = $instancedata->status == self::STATUS_ORPHANED ? self::STATUS_ENABLE :
+                    $instancedata->status;
+            } else {
+                $instancedata->status = self::STATUS_ORPHANED;
+            }
 
             $instancedata->id = $formdata->instanceid;
             // Update the template.

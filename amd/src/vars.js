@@ -42,18 +42,18 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function($, Str) {
                 e.preventDefault();
 
                 var target = e.target.closest('a');
-                var bodyID = target.getAttribute('href'); // Get the clicked placeholder element vars content selector.
+                var btnurl = target.getAttribute('href'); // Get the clicked placeholder element vars content selector.
                 var toggleIcon = target.querySelector('i');
-                var varsContent = document.querySelector(bodyID) // Email vars content body.
+                var varsContent = document.querySelector(btnurl); // Email vars content body.
 
                 varsContent.classList.toggle('show');
 
                 // Change the toggle icon direction.
                 toggleIcon.classList.toggle('fa-angle-double-up');
                 toggleIcon.classList.toggle('fa-angle-double-down');
-            })
-        })
-    }
+            });
+        });
+    };
 
     /**
      * Email vars placeholders show more / show less.
@@ -61,7 +61,7 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function($, Str) {
     const initVarsExpand = function() {
         var selector = '.mod-pulse-emailvars-toggle .pulse-email-placeholders li .button-show-more';
 
-        var placeholders = document.querySelectorAll(selector)
+        var placeholders = document.querySelectorAll(selector);
 
         if (placeholders === undefined || placeholders === null) {
             return;
@@ -71,8 +71,8 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function($, Str) {
             showmorebtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 var target = e.target.closest('a');
-                var bodyID = target.getAttribute('href'); // Get the clicked show more element placeholder content selector.
-                var placeholderContent = document.querySelector(bodyID); // Placeholder content body.
+                var placeholderurl = target.getAttribute('href'); // Get the clicked show more element placeholder content selector.
+                var placeholderContent = document.querySelector(placeholderurl); // Placeholder content body.
                 placeholderContent.classList.toggle('less');
 
                 if (target.innerHTML == 'Show more') {
@@ -86,10 +86,10 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function($, Str) {
                         target.innerHTML = localizedShowmoreString;
                     });
                 }
-            })
-        })
-    }
-    
+            });
+        });
+    };
+
     return {
 
         init: function() {

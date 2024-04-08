@@ -26,16 +26,16 @@ require_once("../../config.php");
 
 $id = optional_param('id', 1, PARAM_INT);    // Course Module ID.
 
-$PAGE->set_url('/mod/pulse/index.php', array('id' => $id));
+$PAGE->set_url('/mod/pulse/index.php', ['id' => $id]);
 if (!$cm = get_coursemodule_from_id('pulse', $id)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if (!$course = $DB->get_record("course", array("id" => $cm->course))) {
+if (!$course = $DB->get_record("course", ["id" => $cm->course])) {
     throw new moodle_exception('coursemisconf');
 }
 
-if (!$pulse = $DB->get_record("pulse", array("id" => $cm->instance))) {
+if (!$pulse = $DB->get_record("pulse", ["id" => $cm->instance])) {
     throw new moodle_exception('invalidcoursemodule');
 }
 

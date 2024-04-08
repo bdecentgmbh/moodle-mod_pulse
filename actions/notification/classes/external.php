@@ -44,7 +44,7 @@ class external extends \external_api {
      */
     public static function get_chapters_parameters() {
         return new \external_function_parameters(
-            array('mod' => new \external_value(PARAM_INT, 'Book module cmid ', VALUE_OPTIONAL))
+            ['mod' => new \external_value(PARAM_INT, 'Book module cmid ', VALUE_OPTIONAL)]
         );
     }
 
@@ -76,10 +76,10 @@ class external extends \external_api {
     public static function get_chapters_returns() {
         return new \external_multiple_structure(
             new \external_single_structure(
-                array(
+                [
                     'value' => new \external_value(PARAM_INT, 'Chapter ID', VALUE_OPTIONAL),
                     'label' => new \external_value(PARAM_TEXT, 'Chapter title', VALUE_OPTIONAL),
-                )
+                ]
             ), '', VALUE_OPTIONAL
         );
     }

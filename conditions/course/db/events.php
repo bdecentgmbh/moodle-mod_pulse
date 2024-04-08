@@ -25,8 +25,8 @@ defined('MOODLE_INTERNAL') || die();
 
 // Course completed event observer for the "Course Completion" condition in the pulse 2.0.
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\course_completed',
         'callback' => '\pulsecondition_course\conditionform::course_completed',
-    ),
+    ],
 ];

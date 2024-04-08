@@ -25,8 +25,8 @@ defined('MOODLE_INTERNAL') || die();
 
 // Course module event observer for the "Activity completion" condition in the pulse 2.0.
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\course_module_completion_updated',
         'callback' => '\pulsecondition_activity\conditionform::module_completed',
-    ),
+    ],
 ];

@@ -64,6 +64,9 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/mod/pulse/automation/instances/list.php', ['courseid' => $courseid]));
 $PAGE->set_course($course);
 
+// Further prepare the page.
+$PAGE->set_title(get_string('autoinstances', 'pulse'));
+
 // Add instance template form submitted.
 $instanceaddform = new \template_addinstance_form(null, ['courseid' => $courseid]);
 if ($data = $instanceaddform->get_data()) {
@@ -149,7 +152,7 @@ echo $OUTPUT->heading(get_string('automation', 'pulse'));
 // Show smart menus description.
 echo get_string('autoinstance_desc', 'pulse');
 
-// Prepare 'Create smart menu' button. // TODO Review.
+// Prepare 'Create smart menu' button.
 $createbutton = $OUTPUT->box_start();
 $createbutton .= mod_pulse\automation\helper::get_addtemplate_instance($instanceaddform, $courseid);
 $createbutton .= $OUTPUT->box_end();

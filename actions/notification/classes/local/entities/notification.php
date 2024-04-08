@@ -54,7 +54,7 @@ class notification extends base {
             'pulseaction_notification_ins' => 'plani',
             'pulseaction_notification' => 'plan',
             'cohort_members' => 'chtm',
-            'cohort' => 'cht'
+            'cohort' => 'cht',
         ];
     }
 
@@ -291,7 +291,7 @@ class notification extends base {
             1 => get_string('onhold', 'pulseaction_notification'),
             2 => get_string('queued', 'pulseaction_notification'),
             3 => get_string('sent', 'pulseaction_notification'),
-            0 => get_string('failed', 'pulseaction_notification')
+            0 => get_string('failed', 'pulseaction_notification'),
         ]);
 
         // Scheduled time date filter.

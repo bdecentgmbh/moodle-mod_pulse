@@ -196,4 +196,20 @@ class behat_pulse extends behat_base {
         $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
         $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
     }
+
+    /**
+     * Select the conditions are met option on the activity completion tracking .
+     *
+     * @Given I set the activity completion tracking
+     */
+    public function i_set_the_activity_completion_tracking() {
+        global $CFG;
+
+        if ($CFG->branch == "403") {
+            $this->execute('behat_forms::i_set_the_field_to', ['id_completion_2', '2']);
+        } else {
+            $this->execute('behat_forms::i_set_the_field_to',
+            ['Completion tracking', 'Show activity as complete when conditions are met']);
+        }
+    }
 }

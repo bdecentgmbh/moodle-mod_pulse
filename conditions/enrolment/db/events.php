@@ -25,16 +25,16 @@ defined('MOODLE_INTERNAL') || die();
 
 // User created, deleted and updated event observers for the "User Enrolment Completion" condition in the pulse 2.0.
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\user_enrolment_created',
         'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
-    ),
-    array(
+    ],
+    [
         'eventname' => 'core\event\user_enrolment_deleted',
         'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
-    ),
-    array(
+    ],
+    [
         'eventname' => 'core\event\user_enrolment_updated',
         'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
-    ),
+    ],
 ];

@@ -240,7 +240,7 @@ class helper {
         $button .= \html_writer::start_div('filter-form-container');
         $button .= \html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('i/filter', 'Filter'), [
             'id' => 'pulse-automation-filter',
-            'class' => 'sort-autotemplates btn btn-primary ml-2 ' . ($filtered ? 'filtered' : '')
+            'class' => 'sort-autotemplates btn btn-primary ml-2 ' . ($filtered ? 'filtered' : ''),
         ]);
         $filter = new \template_table_filter();
         $button .= \html_writer::tag('div', $filter->render(), ['id' => 'pulse-automation-filterform', 'class' => 'hide']);
@@ -252,12 +252,12 @@ class helper {
         $dirimage = ($tdir == SORT_ASC) ? '<i class="fa fa-sort-amount-up"></i>' : $OUTPUT->pix_icon('t/sort_by', 'Sortby');
 
         $manageurl = new moodle_url('/mod/pulse/automation/templates/list.php', [
-            'tsort' => 'reference', 'tdir' => $tdir
+            'tsort' => 'reference', 'tdir' => $tdir,
         ]);
         $tempcount = $DB->count_records('pulse_autotemplates');
         if (!empty($tempcount)) {
             $button .= \html_writer::link($manageurl->out(false), $dirimage.get_string('sort'), [
-                'class' => 'sort-autotemplates btn btn-primary ml-2'
+                'class' => 'sort-autotemplates btn btn-primary ml-2',
             ]);
         }
 
@@ -297,7 +297,7 @@ class helper {
         $dirimage = ($tdir == SORT_ASC) ? '<i class="fa fa-sort-amount-up"></i>' : $OUTPUT->pix_icon('t/sort_by', 'Sortby');
 
         $manageurl = new moodle_url('/mod/pulse/automation/instances/list.php', [
-            'courseid' => $courseid, 'tsort' => 'idnumber', 'tdir' => $tdir
+            'courseid' => $courseid, 'tsort' => 'idnumber', 'tdir' => $tdir,
         ]);
 
         if (!empty($templates)) {
@@ -340,10 +340,10 @@ class helper {
 
         $table = new \html_table();
         $table->id = 'plugins-control-panel';
-        $table->head = array('', '');
+        $table->head = ['', ''];
 
         foreach ($templatehelp as $help => $result) {
-            $row = new \html_table_row(array($result, get_string('automationtemplate_'.$help, 'pulse')));
+            $row = new \html_table_row([$result, get_string('automationtemplate_'.$help, 'pulse')]);
             $table->data[] = $row;
         }
 
@@ -385,10 +385,10 @@ class helper {
 
         $table = new \html_table();
         $table->id = 'plugins-control-panel';
-        $table->head = array('', '');
+        $table->head = ['', ''];
 
         foreach ($templatehelp as $help => $result) {
-            $row = new \html_table_row(array($result, get_string('automationinstance_'.$help, 'pulse')));
+            $row = new \html_table_row([$result, get_string('automationinstance_'.$help, 'pulse')]);
             $table->data[] = $row;
         }
 
@@ -416,7 +416,6 @@ class helper {
         $ul = \html_writer::tag('ul', implode('', array_map(fn($val) => '<li>' . $val . '</li>', array_filter($messages))));
         echo \html_writer::div($ul, 'pulse-warnings text-warning');
     }
-
 
     /**
      * Find the time management tool installed and enabled in the learningtools.
@@ -477,7 +476,7 @@ class helper {
         if ($var == 'coursedue' && function_exists('ltool_timemanagement_cal_course_duedate')) {
             // Get user enrolment info in course.
             $usercourseenrollinfo = ltool_timemanagement_get_course_user_enrollment($course->id, $userid);
-            $coursedatesinfo = $DB->get_record('ltool_timemanagement_course', array('course' => $course->id));
+            $coursedatesinfo = $DB->get_record('ltool_timemanagement_course', ['course' => $course->id]);
             // Check course set in time management.
             if ($coursedatesinfo) {
                 $duedate = ltool_timemanagement_cal_course_duedate($coursedatesinfo, $usercourseenrollinfo[0]['timestart']);
@@ -488,7 +487,7 @@ class helper {
 
         if ($mod && $var == 'activityduedate' && function_exists('ltool_timemanagement_get_course_user_enrollment')) {
             $userenrolments = ltool_timemanagement_get_course_user_enrollment($course->id, $userid);
-            $record = $DB->get_record('ltool_timemanagement_modules', array('cmid' => $mod->cmid));
+            $record = $DB->get_record('ltool_timemanagement_modules', ['cmid' => $mod->cmid ?? 0]);
             if ($record) {
                 $dates = ltool_timemanagement_cal_coursemodule_managedates($record, $userenrolments[0]['timestart']);
                 return isset($dates['duedate']) ? userdate($dates['duedate']) : '';
@@ -524,9 +523,9 @@ class helper {
                 if (!empty($modnumbers)) {
                     foreach ($modnumbers as $modnumber) {
                         $mod = $modinfo->cms[$modnumber];
-                        if ($DB->record_exists('course_modules', array('id' => $mod->id, 'deletioninprogress' => 0))
+                        if ($DB->record_exists('course_modules', ['id' => $mod->id, 'deletioninprogress' => 0])
                             && !empty($mod) && $mod->uservisible) {
-                            $record = $DB->get_record('ltool_timemanagement_modules', array('cmid' => $mod->id));
+                            $record = $DB->get_record('ltool_timemanagement_modules', ['cmid' => $mod->id]);
                             if (!empty($record)) {
                                 $timestarted = $userenrolments[0]['timestart'];
                                 list('startdate' => $startdate,
@@ -546,7 +545,7 @@ class helper {
     /**
      * Bulk edit action buttons for the instance management page.
      *
-     * @param int $templateid
+     * @param bool $filtered
      * @return string $button.
      */
     public static function bulkaction_buttons($filtered = true) {
@@ -573,7 +572,7 @@ class helper {
             'class' => 'selectwithoutins-pulse-bulkaction btn btn-secondary ml-2',
         ]);
 
-        $button .= \mod_pulse\automation\helper::get_filter_button($filtered ?? false);
+        $button .= self::get_filter_button($filtered ?? false);
 
         $button .= \html_writer::end_div();
 
@@ -591,7 +590,7 @@ class helper {
         $button = '';
         $button .= html_writer::start_div('box py-3 generalbox', ['id' => 'bulk-action']);
         $button .= html_writer::start_div('bulkaction-group hide');
-        $button .= html_writer::span(get_string('withselect', 'pulse'), '', array('id' => 'withselect'));
+        $button .= html_writer::span(get_string('withselect', 'pulse'), '', ['id' => 'withselect']);
 
         $button .= \html_writer::link('javascript:void(0);',
             get_string('bulkaction:deleteinstance', 'pulse'). $OUTPUT->pix_icon('t/delete', \get_string('delete')), [
@@ -625,6 +624,12 @@ class helper {
         return $button;
     }
 
+    /**
+     * Return the manage instance filter button html.
+     *
+     * @param bool $filtered
+     * @return string $button Filter button html
+     */
     public static function get_filter_button($filtered) {
         global $CFG, $OUTPUT;
 
@@ -635,16 +640,19 @@ class helper {
         $button .= \html_writer::start_div('filter-form-container');
         $button .= \html_writer::link('javascript:void(0);', $OUTPUT->pix_icon('i/filter', 'Filter'), [
             'id' => 'pulse-manageinstance-filter',
-            'class' => 'sort-autotemplates btn btn-secondary ml-2 filtered' . ($filtered ? 'filtered' : '')
+            'class' => 'sort-autotemplates btn btn-secondary ml-2 filtered' . ($filtered ? 'filtered' : ''),
         ]);
 
         $templateid = optional_param('id', 0, PARAM_INT) ?? 0;
 
         $url = new moodle_url('/mod/pulse/automation/templates/edit.php', ['id' => $templateid, 'sesskey' => sesskey()]);
 
-        $filter = new \manage_instance_table_filter($url->out(false).'#manage-instance-tab', ['id' => $templateid, 'numberofinstance' => null]);
+        $filter = new \manage_instance_table_filter(
+            $url->out(false).'#manage-instance-tab', ['id' => $templateid, 'numberofinstance' => null]);
 
-        $button .= \html_writer::tag('div', $filter->render(), ['id' => 'pulse-automation-filterform', 'class' => 'hideinstance hide']);
+        $button .= \html_writer::tag('div', $filter->render(),
+            ['id' => 'pulse-automation-filterform', 'class' => 'hideinstance hide']);
+
         $button .= \html_writer::end_div();
 
         return $button;

@@ -40,7 +40,7 @@ define(['core/fragment'], function(Fragment) {
                 moduleid = parseInt(id.replace('module-', ''));
                 modules.push(moduleid);
             }
-            var params = {modules:  JSON.stringify(modules)};
+            var params = {modules: JSON.stringify(modules)};
             if (modules.length > 0) {
                 let completionbuttons = Fragment.loadFragment('mod_pulse', 'completionbuttons', 1, params);
                 var approvebtn, element, referenceNode, completioncontent;

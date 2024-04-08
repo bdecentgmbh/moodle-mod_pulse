@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Provides the information to backup of the pulse action notification.
  */
@@ -40,19 +38,19 @@ class backup_pulseaction_notification_subplugin extends backup_subplugin {
 
         // NOtification action template.
         $action = new \backup_nested_element('notificationaction');
-        $actionfields = new \backup_nested_element('pulseaction_notification', array('id'), array(
+        $actionfields = new \backup_nested_element('pulseaction_notification', ['id'], [
             "templateid", "sender", "senderemail", "notifyinterval", "week", "month", "time", "notifydelay", "delayduration",
             "notifylimit", "recipients", "cc", "bcc", "subject", "headercontent", "headercontentformat", "staticcontent",
             "staticcontentformat", "dynamiccontent", "contentlength", "contenttype", "footercontent", "footercontentformat",
             "timemodified",
-        ));
+        ]);
 
         $actionins = new \backup_nested_element('notificationactionins');
-        $actioninsfields = new \backup_nested_element('pulseaction_notification_ins', array('id'), array(
+        $actioninsfields = new \backup_nested_element('pulseaction_notification_ins', ['id'], [
             "instanceid", "sender", "senderemail", "notifyinterval", "week", "month", "time", "notifydelay", "delayduration",
             "suppress", "suppressoperator", "notifylimit", "recipients", "cc", "bcc", "subject", "headercontent", "staticcontent",
             "dynamiccontent", "contentlength", "contenttype", "chapterid", "footercontent", "timemodified",
-        ));
+        ]);
 
         $subplugin->add_child($action);
         $action->add_child($actionfields);
@@ -73,6 +71,14 @@ class backup_pulseaction_notification_subplugin extends backup_subplugin {
         ', ['courseid' => backup::VAR_COURSEID]);
 
         $actioninsfields->set_source_table('pulseaction_notification_ins', ['instanceid' => \backup::VAR_PARENTID]);
+
+        // Define file annotations.
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_headercontent', null);
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_staticcontent', null);
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_footercontent', null);
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_headercontent_instance', null);
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_staticcontent_instance', null);
+        $subplugin->annotate_files('mod_pulse', 'pulsenotification_footercontent_instance', null);
 
         return $subplugin;
     }

@@ -24,5 +24,5 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'pulsecondition_session';
-$plugin->version = 2023080207;
+$plugin->version = 2023080206;
 $plugin->dependencies = ['mod_facetoface' => 2021113000]; // Dependencies set for the session module "Face to Face".

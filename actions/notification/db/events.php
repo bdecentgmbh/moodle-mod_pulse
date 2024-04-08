@@ -24,8 +24,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\course_module_completion_updated',
         'callback' => '\pulseaction_notification\task\notify_users::module_completed',
-    ),
+    ],
 ];

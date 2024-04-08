@@ -110,7 +110,7 @@ class actionform extends \mod_pulse\automation\action_base {
         $editor = [
             "pulsenotification_headercontent",
             "pulsenotification_staticcontent",
-            "pulsenotification_footercontent"
+            "pulsenotification_footercontent",
         ];
 
         foreach ($editor as $field) {
@@ -146,9 +146,10 @@ class actionform extends \mod_pulse\automation\action_base {
         $editor = [
             "pulsenotification_headercontent",
             "pulsenotification_staticcontent",
-            "pulsenotification_footercontent"
+            "pulsenotification_footercontent",
         ];
 
+        // Use the prefix for the instance.
         if (isset($data->courseid) && isset($data->instanceid) ) {
             $prefix = '_instance';
         }
@@ -181,7 +182,7 @@ class actionform extends \mod_pulse\automation\action_base {
             'trusttext' => true,
             'subdirs' => true,
             'maxfiles' => 50,
-            'context' => $context ?: $PAGE->context
+            'context' => $context ?: $PAGE->context,
         ];
     }
 
@@ -203,7 +204,6 @@ class actionform extends \mod_pulse\automation\action_base {
 
         return $DB->delete_records('pulseaction_notification', ['templateid' => $templateid]);
     }
-
 
     /**
      * Action is triggered for the instance. when triggered notification will create a schedule for the triggered users.
@@ -456,7 +456,7 @@ class actionform extends \mod_pulse\automation\action_base {
                 // Create new instance for this tempalte.
                 $notificationinstance = $DB->insert_record($tablename, $actiondata);
             }
-            // TODO: Create a schedules based on receipents role.
+            // Create a schedules based on receipents role.
             notification::instance($notificationinstance)->create_schedule_forinstance();
         } catch (\Exception $e) {
             // Throw  an error incase of issue with manage the data update.
@@ -510,7 +510,7 @@ class actionform extends \mod_pulse\automation\action_base {
         });
 
         $suppress = $mform->createElement('autocomplete', 'pulsenotification_suppress',
-            get_string('suppressmodule', 'pulseaction_notification'), $activities, array('multiple' => 'multiple'));
+            get_string('suppressmodule', 'pulseaction_notification'), $activities, ['multiple' => 'multiple']);
 
         $mform->insertElementBefore($suppress, 'pulsenotification_notifylimit');
         $mform->addHelpButton('pulsenotification_suppress', 'suppressmodule', 'pulseaction_notification');
@@ -546,11 +546,11 @@ class actionform extends \mod_pulse\automation\action_base {
         $mform->addHelpButton('pulsenotification_dynamiccontent', 'dynamiccontent', 'pulseaction_notification');
 
         // Add 'content_type' element with the following options.
-        $contenttypeoptions = array(
+        $contenttypeoptions = [
             notification::DYNAMIC_PLACEHOLDER => get_string('dynamicplacholder', 'pulseaction_notification'),
             notification::DYNAMIC_DESCRIPTION => get_string('dynamicdescription', 'pulseaction_notification'),
             notification::DYNAMIC_CONTENT => get_string('dynamiccontent', 'pulseaction_notification'),
-        );
+        ];
         $dynamic2 = $mform->createElement('select', 'pulsenotification_contenttype',
             get_string('contenttype', 'pulseaction_notification'), $contenttypeoptions);
         $mform->insertElementBefore($dynamic2, 'pulsenotification_footercontent_editor');
@@ -577,11 +577,11 @@ class actionform extends \mod_pulse\automation\action_base {
         }
 
         // Content Length Group.
-        $contentlengthoptions = array(
+        $contentlengthoptions = [
             notification::LENGTH_TEASER => get_string('teaser', 'pulseaction_notification'),
             notification::LENGTH_LINKED => get_string('full_linked', 'pulseaction_notification'),
             notification::LENGTH_NOTLINKED => get_string('full_not_linked', 'pulseaction_notification'),
-        );
+        ];
         $dynamic3 = $mform->createElement('select', 'pulsenotification_contentlength',
             get_string('contentlength', 'pulseaction_notification'), $contentlengthoptions);
         $mform->insertElementBefore($dynamic3, 'pulsenotification_footercontent_editor');
@@ -610,12 +610,12 @@ class actionform extends \mod_pulse\automation\action_base {
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
 
         // Sender Group.
-        $senderoptions = array(
+        $senderoptions = [
             notification::SENDERCOURSETEACHER => get_string('courseteacher', 'pulseaction_notification'),
             notification::SENDERGROUPTEACHER => get_string('groupteacher', 'pulseaction_notification'),
             notification::SENDERTENANTROLE => get_string('tenantrole', 'pulseaction_notification'),
-            notification::SENDERCUSTOM => get_string('custom', 'pulseaction_notification')
-        );
+            notification::SENDERCUSTOM => get_string('custom', 'pulseaction_notification'),
+        ];
         $mform->addElement('select', 'pulsenotification_sender', get_string('sender', 'pulseaction_notification'), $senderoptions);
         $mform->addHelpButton('pulsenotification_sender', 'sender', 'pulseaction_notification');
 
@@ -626,17 +626,17 @@ class actionform extends \mod_pulse\automation\action_base {
 
         $interval = [];
         // Schedule Group.
-        $intervaloptions = array(
+        $intervaloptions = [
             notification::INTERVALONCE => get_string('once', 'pulseaction_notification'),
             notification::INTERVALDAILY => get_string('daily', 'pulseaction_notification'),
             notification::INTERVALWEEKLY => get_string('weekly', 'pulseaction_notification'),
             notification::INTERVALMONTHLY => get_string('monthly', 'pulseaction_notification'),
-        );
+        ];
         $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[interval]',
             get_string('interval', 'pulseaction_notification'), $intervaloptions);
 
         // Add additional settings based on the selected interval.
-        $dayweeks = array(
+        $dayweeks = [
             'monday' => get_string('monday', 'pulseaction_notification'),
             'tuesday' => get_string('tuesday', 'pulseaction_notification'),
             'wednesday' => get_string('wednesday', 'pulseaction_notification'),
@@ -644,7 +644,7 @@ class actionform extends \mod_pulse\automation\action_base {
             'friday' => get_string('friday', 'pulseaction_notification'),
             'saturday' => get_string('saturday', 'pulseaction_notification'),
             'sunday' => get_string('sunday', 'pulseaction_notification'),
-        );
+        ];
 
         // Add 'day_of_week' element if 'weekly' is selected in the 'interval' element.
         $interval[] =& $mform->createElement('select', 'pulsenotification_notifyinterval[weekday]',
@@ -670,15 +670,15 @@ class actionform extends \mod_pulse\automation\action_base {
 
         // Notification interval button groups.
         $mform->addGroup($interval, 'pulsenotification_notifyinterval',
-            get_string('interval', 'pulseaction_notification'), array(' '), false);
+            get_string('interval', 'pulseaction_notification'), [' '], false);
         $mform->addHelpButton('pulsenotification_notifyinterval', 'interval', 'pulseaction_notification');
 
         // Notification delay.
-        $delayoptions = array(
+        $delayoptions = [
             notification::DELAYNONE => get_string('none', 'pulseaction_notification'),
             notification::DELAYBEFORE => get_string('before', 'pulseaction_notification'),
             notification::DELAYAFTER => get_string('after', 'pulseaction_notification'),
-        );
+        ];
         $mform->addElement('select', 'pulsenotification_notifydelay',
             get_string('delay', 'pulseaction_notification'), $delayoptions);
         $mform->setDefault('delay', 'none');
@@ -702,19 +702,19 @@ class actionform extends \mod_pulse\automation\action_base {
         $rolenames = role_fix_names($roles);
         $roleoptions = array_combine(array_column($rolenames, 'id'), array_column($rolenames, 'localname'));
         $mform->addElement('autocomplete', 'pulsenotification_recipients',
-            get_string('recipients', 'pulseaction_notification'), $roleoptions, array('multiple' => 'multiple'));
+            get_string('recipients', 'pulseaction_notification'), $roleoptions, ['multiple' => 'multiple']);
         $mform->addHelpButton('pulsenotification_recipients', 'recipients', 'pulseaction_notification');
 
         // CC Group.
         // Add 'cc' element with all course context and user context roles.
         $courseroles = $forminstance->course_roles();
         $mform->addElement('autocomplete', 'pulsenotification_cc',
-            get_string('ccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
+            get_string('ccrecipients', 'pulseaction_notification'), $courseroles, ['multiple' => 'multiple']);
         $mform->addHelpButton('pulsenotification_cc', 'ccrecipients', 'pulseaction_notification');
 
         // Set BCC.
         $mform->addElement('autocomplete', 'pulsenotification_bcc',
-            get_string('bccrecipients', 'pulseaction_notification'), $courseroles, array('multiple' => 'multiple'));
+            get_string('bccrecipients', 'pulseaction_notification'), $courseroles, ['multiple' => 'multiple']);
         $mform->addHelpButton('pulsenotification_bcc', 'bccrecipients', 'pulseaction_notification');
 
         // Subject.
@@ -730,7 +730,7 @@ class actionform extends \mod_pulse\automation\action_base {
             $this->get_editor_options($context)
         );
         $mform->addHelpButton('pulsenotification_headercontent_editor', 'headercontent', 'pulseaction_notification');
-        $placeholders = pulse_email_placeholders('header');
+        $placeholders = pulse_email_placeholders('header', true);
         $mform->addElement('html', $placeholders);
 
         // Statecontent editor.
@@ -740,7 +740,7 @@ class actionform extends \mod_pulse\automation\action_base {
             $this->get_editor_options($context)
         );
         $mform->addHelpButton('pulsenotification_staticcontent_editor', 'staticcontent', 'pulseaction_notification');
-        $placeholders = pulse_email_placeholders('static');
+        $placeholders = pulse_email_placeholders('static', true);
         $mform->addElement('html', $placeholders);
 
         // Footer Content.
@@ -748,7 +748,7 @@ class actionform extends \mod_pulse\automation\action_base {
             get_string('footercontent', 'pulseaction_notification'),
             ['class' => 'fitem_id_templatevars_editor'], $this->get_editor_options($context));
         $mform->addHelpButton('pulsenotification_footercontent_editor', 'footercontent', 'pulseaction_notification');
-        $placeholders = pulse_email_placeholders('footer');
+        $placeholders = pulse_email_placeholders('footer', true);
         $mform->addElement('html', $placeholders);
 
         // Preview Button.
@@ -777,7 +777,7 @@ class actionform extends \mod_pulse\automation\action_base {
         $timeperiod = new DatePeriod($starttime, $interval, $endtime);
 
         // Loop through the DatePeriod and add each timestamp to the array.
-        $timelist = array();
+        $timelist = [];
         foreach ($timeperiod as $time) {
             $timelist[$time->format('H:i')] = $time->format('H:i'); // Format the timestamp as HH:MM.
         }
@@ -837,10 +837,10 @@ class actionform extends \mod_pulse\automation\action_base {
                 // Get only assignments where the assignment submission deadline was extended.
                 if ($DB->record_exists('assign_user_flags', ['assignment' => $assignment->id, 'userid' => $userid])) {
                     $extensionassignments = $DB->get_records('assign_user_flags', ['assignment' => $assignment->id,
-                    'userid' => $userid]);
+                    'userid' => $userid, ]);
                     foreach ($extensionassignments as $extensionassign) {
                         if ($extensionassign->extensionduedate != 0) {
-                            $extensionduedate = !empty($extensionassign->extensionduedate) ? 
+                            $extensionduedate = !empty($extensionassign->extensionduedate) ?
                             userdate($extensionassign->extensionduedate) : '';
                             $extension .= $assignment->name.": ". $extensionduedate .'('.
                             get_string('previously', 'pulse').': '.userdate($assignment->duedate).')'."<br>";

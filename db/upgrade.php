@@ -54,7 +54,7 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('status', XMLDB_TYPE_INTEGER, '2', null, null, null, '1', 'configparams');
         $table->add_field('order_no', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'status');
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '18', null, null, null, null, 'order_no');
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         // Conditionally launch create table.
         if (!$dbman->table_exists('pulse_presets')) {
@@ -121,7 +121,7 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('courseid', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null, 'templateid');
         $table->add_field('status', XMLDB_TYPE_INTEGER, '9', null, null, null, '1', 'courseid');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'status');
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         // Conditionally launch create table for pulse_autoinstaces.
         if (!$dbman->table_exists($table)) {
@@ -142,7 +142,7 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('triggerconditions', XMLDB_TYPE_TEXT, null, null, null, null, null, 'categories');
         $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '9', null, null, null, '1', 'triggerconditions');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'triggeroperator');
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         // Conditionally launch create table for pulse_autotemplates.
         if (!$dbman->table_exists($table)) {
@@ -162,8 +162,8 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('triggerconditions', XMLDB_TYPE_TEXT, null, null, null, null, null, 'categories');
         $table->add_field('triggeroperator', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'triggerconditions');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'triggeroperator');
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('unique', XMLDB_KEY_UNIQUE, array('instanceid'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('unique', XMLDB_KEY_UNIQUE, ['instanceid']);
 
         // Conditionally launch create table for pulse_autotemplates_ins.
         if (!$dbman->table_exists($table)) {
@@ -179,8 +179,8 @@ function xmldb_pulse_upgrade($oldversion) {
         $table->add_field('upcomingtime', XMLDB_TYPE_INTEGER, '18', null, null, null, null, 'status');
         $table->add_field('additional', XMLDB_TYPE_TEXT, null, null, null, null, null, 'status');
         $table->add_field('isoverridden', XMLDB_TYPE_INTEGER, '8', null, null, null, '1', 'additional');
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('unique', XMLDB_KEY_UNIQUE, array('instanceid', 'triggercondition'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('unique', XMLDB_KEY_UNIQUE, ['instanceid', 'triggercondition']);
 
         // Conditionally launch create table for pulse_condition_overrides.
         if (!$dbman->table_exists($table)) {

@@ -24,24 +24,24 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
+$capabilities = [
     // Capability to recieve notifications.
-    'pulseaction/notification:receivenotification' => array(
+    'pulseaction/notification:receivenotification' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'student' => CAP_ALLOW,
             'guest' => CAP_ALLOW,
-        )
-    ),
+        ],
+    ],
 
-    'pulseaction/notification:sender' => array(
+    'pulseaction/notification:sender' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'teacher' => CAP_ALLOW
-        ),
-    ),
+            'teacher' => CAP_ALLOW,
+        ],
+    ],
 
-);
+];

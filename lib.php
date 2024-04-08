@@ -50,7 +50,7 @@ function pulse_add_instance($pulse) {
     if (isset($pulse->pulse_content_editor)) {
         $pulse->pulse_content = file_save_draft_area_files($pulse->pulse_content_editor['itemid'],
                                                     $context->id, 'mod_pulse', 'pulse_content', 0,
-                                                    array('subdirs' => true), $pulse->pulse_content_editor['text']);
+                                                    ['subdirs' => true], $pulse->pulse_content_editor['text']);
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
     }
@@ -80,7 +80,7 @@ function pulse_update_instance($pulse) {
         // Save pulse content areafiles.
         $pulse->pulse_content = file_save_draft_area_files($pulse->pulse_content_editor['itemid'],
                                                     $context->id, 'mod_pulse', 'pulse_content', 0,
-                                                    array('subdirs' => true), $pulse->pulse_content_editor['text']);
+                                                    ['subdirs' => true], $pulse->pulse_content_editor['text']);
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
     }
@@ -102,7 +102,6 @@ function pulse_update_instance($pulse) {
     \mod_pulse\extendpro::pulse_extend_update_instance($pulse, $context);
     return $updates;
 }
-
 
 /**
  * Delete Pulse instnace
@@ -194,7 +193,7 @@ function mod_pulse_cm_info_dynamic(cm_info &$cm) {
  * @param array $options additional options affecting the file serving
  * @return bool false if the file not found, just send the file otherwise and do not return anything
  */
-function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=[]) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
     if ($context->contextlevel != CONTEXT_MODULE && $context->contextlevel != CONTEXT_SYSTEM) {
         return false;
@@ -228,7 +227,6 @@ function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownlo
     // We can now send the file back to the browser - in this case with a cache lifetime of 1 day and no filtering.
     send_stored_file($file, 86400, 0, $forcedownload, $options);
 }
-
 
 /**
  * Add a get_coursemodule_info function in case any pulse type wants to add 'extra' information
@@ -371,7 +369,6 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
     return $status;
 }
 
-
 /**
  * This function receives a calendar event and returns the action associated with it, or null if there is none.
  *
@@ -427,7 +424,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     global $DB, $USER;
 
     $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
-    $content = $cm->content;
+    $content = $cm->get_formatted_content();
     $course = $cm->get_course();
     $senderdata = \mod_pulse\task\sendinvitation::get_sender($course->id, $cm->context->id);
     $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
@@ -441,14 +438,14 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     if (isset($pulse->displaymode) && $pulse->displaymode == 1) {
         $boxtype = ($pulse->boxtype) ? $pulse->boxtype : 'primary';
         $boxicon = ($pulse->boxicon) ? $pulse->boxicon : '';
-        $content = $cm->content;
+        $content = $cm->get_formatted_content();
         $content = \mod_pulse\helper::pulse_render_content($content, $boxicon, $boxtype);
         $cm->set_content($content);
     }
 
     $completionbtn = \mod_pulse\helper::cm_completionbuttons($cm, $pulse);
     if (!empty($completionbtn)) {
-        $content = $cm->content;
+        $content = $cm->get_formatted_content();
         $content .= html_writer::tag('div', $completionbtn, ['class' => 'pulse-completion-btn']);
         $cm->set_content($content);
     }
@@ -598,7 +595,6 @@ function mod_pulse_output_fragment_completionbuttons($args) {
     return json_encode($html);
 }
 
-
 /**
  * Update the automation templates and instance title during edited directly on table using inplace editable.
  *
@@ -615,12 +611,12 @@ function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
 
     if ($itemtype === 'templatetitle') {
 
-        $record = $DB->get_record('pulse_autotemplates', array('id' => $itemid), '*', MUST_EXIST);
+        $record = $DB->get_record('pulse_autotemplates', ['id' => $itemid], '*', MUST_EXIST);
         // Check permission of the user to update this item.
         require_capability('mod/pulse:addtemplate', context_system::instance());
         // Clean input and update the record.
         $newvalue = clean_param($newvalue, PARAM_NOTAGS);
-        $DB->update_record('pulse_autotemplates', array('id' => $itemid, 'title' => $newvalue));
+        $DB->update_record('pulse_autotemplates', ['id' => $itemid, 'title' => $newvalue]);
         // Prepare the element for the output.
         $record->title = $newvalue;
         return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
@@ -629,12 +625,12 @@ function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
 
     } else if ($itemtype === 'instancetitle') {
 
-        $record = $DB->get_record('pulse_autotemplates_ins', array('instanceid' => $itemid), '*', MUST_EXIST);
+        $record = $DB->get_record('pulse_autotemplates_ins', ['instanceid' => $itemid], '*', MUST_EXIST);
         // Check permission of the user to update this item.
         require_capability('mod/pulse:addtemplateinstance', context_system::instance());
         // Clean input and update the record.
         $newvalue = clean_param($newvalue, PARAM_NOTAGS);
-        $DB->update_record('pulse_autotemplates_ins', array('id' => $record->id, 'title' => $newvalue));
+        $DB->update_record('pulse_autotemplates_ins', ['id' => $record->id, 'title' => $newvalue]);
         // Prepare the element for the output.
         $record->title = $newvalue;
         return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
@@ -710,19 +706,17 @@ function mod_pulse_myprofile_navigation(tree $tree, $user, $iscurrentuser, $cour
  * Add email placeholder fields in form fields.
  *
  * @param string $editor
- * @param bool $visible
+ * @param bool $automation
  * @return void
  */
-function pulse_email_placeholders($editor, $visible=true) {
+function pulse_email_placeholders($editor, $automation=true) {
     global $OUTPUT;
 
-    $vars = \pulse_email_vars::vars($visible);
-
+    $vars = \pulse_email_vars::vars($automation);
     $i = 0;
-    foreach ($vars as $key => $var)  {
 
+    foreach ($vars as $key => $var) {
         $label = str_replace($key.'_', '', $var);
-
         // Help text added.
         $alt = get_string('description');
         $data = [

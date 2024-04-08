@@ -1,6 +1,7 @@
 import Modal from 'core/modal';
 import * as CustomEvents from 'core/custom_interaction_events';
 import * as PresetEvents from 'mod_pulse/events';
+import $ from 'jquery';
 
 const SELECTORS = {
     SAVE_BUTTON: '[data-action="save"]',
@@ -17,11 +18,11 @@ export default class PresetModal extends Modal {
         // Apply parent event listeners.
         super.registerEventListeners(this);
 
-        this.getModal().on(CustomEvents.events.activate, SELECTORS.SAVE_BUTTON, function (event, data) {
+        this.getModal().on(CustomEvents.events.activate, SELECTORS.SAVE_BUTTON, function(event, data) {
             // Load the backupfile.
             document.querySelectorAll('.preset-config-params form.mform').forEach(form => {
                 form.importmethod.value = 'save';
-                form.addEventListener('submit', function (e) {
+                form.addEventListener('submit', function(e) {
                     e.preventDefault();
                 });
             });
@@ -41,7 +42,7 @@ export default class PresetModal extends Modal {
         }.bind(this));
 
 
-        this.getModal().on(CustomEvents.events.activate, SELECTORS.CUSTOMIZE_BUTTON, function (event, data) {
+        this.getModal().on(CustomEvents.events.activate, SELECTORS.CUSTOMIZE_BUTTON, function(event, data) {
             // Add your logic for when the login button is clicked. This could include the form validation,
             document.querySelectorAll('.preset-config-params form.mform').forEach(form => {
                 form.importmethod.value = 'customize';
@@ -57,10 +58,12 @@ export default class PresetModal extends Modal {
 
         }.bind(this));
 
-        this.getModal().on(CustomEvents.events.activate, SELECTORS.CANCEL_BUTTON, function () {
+        this.getModal().on(CustomEvents.events.activate, SELECTORS.CANCEL_BUTTON, function() {
             this.destroy();
         }.bind(this));
-    };
+    }
 }
 
-PresetModal.registerModalType();
+if (PresetModal.registerModalType !== 'undefined') {
+    PresetModal.registerModalType();
+}

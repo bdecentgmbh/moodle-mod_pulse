@@ -23,9 +23,8 @@
  */
 defined('MOODLE_INTERNAL') || die('No direct access');
 
-
 use mod_pulse\automation\helper;
-
+use mod_pulse\helper as pulsehelper;
 /**
  * Filter for notification content placeholders.
  */
@@ -123,29 +122,42 @@ class pulse_email_vars {
      */
     public $assignment = null;
 
+    /**
+     * Conditions vars data.
+     *
+     * @var mixed
+     */
     public $condition = null;
 
     /**
      * Event data.
-     * 
+     *
      * @var object
      */
     public $event = null;
 
     /**
      * Traning data.
-     * 
+     *
      * @var object
      */
     public $training = null;
 
     /**
+     * Reaction Data
+     *
+     * @var object
+     */
+    public $reaction = null;
+
+    /**
      * Sets up and retrieves the API objects.
      *
-     * @param  mixed $user User data record
-     * @param  mixed $course Course data object
-     * @param  mixed $sender Sender user record data.
-     * @param  mixed $pulse Pulse instance record data.
+     * @param mixed $user User data record
+     * @param mixed $course Course data object
+     * @param mixed $sender Sender user record data.
+     * @param mixed $pulse Pulse instance record data.
+     * @param mixed $condition Conditions data
      * @return void
      */
     public function __construct($user, $course, $sender, $pulse, $condition=null) {
@@ -168,10 +180,10 @@ class pulse_email_vars {
         $this->coursecontext = \context_course::instance($this->course->id);
 
         if (!empty($course->id)) {
-            $this->course->url = new moodle_url($wwwroot .'/course/view.php', array('id' => $this->course->id));
+            $this->course->url = new moodle_url($wwwroot .'/course/view.php', ['id' => $this->course->id]);
         }
         if (!empty($user->id)) {
-            $this->url = new moodle_url($wwwroot .'/user/profile.php', array('id' => $this->user->id));
+            $this->url = new moodle_url($wwwroot .'/user/profile.php', ['id' => $this->user->id]);
         }
         $this->site = $this->get_sitedata();
 
@@ -185,6 +197,10 @@ class pulse_email_vars {
         $plugins = $actionplugins->get_plugins_base();
         foreach ($plugins as $component => $pluginbase) {
             $this->assignment = $pluginbase->get_assignment_extension($this->course->id, $this->user->id);
+        }
+
+        if (pulsehelper::pulse_has_pro()) {
+            $this->reaction = $this->reaction_data();
         }
 
         $this->condition = $condition;
@@ -213,7 +229,8 @@ class pulse_email_vars {
         // Update the timestamp to user readable time.
         array_walk($var, function(&$value, $key) {
             if (in_array(strtolower($key), ['timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
-                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime'])) {
+                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime',
+                ])) {
                 $value = $value ? userdate($value) : '';
             }
             // Update the status to user readable strings.
@@ -234,10 +251,11 @@ class pulse_email_vars {
     /**
      * Set up all the methods that can be called and used for substitution var in email templates.
      *
+     * @param bool $automation Display the vars related to the automation actions and conditions.
      * @return array
      *
      **/
-    public static function vars($visible=true) {
+    public static function vars($automation=false) {
         global $DB, $SITE;
 
         $reflection = new ReflectionClass("pulse_email_vars");
@@ -246,9 +264,9 @@ class pulse_email_vars {
         // These fields refer to the objects declared at the top of this class. User_ -> $this->user, etc.
         $result = [
             // User data fields.
-            'User'=> self::user_profile_fields(),
+            'User' => self::user_profile_fields(),
             // Course data fields.
-            'Course'=> self::course_fields(),
+            'Course' => self::course_fields(),
             // Sender data fields.
             'Sender' => self::sender_data_fields(),
             // Enrolment data fields.
@@ -263,44 +281,28 @@ class pulse_email_vars {
             'Mod_Metadata' => self::module_meta_fields(),
             // Training fields.
             "Training" => self::training_data_fields(),
-
         ];
 
-        $actionplugins = new \mod_pulse\plugininfo\pulseaction();
-        $plugins = $actionplugins->get_plugins_base();
-        foreach ($plugins as $component => $pluginbase) {
-            $result += $pluginbase->get_email_placeholders();
+        if ($automation) {
+            $actionplugins = new \mod_pulse\plugininfo\pulseaction();
+            $plugins = $actionplugins->get_plugins_base();
+            foreach ($plugins as $component => $pluginbase) {
+                $result += $pluginbase->get_email_placeholders();
+            }
+
+            $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
+            foreach ($plugins as $component => $pluginbase) {
+                $result += $pluginbase->get_email_placeholders();
+            }
+
+            // Session data fields.
+            $result += ['Mod_session' => self::session_fields()];
+        } else {
+            $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
         }
 
-        $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
-        foreach ($plugins as $component => $pluginbase) {
-            $result += $pluginbase->get_email_placeholders();
-        }
-
+        // Remove empty vars.
         $result = array_filter($result);
-
-        if ($visible) {
-            $result += [
-                //Session data fields.
-                'Mod_session'=> self::session_fields(),
-            ];
-        }
-
-        // // List of methods which doesn't used as placeholders.
-        // $novars = ['get_user_enrolment', 'user_profile_fields', 'course_fields',
-        //     'module_meta_fields', 'session_fields', 'training_data_fields', 'training'];
-
-        // // Add all methods of this class that are ok2call to the $result array as well.
-        // // This means you can add extra methods to this class to cope with values that don't fit in objects mentioned above.
-        // // Or to create methods with specific formatting of the values (just don't give those methods names starting with
-        // // 'User_', 'Course_', etc).
-        // foreach ($amethods as $method) {
-        //     if (self::ok2call($method->name) && !in_array($method->name, $result) && !in_array($method->name, $novars) ) {
-        //         $result += [
-        //             'Others' => $method->name,
-        //         ];
-        //     }
-        // }
 
         return $result ?? [];
     }
@@ -376,10 +378,10 @@ class pulse_email_vars {
      * Reaction placeholders dynamic data.
      * Pro featuer extended from locla_pulsepro.
      *
-     * @return void
+     * @return array
      */
-    public function reaction() {
-        return \mod_pulse\extendpro::pulse_extend_reaction($this);
+    public function reaction_data() {
+        return (object)['reaction' => \mod_pulse\extendpro::pulse_extend_reaction($this)];
     }
 
     /**
@@ -424,8 +426,8 @@ class pulse_email_vars {
 
         if (!empty($enrolments)) {
             $firstinstance = current($enrolments);
-            $progress = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
-            $progress = !empty($progress) ? $progress : 0;
+            $percentage = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
+            $progress = !empty($percentage) ? $percentage : 0;
             $courseduedate = helper::create()->timemanagement_details(
                 'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
 
@@ -449,10 +451,11 @@ class pulse_email_vars {
      */
     public function training_data() {
         // Course user progress in percentage.
-        $progress = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
+        $percentage = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
+        $progress = !empty($percentage) ? $percentage : 0;
         $eventdates = helper::create()->timemanagement_details(
             'eventdates', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-        $Upcomingmods = helper::create()->timemanagement_details(
+        $upcomingmods = helper::create()->timemanagement_details(
                 'upcomingmods', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
         $courseduedate = helper::create()->timemanagement_details(
             'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
@@ -460,11 +463,11 @@ class pulse_email_vars {
             'activityduedate', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
 
         return (object) [
-            'upcomingmods' => $Upcomingmods,
-            'courseprogress' => round($progress) .'%',
+            'upcomingmods' => $upcomingmods,
+            'courseprogress' => $progress ? round($progress) .'%' : '',
             'eventdates' => $eventdates,
             'coursedue' => $courseduedate,
-            'activityduedate' =>  $activityduedate,
+            'activityduedate' => $activityduedate,
         ];
     }
 
@@ -505,7 +508,7 @@ class pulse_email_vars {
                 'User_confirmed', 'User_policyagreed', 'User_deleted', 'User_suspended', 'User_mnethostid', 'User_password',
                 'User_emailstop', 'User_descriptionformat', 'User_mailformat', 'User_maildigest', 'User_maildisplay',
                 'User_autosubscribe', 'User_trackforums', 'User_timemodified', 'User_trustbitmask', 'User_imagealt',
-                'User_moodlenetprofile'
+                'User_moodlenetprofile',
             ];
             $fields = array_filter($fields, fn($field) => !in_array($field, $removefields));
         }
@@ -531,7 +534,7 @@ class pulse_email_vars {
                 'fullname', 'shortname', 'summary', 'courseurl', 'startdate',
                 'enddate', 'id', 'category', 'idnumber', 'format', 'visible',
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
-                'timemodified', 'enablecompletion'
+                'timemodified', 'enablecompletion',
             ];
             $records = $DB->get_records('customfield_field', [], '', 'shortname');
 
@@ -574,7 +577,7 @@ class pulse_email_vars {
                 $fields = array_keys($records);
 
                 array_walk($fields, function(&$value) {
-                    $value = 'Mod_Metadata'.$value;
+                    $value = $value;
                 });
             }
 
@@ -666,21 +669,19 @@ class pulse_email_vars {
     public static function course_activities_data_fields() {
         return [
             // Activities Fields.
-            'Mod_Type', 'Mod_Name', 'Mod_Intro','Mod_Url', 'Mod_Duedate',
-
+            'Mod_Type', 'Mod_Name', 'Mod_Intro', 'Mod_Url', 'Mod_Duedate',
         ];
     }
 
     /**
      * Training fields. Timemanagement ltools support.
      *
-     * @return string
+     * @return array
      */
     public static function training_data_fields() {
         return [
-            'Training_Upcomingmods', 'Training_Courseprogress','Training_Eventdates',
+            'Training_Upcomingmods', 'Training_Courseprogress', 'Training_Eventdates',
             'Training_Coursedue', 'Training_Activityduedate',
-            
         ];
     }
 
@@ -734,9 +735,10 @@ if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
          * Set up all the methods that can be called and used for substitution var in email templates.
          * There is not use for this function, FIX for CI.
          *
+         * @param bool $automation
          * @return array
          **/
-        public static function vars($visible=true) {
+        public static function vars($automation=false) {
             $test = ''; // FIX for Moodle CI codechecker.
             return parent::vars();
         }

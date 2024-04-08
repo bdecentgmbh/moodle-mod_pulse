@@ -108,5 +108,5 @@ $capabilities = [
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
-    ]
+    ],
 ];

@@ -17,20 +17,18 @@
 /**
  * This file contains the class for backup of this submission plugin
  *
- * @package assignsubmission_file
- * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @package pulsecondition_events
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Provides the information to backup submission files
  *
  * This just adds its filearea to the annotations and records the number of files
  *
- * @package assignsubmission_file
- * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @package pulsecondition_events
+ * @copyright 2023, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_pulsecondition_events_subplugin extends backup_subplugin {
@@ -46,9 +44,9 @@ class backup_pulsecondition_events_subplugin extends backup_subplugin {
 
         // Automation templates.
         $events = new \backup_nested_element('pulseconditionevents');
-        $eventsfields = new \backup_nested_element('pulsecondition_events', array('id'), array(
-            "instanceid", "eventname", "notifyuser"
-        ));
+        $eventsfields = new \backup_nested_element('pulsecondition_events', ['id'], [
+            "instanceid", "eventname", "notifyuser",
+        ]);
 
         $subplugin->add_child($events);
         $events->add_child($eventsfields);

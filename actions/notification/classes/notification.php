@@ -480,6 +480,10 @@ class notification {
     protected function disable_schedules() {
         global $DB;
 
+        if (!empty($this->notificationdata)) {
+            $this->create_instance_data();
+        }
+
         $params = [
             'instanceid' => $this->notificationdata->instanceid,
             'status' => self::STATUS_QUEUED,
@@ -593,8 +597,6 @@ class notification {
             return true;
         }
 
-        // TODO: Verify it realy need to verify the suppress reached status.
-
         $notifycount = $notifycount ?: $this->find_notify_count($userid);
         // Verify the Limit is reached, if 0 then its unlimited.
         if ($this->notificationdata->notifylimit > 0 && ($notifycount >= $this->notificationdata->notifylimit)) {
@@ -655,7 +657,7 @@ class notification {
 
             case self::INTERVALDAILY:
                 $time = $data->notifyinterval['time'];
-                $nextrun->modify('+1 day'); // TODO: Change this to Dateinterval().
+                $nextrun->modify('+1 day'); // ...TODO: Change this to Dateinterval().
                 $timeex = explode(':', $time);
                 $nextrun->setTime(...$timeex);
                 break;
@@ -691,28 +693,13 @@ class notification {
 
         // Add limit of available.
         if ($data->notifydelay == self::DELAYAFTER) {
-
-            // QuickFIX - PLS-726.
-            // When the instances are created/updated, creates the schedules directly. 
-			// With is method expected run time are not included.
-            // Other conditions are not contains any specific usecases.
-            // Verify and include the expected runtime from sessions only.
-            if (!$expectedruntime && method_exists('\pulsecondition_session\conditionform', 'get_session_time')) {
-                // Confirm any f2f module added in condition.
-                $sessionstarttime = \pulsecondition_session\conditionform::get_session_time($data, $this->instancedata);
-                if (!empty($sessionstarttime)) {
-                    $nextrun->setTimestamp($sessionstarttime);
-                }
-            }
-
             $delay = $data->delayduration;
             $nextrun->modify("+ $delay seconds");
-
         } else if ($data->notifydelay == self::DELAYBEFORE) {
             $delay = $data->delayduration;
 
             if ($expectedruntime) {
-                // Session condition only send the expected runtime.
+                // SEssion condition only send the expected runtime.
                 // Reduce the delay directly from the expected runtime.
                 $nextrun->modify("- $delay seconds");
 
@@ -741,14 +728,14 @@ class notification {
     protected function get_users_withroles(array $roles, $context, $childuserid=null) {
         global $DB;
 
-        // TODO: Cache the role users.
+        // ...TODO: Cache the role users.
         if (empty($roles)) {
             return [];
         }
 
         list($insql, $inparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'rle');
 
-        // TODO: Define user fields, never get entire fields.
+        // ...TODO: Define user fields, never get entire fields.
         $rolesql = "SELECT ra.id as assignid, u.*, ra.roleid FROM {role_assignments} ra
         JOIN {user} u ON u.id = ra.userid
         JOIN {role} r ON ra.roleid = r.id
@@ -876,7 +863,7 @@ class notification {
             }
 
         } else {
-            // TODO: Need to cache module intro content.
+            // ...TODO: Need to cache module intro content.
             $activity = $DB->get_record("$cm->modname", ['id' => $cm->instance]);
             $content = format_module_intro($cm->modname, $activity, $cm->id, true);
             $link = new moodle_url("/mod/$cm->modname/view.php", ['id' => $cm->id]);
@@ -965,7 +952,7 @@ class notification {
      * @return stdclass
      */
     public function get_tenantrole_sender($scheduledata) {
-        // TODO: Tenant based sender fetch goes here.
+        // ...TODO: Tenant based sender fetch goes here.
         return (object) [];
     }
 

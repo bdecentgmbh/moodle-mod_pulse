@@ -1,4 +1,5 @@
-define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates', 'core/str'], function($, Modal, Template, Str) {
+define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates', 'core/str', "core/notification"],
+    function($, Modal, Template, Str, notification) {
 
     const moveOutMoreMenu = (navMenu) => {
 
@@ -64,8 +65,6 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
 
             var observer = new MutationObserver(function(mutations) {
                 mutations.forEach((mutation) => {
-                    // Console.log(mutation);
-                    // If(mutation.type === 'attributes') {
                     var target = mutation.target;
                     var overrideElement = target.querySelector('.custom-switch');
                     if (overrideElement === null) {
@@ -76,7 +75,6 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
                 });
             });
             observer.observe(element, {attributes: true, childList: true, subtree: true});
-            // Observer.disconnect();
             return true;
         });
 
@@ -101,10 +99,8 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
                     return true;
                 }
             }
-
             var parent = overElement.parentNode;
             parent.innerHTML += '<span class="custom-control-label"></span>';
-
             var nodeToMove = document.createElement('div');
             nodeToMove.classList.add('custom-control', 'custom-switch');
             nodeToMove.append(parent);
@@ -160,7 +156,7 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
                     }).then((modal) => {
                         modal.show();
                         return true;
-                    }).catch();
+                    }).catch(notification.exception);
                 }
             });
         });

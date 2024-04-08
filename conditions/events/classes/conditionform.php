@@ -104,7 +104,6 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $mform->setType('override[condition_events_modules]', PARAM_INT);
     }
 
-
     /**
      * Get the all event list form the moodle events list generator.
      *
@@ -174,7 +173,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         // Module configured.
         if (!empty($eventdata['modules'])) {
-            $sql .=  " AND contextinstanceid = :module";
+            $sql .= " AND contextinstanceid = :module";
             $params['module'] = $eventdata['modules'];
         }
 
@@ -196,6 +195,12 @@ class conditionform extends \mod_pulse\automation\condition_base {
         return [$sql, $params];
     }
 
+    /**
+     * Pulse event condition trigger.
+     *
+     * @param stdclasss $eventdata event data.
+     * @return bool
+     */
     public static function pulse_event_condition_trigger($eventdata) {
         global $DB, $USER;
         $data = $eventdata->get_data();
@@ -213,7 +218,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $additional = json_decode($instance->additional);
 
             // Module configured for this instance event, and the event is not for this module, continue to next instance.
-            if (property_exists($additional, 'modules') && $additional->modules && $additional->modules !== $data['contextinstanceid']) {
+            if (property_exists($additional, 'modules') && $additional->modules &&
+                $additional->modules !== $data['contextinstanceid']) {
                 continue;
             }
 
@@ -227,7 +233,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             $notifyuser = $additional->notifyuser ?? 0;
 
             if ($notifyuser == self::AFFECTED_USER) {
-                $userid =  $data['relateduserid'] ?? $USER->id;
+                $userid = $data['relateduserid'] ?? $USER->id;
             } else if ($notifyuser == self::RELATED_USER) {
                 $userid = $data['userid'] ?? $USER->id;
             }
@@ -239,18 +245,18 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
     }
 
-     /**
+    /**
      * Fetch the list of instances which is used the triggered event in the access rules for the given method.
      *
      * Find the instance which contains the given event in the access rule (events).
      *
-     * @param string  $event instance of the event triggered method.
+     * @param string $eventname name of the triggered event.
      * @return array
      */
     public static function get_events_notifications($eventname) {
         global $DB;
 
-        $name =  stripslashes($eventname);
+        $name = stripslashes($eventname);
 
         $like = $DB->sql_like('eve.eventname', ':value'); // Like query to fetch the instances assigned this event.
         $eventlike = $DB->sql_like('pat.triggerconditions', ':events');
@@ -300,7 +306,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         return [
             'event.status as event_status, event.additional as event_additional, event.isoverridden as event_isoverridden',
-            "LEFT JOIN {pulse_condition_overrides} event ON event.instanceid = pati.instanceid AND event.triggercondition = 'events'"
+            "LEFT JOIN {pulse_condition_overrides} event ON event.instanceid = pati.instanceid AND
+                event.triggercondition = 'events'",
         ];
     }
 
@@ -321,7 +328,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             "Event_Affecteduserfullname",
             "Event_Affecteduserfullnamelinked",
             "Event_Relateduserfullname",
-            "Event_Relateduserfullnamelinked"
+            "Event_Relateduserfullnamelinked",
         ];
         return ['Event' => $vars];
     }
@@ -365,7 +372,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             // Only encode as an action link if we're not downloading.
             if ($url = $event->get_url()) {
                 $link = new \action_link($url, $vars['name'],
-                    new \popup_action('click', $url, 'action', array('height' => 440, 'width' => 700)));
+                    new \popup_action('click', $url, 'action', ['height' => 440, 'width' => 700]));
                 $vars['namelinked'] = $OUTPUT->render($link);
             }
 
@@ -388,8 +395,8 @@ class conditionform extends \mod_pulse\automation\condition_base {
             }
             // Event_Affecteduserfullname.
             if (!empty($event->relateduserid)) {
-               $vars['affecteduserfullname'] = $this->get_user_fullname($event->relateduserid);
-                $params = array('id' => $event->relateduserid);
+                $vars['affecteduserfullname'] = $this->get_user_fullname($event->relateduserid);
+                $params = ['id' => $event->relateduserid];
                 if ($event->courseid) {
                     $params['course'] = $event->courseid;
                 }
@@ -399,7 +406,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             }
             // Event_Relateduserfullname.
             if (!empty($event->userid) && $vars['relateduserfullname'] = $this->get_user_fullname($event->userid)) {
-                $params = array('id' => $event->userid);
+                $params = ['id' => $event->userid];
                 if ($event->courseid) {
                     $params['course'] = $event->courseid;
                 }
@@ -453,9 +460,9 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
          // Automation templates.
         $events = new \backup_nested_element('automationtemplates');
-        $eventsfields = new \backup_nested_element('pulse_autotemplates', array('id'), array(
-            "instanceid", "eventname", "notifyuser"
-        ));
+        $eventsfields = new \backup_nested_element('pulse_autotemplates', ['id'], [
+            "instanceid", "eventname", "notifyuser",
+        ]);
 
         $instances->add_child($events);
         $events->add_child($eventsfields);

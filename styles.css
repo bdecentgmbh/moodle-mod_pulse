@@ -253,7 +253,8 @@
     display: inline-block;
     margin-right: 10px;
 }
-.mod-pulse-automation-table table.generaltable tbody td .menu-item-actions.item-actions .pulse-instance-status-switch .custom-control-label {
+.mod-pulse-automation-table table.generaltable tbody td .menu-item-actions.item-actions
+.pulse-instance-status-switch .custom-control-label {
     display: block;
 }
 .mod-pulse-automation-table .automation-instruction {
@@ -359,7 +360,7 @@ body.behat-site .pulse-instance-status-switch input.custom-control-input {
 
 /* Pulse 2.1 */
 .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
-    width: 520px;
+    width: 400px;
     height: 25px;
     overflow: hidden;
 }
@@ -436,7 +437,7 @@ body.behat-site .pulse-instance-status-switch input.custom-control-input {
     color: #000;
     text-decoration: none;
     border-radius: 5px;
-    background-color: #ffe99C;
+    background-color: #ffe99c;
     padding: 1px 5px;
     margin-right: 5px;
     margin-bottom: 10px;
@@ -455,7 +456,7 @@ body.behat-site .pulse-instance-status-switch input.custom-control-input {
 }
 
 #manage-instance-tab.show + .femptylabel,
-#manage-instance-tab.show ~ .required  {
+#manage-instance-tab.show ~ .required {
     display: none;
 }
 

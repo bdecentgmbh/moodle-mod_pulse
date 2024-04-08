@@ -145,10 +145,10 @@ class preset extends \moodleform {
      *
      * @param int $presetid ID of selected preset.
      * @param int $courseid ID of current course.
-     * @param stdclass $coursecontext Course context.
+     * @param mixed $coursecontext Course context.
      * @param int $section Section number.
      */
-    public function __construct(int $presetid, int $courseid, $coursecontext=null, ?int $section=0) {
+    public function __construct(int $presetid, int $courseid, $coursecontext=null, int $section=0) {
         global $COURSE;
         $this->courseid = $courseid;
         $this->presetid = $presetid;
@@ -364,7 +364,7 @@ class preset extends \moodleform {
      */
     public static function get_pulse_config_list($courseid): array {
         self::js_collection_requirement();
-        $fields = array();
+        $fields = [];
         $header = '';
         $pulseform = self::pulseform_instance($courseid);
         foreach ($pulseform->_form->_elements as $element) {
@@ -455,6 +455,7 @@ class preset extends \moodleform {
 
         foreach ($config as $key => $value) {
 
+            $value = $value != null ? $value : '';
             if ($key == 'completionapprovalroles') {
                 $value = (is_array($config['completionapprovalroles']))
                         ? json_encode($config['completionapprovalroles']) : '';
@@ -492,10 +493,10 @@ class preset extends \moodleform {
      */
     public static function format_editordata(array &$data, string $name, string $editor) {
         if (isset($data[$name])) {
-            $data[$editor] = array(
+            $data[$editor] = [
                 'text' => $data[$name],
-                'format' => $data[$name.'format']
-            );
+                'format' => $data[$name.'format'],
+            ];
         }
     }
 
@@ -569,7 +570,7 @@ class preset extends \moodleform {
         }
 
         // No need to clear basic data and pro schedules.
-        $nochanged = array('courseid', 'presetid', 'section', 'importmethod', 'sesskey', 'second_schedule', 'first_schedule');
+        $nochanged = ['courseid', 'presetid', 'section', 'importmethod', 'sesskey', 'second_schedule', 'first_schedule'];
         $configdata = array_filter($configdata, function($value, $key) use ($nochanged, $configdata) {
             if (!in_array($key, $nochanged) && strpos($key, 'recipients') == false && strpos($key, 'editor') == false) {
                 $value = (isset($configdata[$key.'_changed']) && empty($configdata[$key.'_changed'])) ? '' : $value;
@@ -598,7 +599,7 @@ class preset extends \moodleform {
                         $configdata['introformat'] = $introeditor['format'];
                         $configdata['intro'] = file_save_draft_area_files(
                             $introeditor['itemid'], $contextid, 'mod_pulse', 'intro', 0,
-                            array('subdirs' => true), $introeditor['text']
+                            ['subdirs' => true], $introeditor['text']
                         );
                     }
                     if (isset($configdata['pulse_contenteditor']) && !empty($configdata['pulse_contenteditor']['text'])) {
@@ -606,7 +607,7 @@ class preset extends \moodleform {
                         $configdata['pulse_contentformat'] = $pulseeditor['format'];
                         $configdata['pulse_content'] = file_save_draft_area_files(
                             $pulseeditor['itemid'], $contextid, 'mod_pulse', 'pulse_content', 0,
-                            array('subdirs' => true), $pulseeditor['text']
+                            ['subdirs' => true], $pulseeditor['text']
                         );
                     }
                     unset($configdata['pulse_contenteditor']);
@@ -645,16 +646,16 @@ class preset extends \moodleform {
 
             $this->controller->destroy();
             if (isset($backupdata['intro'])) {
-                $backupdata['introeditor'] = array(
+                $backupdata['introeditor'] = [
                     'text' => $backupdata['intro'],
-                    'format' => $backupdata['introformat']
-                );
+                    'format' => $backupdata['introformat'],
+                ];
             }
             if (isset($backupdata['pulse_content'])) {
-                $backupdata['pulse_content_editor'] = array(
+                $backupdata['pulse_content_editor'] = [
                     'text' => $backupdata['pulse_content'],
-                    'format' => $backupdata['pulse_contentformat']
-                );
+                    'format' => $backupdata['pulse_contentformat'],
+                ];
             }
 
             // Update the config params with backup data.
@@ -745,7 +746,7 @@ class preset extends \moodleform {
             'section' => $this->modformdata['section'],
             'add' => $this->modformdata['add'],
             'update' => $this->modformdata['update'],
-            'course' => $this->course->id
+            'course' => $this->course->id,
         ]));
 
         $pulseform = new \mod_pulse_mod_form((object) $this->modformdata, $this->modformdata['section'], null, $this->course);
@@ -854,6 +855,6 @@ class preset extends \moodleform {
             $result = json_decode(json_encode($presetsxml), true);
             return $result;
         }
-        return array();
+        return [];
     }
 }

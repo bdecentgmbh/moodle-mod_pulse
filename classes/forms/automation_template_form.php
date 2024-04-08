@@ -48,7 +48,7 @@ class automation_template_form extends moodleform {
      * @return void
      */
     public function definition() {
-        global $PAGE, $OUTPUT;
+        global $PAGE, $OUTPUT, $CFG;
 
         $mform = $this->_form; // Get the form instance.
 
@@ -75,11 +75,8 @@ class automation_template_form extends moodleform {
             $tabs[] = ['name' => 'manage-instance-tab', 'title' => get_string('tabmanageinstance', 'pulse')];
         }
 
-        $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
-        // $mform->addElement('html', $tab);
-
         // Pulse templates tab content.
-        // $mform->addElement('html', '<div class="tab-content" id="pulsetemplates-tab-content">');
+        $tab = $OUTPUT->render_from_template('mod_pulse/automation_tabs', ['tabs' => $tabs]);
 
         // Template options.
         $this->load_template_options($mform);
@@ -89,7 +86,6 @@ class automation_template_form extends moodleform {
 
         // Load template actions.
         $this->load_template_actions($mform);
-
 
         if ($templateid = $this->get_customdata('id')) {
             list($overcount, $overinstances) = templates::create($templateid)->get_instances();
@@ -105,7 +101,7 @@ class automation_template_form extends moodleform {
                     'data-templateid' => $templateid,
                     'data-element' => $elementname,
                     'class' => 'override-count-element badge mt-1',
-                    'id' => "override_$elementname"
+                    'id' => "override_$elementname",
                 ]);
                 $overrideelement = $mform->createElement('html', $count);
                 $mform->insertElementBefore($overrideelement, $elementname);
@@ -115,15 +111,13 @@ class automation_template_form extends moodleform {
             }
         }
 
-        // $mform->addElement('html', html_writer::end_div());
-
         // Show the list of overriden content.
         $PAGE->requires->js_call_amd('mod_pulse/automation', 'init');
 
         // Email placeholders.
         $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
-        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
-        
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init', [$CFG->branch]);
+
         // Add standard form buttons.
         $this->add_action_buttons(true);
     }
@@ -237,6 +231,7 @@ class automation_template_form extends moodleform {
     /**
      * Include the manage instance table to the templates form.
      *
+     * @param object $manageinstancetable Manage instance table
      * @return void
      */
     public function load_template_manageinstance($manageinstancetable) {

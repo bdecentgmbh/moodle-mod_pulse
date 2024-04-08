@@ -22,6 +22,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Define all the restore steps that will be used by the restore_pulse_activity_task
  */
@@ -35,7 +37,7 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
      * Restore steps structure definition.
      */
     protected function define_structure() {
-        $paths = array();
+        $paths = [];
         // Restore path.
         $paths[] = new restore_path_element('pulse', '/activity/pulse');
         $paths[] = new restore_path_element('pulse_users', '/activity/pulse/notifiedusers/pulse_users');
@@ -159,7 +161,9 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
     }
 }
 
-
+/**
+ * Structure step to restore pulse course.
+ */
 class restore_pulse_course_structure_step extends restore_activity_structure_step {
 
     /**
@@ -168,7 +172,7 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
     protected function define_structure() {
         static $cache;
 
-        $paths = array();
+        $paths = [];
         // Restore path.
 
         if (isset($cache[$this->get_restoreid()]) && $cache[$this->get_restoreid()]) {
@@ -182,17 +186,11 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
 
         $paths[] = new restore_path_element('pulse_autotemplates',
             '/activity/pulse_autoinstances/automationtemplates/pulse_autotemplates');
-        // $paths[] = new restore_path_element('pulse_autoinstances',
-        //     '/activity/pulse_autoinstances');
+
         $paths[] = new restore_path_element('pulse_autotemplates_ins',
             '/activity/pulse_autoinstances/automationtemplateinstance/pulse_autotemplates_ins');
         $paths[] = new restore_path_element('pulse_condition_overrides',
             '/activity/pulse_autoinstances/pulseconditionoverrides/pulse_condition_overrides');
-
-        // $actions = new restore_path_element('pulseaction',
-        //                                         '/activity/pulse_autoinstances/pulseaction');
-
-        // $paths[] = $actions;
 
         $this->add_subplugin_structure('pulseaction', $instances);
 
@@ -212,7 +210,7 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
         $data = (object) $data;
         $oldid = $data->id;
         $data->courseid = $this->get_courseid();
-        // All the status of the instance is disabled initialy
+        // All the status of the instance is disabled initialy.
         $data->status = \mod_pulse\automation\instances::STATUS_DISABLE;
         // Use the new template id.
         $data->templateid = $this->get_mappingid('templateid', $data->templateid);
@@ -221,7 +219,7 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
         $newitemid = $DB->insert_record('pulse_autoinstances', $data);
 
         // Create a mapping for the instance.
-        $this->set_mapping('pulse_autoinstances', $oldid, $newitemid);
+        $this->set_mapping('pulse_autoinstances', $oldid, $newitemid, true);
     }
 
     /**
@@ -245,8 +243,10 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
 
         // Update the parent instance templateid.
         if ($DB->record_exists('pulse_autoinstances', ['id' => $this->get_new_parentid('pulse_autoinstances')])) {
-            $DB->set_field('pulse_autoinstances', 'templateid', $templateid, ['id' => $this->get_new_parentid('pulse_autoinstances')]);
-            $categories = json_decode($data->categories, true);
+            $DB->set_field('pulse_autoinstances', 'templateid', $templateid,
+                ['id' => $this->get_new_parentid('pulse_autoinstances')],
+            );
+            $categories = json_decode($record->categories, true);
 
             // In array of categories.
             $category = get_course($this->get_courseid())->category;
@@ -259,7 +259,6 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
 
         $this->set_mapping('pulse_autotemplates', $oldtemplateid, $templateid);
 
-        print_r($templateid);
     }
 
     /**
@@ -295,15 +294,52 @@ class restore_pulse_course_structure_step extends restore_activity_structure_ste
         $DB->insert_record('pulse_condition_overrides', $data);
     }
 
-
     /**
      * Update the files of editors after restore execution.
      *
      * @return void
      */
-    protected function after_execute() {
-        // Add pulse related files.
-        /* $this->add_related_files('mod_pulse', 'intro', null);
-        $this->add_related_files('mod_pulse', 'pulse_content', null); */
+    protected function after_restore() {
+        global $DB;
+
+        $instances = $DB->get_records('backup_ids_temp', [
+            'backupid' => $this->get_restoreid(), 'itemname' => 'pulse_autoinstances',
+        ]);
+
+        foreach ($instances as $instance) {
+            $oldinstances = $DB->get_records('pulse_condition_overrides', ['instanceid' => $instance->newitemid]);
+            foreach ($oldinstances as $ins) {
+                $additional = $ins->additional ? json_decode($ins->additional, true) : [];
+                if (isset($additional['modules']) && $additional['modules']) {
+                    $newcmid = $ins->triggercondition == 'session'
+                        ? $this->get_mappingid('facetoface', $additional['modules'], $additional['modules'])
+                        : $this->get_mappingid('course_module', $additional['modules'], $additional['modules']);
+                    $additional['modules'] = $newcmid;
+                    $additional = json_encode($additional);
+                    $DB->set_field('pulse_condition_overrides', 'additional', $additional, ['id' => $ins->id]);
+                }
+            }
+        }
     }
+
+    /**
+     * Decode the pulse action restore contents.
+     *
+     * @param array $contents
+     * @return void
+     */
+    public static function decode_contents(&$contents) {
+        // Get all the restore path elements, looking across all the subplugin dirs.
+        $subplugintype = 'pulseaction';
+        $subpluginsdirs = core_component::get_plugin_list($subplugintype);
+        foreach ($subpluginsdirs as $name => $subpluginsdir) {
+            $classname = 'restore_' . $subplugintype . '_' . $name . '_subplugin';
+            $restorefile = $subpluginsdir . '/backup/moodle2/' . $classname . '.class.php';
+            if (file_exists($restorefile)) {
+                require_once($restorefile);
+                $classname::decode_contents($contents);
+            }
+        }
+    }
+
 }

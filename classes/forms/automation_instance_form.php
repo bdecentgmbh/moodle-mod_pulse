@@ -98,7 +98,7 @@ class automation_instance_form extends automation_template_form {
                     'data-templateid' => $templateid,
                     'data-element' => $elementname,
                     'class' => 'override-count-element badge mt-1',
-                    'id' => "override_$elementname"
+                    'id' => "override_$elementname",
                 ]);
                 $overrideelement = $mform->createElement('html', $count);
                 $mform->insertElementBefore($overrideelement, $elementname);
@@ -124,7 +124,7 @@ class automation_instance_form extends automation_template_form {
      * @return void
      */
     public function after_definition() {
-        global $PAGE;
+        global $PAGE, $CFG;
 
         $mform =& $this->_form;
 
@@ -162,13 +162,13 @@ class automation_instance_form extends automation_template_form {
             ['class' => 'form-control',
             'type' => 'text',
             'value' => $templatereference,
-            'disabled' => 'disabled'
+            'disabled' => 'disabled',
             ]);
         $referenceprefix = $mform->createElement('html', html_writer::div($input, 'hide', ['id' => 'pulse-template-reference']));
         $mform->insertElementBefore($referenceprefix, 'insreference');
 
         $this->load_default_override_elements(['insreference']);
-        
+
         // Add element to disable instance override options.
         $hasinstanceeditcapability = has_capability('mod/pulse:overridetemplateinstance', \context_course::instance($course));
         $mform->addElement('hidden', 'hasinstanceeditcapability', $hasinstanceeditcapability);
@@ -195,13 +195,14 @@ class automation_instance_form extends automation_template_form {
         }
         // Email placeholders.
         $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
-        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init', [$CFG->branch]);
     }
 
     /**
      * Add an override element to the form.
      *
      * @param mixed $element The form element.
+     * @param int $course The course ID
      */
     protected function add_override_element($element, $course) {
 
@@ -222,7 +223,7 @@ class automation_instance_form extends automation_template_form {
         }
 
         $overrideelement = $mform->createElement('advcheckbox', $name, '', '',
-        array('group' => 'automation', 'class' => 'custom-control-input'), array(0, 1));
+        ['group' => 'automation', 'class' => 'custom-control-input'], [0, 1]);
 
         // Insert the override checkbox before the element.
         if (isset($mform->_elementIndex[$orgelementname]) && $mform->_elementIndex[$orgelementname]

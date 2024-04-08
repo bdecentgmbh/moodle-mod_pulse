@@ -111,7 +111,7 @@ class notification extends datasource {
             'user:fullname',
             'notification:timecreated',
             'notification:scheduletime',
-            'notification:status'
+            'notification:status',
         ];
     }
 

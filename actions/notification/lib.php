@@ -38,7 +38,7 @@ function pulseaction_notification_extend_pulse_filearea() : array {
         'pulsenotification_footercontent',
         'pulsenotification_headercontent_instance',
         'pulsenotification_staticcontent_instance',
-        'pulsenotification_footercontent_instance'
+        'pulsenotification_footercontent_instance',
     ];
 }
 
@@ -88,7 +88,7 @@ function pulseaction_notification_output_fragment_preview_instance_content($args
         $course = get_course($formdata->courseid ?? SITEID);
 
         $mod = new stdclass;
-        // TODO: Inlcude the vars update from condition plugins.
+        // ...TODO: Inlcude the vars update from condition plugins.
         if ($formdata->actions['notification']['dynamiccontent']) {
             // Prepare the module data. based on dynamic content and includ the session data.
             $modname = $formdata->actions['notification']['mod']->modname;
@@ -102,14 +102,6 @@ function pulseaction_notification_output_fragment_preview_instance_content($args
             $sessionconditiondata = (object) ['modules' => $formdata->condition['session']['modules']];
             schedule::instance()->include_session_data($mod, $sessionconditiondata, $user->id);
         }
-
-        // Include the conditions vars for placeholder replace.
-        /* $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
-        $conditionvars = [];
-        foreach ($plugins as $component => $pluginbase) {
-            $vars = $pluginbase->update_email_customvars($args['userid'], $formdata);
-            $conditionvars += $vars ?: [];
-        } */
 
         list($subject, $messagehtml) = mod_pulse\helper::update_emailvars($content, '', $course, $user, $mod, $sender);
         $selector = "";
@@ -165,7 +157,7 @@ function pulseaction_notification_output_fragment_preview_content($args) {
                 $context,
                 $moddata
             );
-            // TODO: Inlcude the vars update from condition plugins.
+            // ...TODO: Inlcude the vars update from condition plugins.
             if ($args['contentdynamic']) {
                 // Prepare the module data. based on dynamic content and includ the session data.
                 $modname = $module->modname;

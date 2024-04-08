@@ -94,7 +94,7 @@ $templatesform = new \mod_pulse\forms\automation_instance_form(null, [
     'templateid' => $templateid,
     'courseid' => $course->id,
     'instanceid' => $instanceid,
-    'templatereference' => $templatereference ?? ''
+    'templatereference' => $templatereference ?? '',
 ]);
 
 // Instance form submitted, handel the submitted data.
@@ -150,7 +150,7 @@ if ($instanceid !== null && $instanceid > 0) {
 $PAGE->set_heading(format_string($course->fullname));
 // PAGE breadcrumbs.
 $PAGE->navbar->add(get_string('mycourses', 'core'), new moodle_url('/course/index.php'));
-$PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', array('id' => $course->id)));
+$PAGE->navbar->add(format_string($course->shortname), new moodle_url('/course/view.php', ['id' => $course->id]));
 $PAGE->navbar->add(get_string('autotemplates', 'pulse'), $overviewurl);
 $PAGE->navbar->add(get_string('autoinstances', 'pulse'));
 

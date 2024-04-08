@@ -174,14 +174,14 @@ abstract class condition_base {
             'triggercondition' => $this->component,
             'status' => $data['status'] ?? null,
             'upcomingtime' => $data['upcomingtime'] ?? null,
-            'isoverridden' => (isset($data['status'])) ? true : false
+            'isoverridden' => (isset($data['status'])) ? true : false,
         ];
         // Remove 'status' from data array.
         unset($data['status']);
         // Encode additional data as JSON.
         $record['additional'] = json_encode($data);
 
-         if ($this->component == 'events' && array_key_exists('event', $data)) {
+        if ($this->component == 'events' && array_key_exists('event', $data)) {
             $eventrecord = [
                 'instanceid' => $instanceid,
                 'eventname' => stripslashes($data['event']),
@@ -238,7 +238,8 @@ abstract class condition_base {
             $instance->overridecount = $count;
         }
         // If component condition is set, merge additional data and set 'upcomingtime'.
-        if (isset($instance->condition[$this->component]) && $instance->condition[$this->component] != null && is_array($additional)) {
+        if (isset($instance->condition[$this->component])
+            && $instance->condition[$this->component] != null && is_array($additional)) {
             $instance->condition[$this->component] = array_merge($instance->condition[$this->component], $additional);
             $instance->condition[$this->component]['upcomingtime'] = $data->upcomingtime ?: 0;
         }
@@ -273,7 +274,6 @@ abstract class condition_base {
     public function schedule_override_join() {
         return '';
     }
-
 
     /**
      * Define the stutures of conditions for the backup.

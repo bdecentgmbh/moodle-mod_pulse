@@ -42,7 +42,7 @@ class pulseaction_notification_email extends message_output_email {
         global $CFG, $DB;
 
         // Skip any messaging suspended and deleted users.
-        if ($eventdata->userto->auth === 'nologin' or $eventdata->userto->suspended or $eventdata->userto->deleted) {
+        if ($eventdata->userto->auth === 'nologin' || $eventdata->userto->suspended || $eventdata->userto->deleted) {
             return true;
         }
 
@@ -157,7 +157,7 @@ class pulseaction_notification_email extends message_output_email {
 
         global $CFG, $PAGE, $SITE;
 
-        if (empty($user) or empty($user->id)) {
+        if (empty($user) || empty($user->id)) {
             debugging('Can not send email to null user', DEBUG_DEVELOPER);
             return false;
         }
@@ -190,7 +190,7 @@ class pulseaction_notification_email extends message_output_email {
         }
 
         // Skip mail to suspended users.
-        if ((isset($user->auth) && $user->auth == 'nologin') or (isset($user->suspended) && $user->suspended)) {
+        if ((isset($user->auth) && $user->auth == 'nologin') || (isset($user->suspended) && $user->suspended)) {
             return true;
         }
 
@@ -234,8 +234,8 @@ class pulseaction_notification_email extends message_output_email {
             echo '<pre>' . "\n";
         }
 
-        $temprecipients = array();
-        $tempreplyto = array();
+        $temprecipients = [];
+        $tempreplyto = [];
 
         // Make sure that we fall back onto some reasonable no-reply address.
         $noreplyaddressdefault = 'noreply@' . get_host_from_url($CFG->wwwroot);
@@ -283,7 +283,7 @@ class pulseaction_notification_email extends message_output_email {
             }
             $mail->FromName = $fromstring;
             if (empty($replyto)) {
-                $tempreplyto[] = array($from->email, fullname($from));
+                $tempreplyto[] = [$from->email, fullname($from)];
             }
         } else {
             $mail->From = $noreplyaddress;
@@ -297,15 +297,15 @@ class pulseaction_notification_email extends message_output_email {
             }
             $mail->FromName = $fromstring;
             if (empty($replyto)) {
-                $tempreplyto[] = array($noreplyaddress, get_string('noreplyname'));
+                $tempreplyto[] = [$noreplyaddress, get_string('noreplyname')];
             }
         }
 
         if (!empty($replyto)) {
-            $tempreplyto[] = array($replyto, $replytoname);
+            $tempreplyto[] = [$replyto, $replytoname];
         }
 
-        $temprecipients[] = array($user->email, fullname($user));
+        $temprecipients[] = [$user->email, fullname($user)];
 
         // Set word wrap.
         $mail->WordWrap = $wordwrapwidth;
@@ -325,8 +325,9 @@ class pulseaction_notification_email extends message_output_email {
         // header with details of where exactly in moodle the email was triggered from,
         // either a call to message_send() or to email_to_user().
         if (ini_get('mail.add_x_header')) {
-
+            // @codingStandardsIgnoreStart
             $stack = debug_backtrace(false);
+            // @codingStandardsIgnoreEnd
             $origin = $stack[0];
 
             foreach ($stack as $depth => $call) {
@@ -354,7 +355,7 @@ class pulseaction_notification_email extends message_output_email {
         }
 
         $renderer = $PAGE->get_renderer('core');
-        $context = array(
+        $context = [
             'sitefullname' => $SITE->fullname,
             'siteshortname' => $SITE->shortname,
             'sitewwwroot' => $CFG->wwwroot,
@@ -364,7 +365,7 @@ class pulseaction_notification_email extends message_output_email {
             'toname' => fullname($user),
             'from' => $mail->From,
             'fromname' => $mail->FromName,
-        );
+        ];
         if (!empty($tempreplyto[0])) {
             $context['replyto'] = $tempreplyto[0][0];
             $context['replytoname'] = $tempreplyto[0][1];
@@ -411,7 +412,7 @@ class pulseaction_notification_email extends message_output_email {
             if (preg_match( "~\\.\\.~" , $attachment )) {
                 // Security check for ".." in dir path.
                 $supportuser = core_user::get_support_user();
-                $temprecipients[] = array($supportuser->email, fullname($supportuser, true));
+                $temprecipients[] = [$supportuser->email, fullname($supportuser, true)];
                 $mail->addStringAttachment(
                     'Error in attachment.  User attempted to attach a filename with a unsafe name.',
                     'error.txt', '8bit', 'text/plain');
@@ -523,16 +524,16 @@ class pulseaction_notification_email extends message_output_email {
             return true;
         } else {
             // Trigger event for failing to send email.
-            $event = \core\event\email_failed::create(array(
+            $event = \core\event\email_failed::create([
                 'context' => context_system::instance(),
                 'userid' => $from->id,
                 'relateduserid' => $user->id,
-                'other' => array(
+                'other' => [
                     'subject' => $subject,
                     'message' => $messagetext,
-                    'errorinfo' => $mail->ErrorInfo
-                )
-            ));
+                    'errorinfo' => $mail->ErrorInfo,
+                ],
+            ]);
             $event->trigger();
             if (CLI_SCRIPT) {
                 mtrace('Error: lib/moodlelib.php email_to_user(): '.$mail->ErrorInfo);

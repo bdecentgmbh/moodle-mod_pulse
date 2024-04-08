@@ -392,7 +392,7 @@ class templates {
     public static function get_tag_options() {
         return [
             'itemtype' => 'pulse_autotemplates',
-            'component' => 'mod_pulse'
+            'component' => 'mod_pulse',
         ];
     }
 
@@ -404,7 +404,7 @@ class templates {
     public static function get_tag_instance_options() {
         return [
             'itemtype' => 'pulse_autotemplates_ins',
-            'component' => 'mod_pulse'
+            'component' => 'mod_pulse',
         ];
     }
 
@@ -437,8 +437,12 @@ class templates {
         $record->timemodified = time();
         if (isset($formdata->id) && $DB->record_exists('pulse_autotemplates', ['id' => $formdata->id])) {
             $templateid = $formdata->id;
+
             // Update the template.
             $DB->update_record('pulse_autotemplates', $record);
+            foreach (self::create($templateid)->get_instances_record() as $instanceid => $instance) {
+                instances::create($instanceid)->update_status($formdata->status, true);
+            }
 
             // Show the edited success notification.
             \core\notification::success(get_string('templateupdatesuccess', 'pulse'));

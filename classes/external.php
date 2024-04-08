@@ -41,10 +41,10 @@ class external extends \external_api {
     public static function apply_presets_parameters() {
 
         return new \external_function_parameters(
-            array(
+            [
                 'contextid' => new \external_value(PARAM_INT, 'The context id for the course'),
                 'formdata' => new \external_value(PARAM_RAW, 'The data from the user notes'),
-            )
+            ]
         );
     }
 
@@ -97,7 +97,7 @@ class external extends \external_api {
             [
                 'templateid' => new \external_value(PARAM_INT, 'The automation template id'),
                 'courseids' => new \external_multiple_structure(new \external_value(PARAM_INT, 'course ID',
-                        VALUE_REQUIRED, '', NULL_NOT_ALLOWED), 'Array of Course IDs', VALUE_DEFAULT, array()),
+                        VALUE_REQUIRED, '', NULL_NOT_ALLOWED), 'Array of Course IDs', VALUE_DEFAULT, []),
                 'action' => new \external_value(PARAM_TEXT, 'The bulk action'),
             ]
         );
@@ -105,18 +105,19 @@ class external extends \external_api {
 
     /**
      * Manage the instance on the selected courses use the bulk action in the instance management table.
-     * 
+     *
      * @param int $templateid Automation template ID.
      * @param array $courseids Course ID.
-     * 
+     * @param string $action Action name
+     *
      * @return array $message
      */
     public static function manage_instances(int $templateid, array $courseids, string $action) {
         global $DB;
 
-        $vaildparams = self::validate_parameters(self::manage_instances_parameters(), 
+        $vaildparams = self::validate_parameters(self::manage_instances_parameters(),
         ['templateid' => $templateid, 'courseids' => $courseids, 'action' => $action]);
-        
+
         $message = '';
         switch ($vaildparams['action']) {
 
@@ -165,7 +166,7 @@ class external extends \external_api {
             break;
         }
         return [
-            'message' => $message
+            'message' => $message,
         ];
     }
 

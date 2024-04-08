@@ -24,7 +24,7 @@
 
 /**
  * Fetch the events data form the condition overrides table.
- * 
+ *
  * @return array $list event list
  */
 function get_events() {

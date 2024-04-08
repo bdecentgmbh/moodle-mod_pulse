@@ -309,7 +309,7 @@ abstract class action_base {
         // Get data specific to the instance.
         $actioninstancedata = $this->get_data_forinstance($instance->id);
 
-        // TODO: Get editors dynamically.
+        // ...TODO: Get editors dynamically.
         // Define editors for special handling.
         $editors = ['headercontent', 'footercontent', 'staticcontent'];
         // Include the override data which is used in the form.
@@ -325,8 +325,6 @@ abstract class action_base {
                 $configname = in_array($configname, $editors) ? $configname.'_editor' : $configname;
                 $instance->override[$prefix . "_" . $configname] = 1;
             }
-
-
         }
         // Merge instance overrides with template data.
         $actiondata = \mod_pulse\automation\helper::merge_instance_overrides($actioninstancedata, $actiondata);
@@ -344,7 +342,6 @@ abstract class action_base {
 
             // Update the keys with prefix.
             $instance = (object) array_merge((array) $instance, array_combine($notificationkeys, array_values($actiondata)));
-            // TODO: Include overrides.
             return $instance;
         }
 
@@ -383,14 +380,14 @@ abstract class action_base {
 
         // NOtification action template.
         $action = new \backup_nested_element('action'.$this->component);
-        $actionfields = new \backup_nested_element($this->get_tablename(), array('id'), array(
-            array_keys($templatecolumns)
-        ));
+        $actionfields = new \backup_nested_element($this->get_tablename(), ['id'], [
+            array_keys($templatecolumns),
+        ]);
 
         $actionins = new \backup_nested_element('actionins'.$this->component);
-        $actioninsfields = new \backup_nested_element($this->get_instance_tablename(), array('id'), array(
-            array_keys($inscolumns)
-        ));
+        $actioninsfields = new \backup_nested_element($this->get_instance_tablename(), ['id'], [
+            array_keys($inscolumns),
+        ]);
 
         $instances->add_child($action);
         $action->add_child($actionfields);

@@ -160,7 +160,8 @@ class auto_templates extends table_sql {
 
         list($totalcount, $disabledcount) = $this->get_instance_count($row);
         $actions[] = html_writer::tag('label', $totalcount . "(" . $disabledcount . ")", [
-                    'class' => 'overrides badge badge-secondary pl-10']);
+                    'class' => 'overrides badge badge-secondary pl-10',
+                    ]);
         $listurl = new \moodle_url('/mod/pulse/automation/templates/list.php', [
             'id' => $row->id,
             'sesskey' => \sesskey(),

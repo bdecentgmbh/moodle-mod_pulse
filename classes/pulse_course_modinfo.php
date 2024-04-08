@@ -45,7 +45,7 @@ class pulse_course_modinfo extends \course_modinfo {
      *
      * @var array
      */
-    private static $standardproperties = array(
+    private static $standardproperties = [
         'courseid' => 'get_course_id',
         'userid' => 'get_user_id',
         'sections' => 'get_sections',
@@ -53,7 +53,7 @@ class pulse_course_modinfo extends \course_modinfo {
         'instances' => 'get_instances',
         'groups' => 'get_groups_all',
         'groupuserid' => 'get_group_userid', // User id to get groups.
-    );
+    ];
 
     /**
      * Get current group user id.
@@ -83,7 +83,7 @@ class pulse_course_modinfo extends \course_modinfo {
     public function get_groups($groupingid = 0) {
         $allgroups = groups_get_user_groups($this->get_course_id(), $this->groupuserid);
         if (!isset($allgroups[$groupingid])) {
-            return array();
+            return [];
         }
         return $allgroups[$groupingid];
     }

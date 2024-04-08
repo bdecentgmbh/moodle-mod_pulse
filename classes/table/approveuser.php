@@ -41,7 +41,7 @@ class approveuser extends \core_user\table\participants {
      *
      * @var mixed
      */
-    protected $completionusers = array();
+    protected $completionusers = [];
 
     /**
      * Course module instance.

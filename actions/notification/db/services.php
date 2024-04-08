@@ -24,14 +24,14 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$functions = array(
+$functions = [
 
-    'pulseaction_notification_get_chapters' => array(
+    'pulseaction_notification_get_chapters' => [
         'classname' => 'pulseaction_notification\external',
         'methodname' => 'get_chapters',
         'description' => 'Get list of chapters for the selected book',
         'type' => 'write',
         'ajax' => true,
         'loginrequired' => true,
-    ),
-);
+    ],
+];

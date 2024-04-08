@@ -143,7 +143,7 @@ class notify_users extends \core\task\scheduled_task {
 
                 $params = [
                     'instanceid' => $notification->instanceid, 'userid' => $userid,
-                    'disabledstatus' => notification::STATUS_DISABLED, 'queued' => notification::STATUS_QUEUED
+                    'disabledstatus' => notification::STATUS_DISABLED, 'queued' => notification::STATUS_QUEUED,
                 ];
 
                 if ($records = $DB->get_records_sql($sql, $params)) {

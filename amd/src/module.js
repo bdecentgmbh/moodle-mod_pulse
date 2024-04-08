@@ -28,8 +28,10 @@ define(['core_editor/events'], function() {
     return {
         /**
          * Setup the classes to editors works with placeholders.
+         *
+         * @param {integer} branch
          */
-        init: function() {
+        init: function(branch) {
             var module = this;
 
             var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
@@ -58,13 +60,17 @@ define(['core_editor/events'], function() {
                 });
             }
 
-            
+
             templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             if (templatevars) {
                 templatevars.forEach((elem) => {
                     elem.addEventListener('click', function(e) {
                         var target = e.currentTarget;
-                        var EditorInput = target.querySelector('textarea[id*="_content_editor"]');
+                        if (branch <= "402") {
+                            var EditorInput = target.querySelector('[id*="_editoreditable"]');
+                        } else {
+                            var EditorInput = target.querySelector('textarea[id*="_content_editor"]');
+                        }
                         module.insertCaretActive(EditorInput);
                     });
                 });
@@ -73,12 +79,12 @@ define(['core_editor/events'], function() {
 
             var headertargetNode = document.querySelector('#id_s_mod_pulse_notificationheader');
             if (headertargetNode !== null) {
-                var observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function() {
                     if (headertargetNode.style.display == 'none') {
                         var headeriframe = document.querySelector('#admin-notificationheader iframe').contentDocument;
                         if (headeriframe !== null) {
                             headeriframe.addEventListener('click', function(e) {
-                                var currentFrame = e.target;    
+                                var currentFrame = e.target;
                                 var headercontentBody = currentFrame.querySelector('body');
                                 if (headercontentBody !== null) {
                                     headercontentBody.classList.add("insertatcaretactive");
@@ -90,7 +96,7 @@ define(['core_editor/events'], function() {
                                     footerBody.classList.remove("insertatcaretactive");
                                 }
 
-                            }) ;
+                            });
                         }
                     }
                 });
@@ -99,7 +105,7 @@ define(['core_editor/events'], function() {
 
             var footertargetNode = document.querySelector('#id_s_mod_pulse_notificationfooter');
             if (footertargetNode !== null) {
-                var observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function() {
                     if (footertargetNode.style.display == 'none') {
                         var footeriframe = document.querySelector('#admin-notificationfooter iframe').contentDocument;
                         if (footeriframe !== null) {
@@ -114,21 +120,19 @@ define(['core_editor/events'], function() {
                                 var headerBody = header.querySelector('body');
                                 if (headerBody.classList.contains('insertatcaretactive')) {
                                     headerBody.classList.remove("insertatcaretactive");
-                                } 
-                               
-                            }) ;
+                                }
+
+                            });
                         }
                     }
                 });
                 observer.observe(footertargetNode, {attributes: true, childList: true});
             }
 
-
-            // Console.log(window.tinyMCE.get());
             var targetNode = document.querySelector('textarea[id$=_editor]');
-            
+
             if (targetNode !== null) {
-                var observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function() {
                     if (targetNode.style.display == 'none') {
                         setTimeout(initIframeListeners, 100);
                     }
@@ -138,7 +142,7 @@ define(['core_editor/events'], function() {
 
             const initIframeListeners = () => {
 
-                var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
+                let iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
                 if (iframes === null || !iframes.length) {
                     return false;
                 }
@@ -169,38 +173,41 @@ define(['core_editor/events'], function() {
                     e.preventDefault(); // To prevent the default behaviour of a tag.
 
                     var content = "{" + this.getAttribute('data-text') + "}";
-                    var iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
-                        
+                    let iframes = document.querySelectorAll('[data-fieldtype="editor"] iframe');
+
                     // Copy the placeholder field.
                     navigator.clipboard.writeText(content);
 
                     if (iframes === null || !iframes.length) {
-
-                        // Header notification editor.
-                        var headerNode = document.querySelector('#admin-notificationheader iframe').contentDocument;
-                        if (headerNode !== null) {
-                            var headercontentBody = headerNode.querySelector("body");
-                            if (headercontentBody.classList.contains("insertatcaretactive")) {
-                                headercontentBody.classList.add("insertatcaretactive");
-                                var id = headercontentBody.dataset.id;
-                                var headereditor = window.tinyMCE.get(id);
-                                headereditor.selection.setContent(content);
-                                return true;
+                        if (branch <= '402') {
+                            module.insertAtCaret(content);
+                            return true;
+                        } else {
+                            // Header notification editor.
+                            var headerNode = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                            if (headerNode !== null) {
+                                var headercontentBody = headerNode.querySelector("body");
+                                if (headercontentBody.classList.contains("insertatcaretactive")) {
+                                    headercontentBody.classList.add("insertatcaretactive");
+                                    const id = headercontentBody.dataset.id;
+                                    var headereditor = window.tinyMCE.get(id);
+                                    headereditor.selection.setContent(content);
+                                    return true;
+                                }
+                            }
+                            // Footer notification editor.
+                            var footerNode = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                            if (footerNode !== null) {
+                                var footercontentBody = footerNode.querySelector("body");
+                                if (footercontentBody.classList.contains("insertatcaretactive")) {
+                                    footercontentBody.classList.add("insertatcaretactive");
+                                    const id = footercontentBody.dataset.id;
+                                    var footereditor = window.tinyMCE.get(id);
+                                    footereditor.selection.setContent(content);
+                                    return true;
+                                }
                             }
                         }
-                        // Footer notification editor.
-                        var footerNode = document.querySelector('#admin-notificationfooter iframe').contentDocument;
-                        if (footerNode !== null) {
-                            var footercontentBody = footerNode.querySelector("body");
-                            if (footercontentBody.classList.contains("insertatcaretactive")) {
-                                footercontentBody.classList.add("insertatcaretactive");
-                                var id = footercontentBody.dataset.id;
-                                var footereditor = window.tinyMCE.get(id);
-                                footereditor.selection.setContent(content);
-                                return true;
-                            }
-                        }
-
                     }
 
                     var tinyEditor;
@@ -210,7 +217,7 @@ define(['core_editor/events'], function() {
                             var contentBody = frame.contentDocument.querySelector('body');
                             if (contentBody !== null) {
                                 contentBody.classList.add("insertatcaretactive");
-                                var id = contentBody.dataset.id;
+                                const id = contentBody.dataset.id;
                                 var editor = window.tinyMCE.get(id);
                                 tinyEditor = editor;
                             }
@@ -232,7 +239,7 @@ define(['core_editor/events'], function() {
                 .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']") !== null) {
                 const textNodes = this.getAllTextNodes(
                     document.getElementById('page-mod-pulse-mod')
-                    .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']")
+                        .querySelector("#fgroup_id_completionrequireapproval [data-fieldtype='autocomplete']")
                 );
                 textNodes.forEach(node => {
                     const span = document.createElement('span');
@@ -261,7 +268,7 @@ define(['core_editor/events'], function() {
          */
         getAllTextNodes: function(element) {
             return Array.from(element.childNodes)
-            .filter(node => node.nodeType === 3 && node.textContent.trim().length > 1);
+                .filter(node => node.nodeType === 3 && node.textContent.trim().length > 1);
         },
 
         /**
@@ -273,7 +280,7 @@ define(['core_editor/events'], function() {
         isSelectionInsideDiv: (div) => {
             const selection = window.getSelection();
             if (selection.rangeCount === 0) {
-              return false;
+                return false;
             }
 
             // Get the start and end nodes of the selection.

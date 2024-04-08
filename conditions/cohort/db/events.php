@@ -25,12 +25,12 @@ defined('MOODLE_INTERNAL') || die();
 
 // Cohort member add and remove events observer for the "Cohort Membership Completion" condition in the pulse 2.0.
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\cohort_member_added',
         'callback' => '\pulsecondition_cohort\conditionform::member_added',
-    ),
-    array(
+    ],
+    [
         'eventname' => 'core\event\cohort_member_removed',
         'callback' => '\pulsecondition_cohort\conditionform::member_added',
-    ),
+    ],
 ];

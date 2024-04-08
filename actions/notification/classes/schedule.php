@@ -159,7 +159,7 @@ class schedule {
             $cmdata = (object) [
                 'modname' => $schedule->md_name, // Module name Book or page.
                 'instance' => $schedule->cm_instance,
-                'id' => $schedule->cm_id
+                'id' => $schedule->cm_id,
             ];
             // Generate the details to send the notification, it contains user, cc, bcc and schedule data.
             $detail = $this->notification->generate_notification_details(
@@ -199,7 +199,7 @@ class schedule {
 
             // Courseid is needed in the message api.
             $pulse = (object) ['course' => $this->course->id];
-            // TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
+            // ...TODO: NOTE using notification API takes 16 queries. Direct email_to_user method will take totally 9 queries.
             // Send the notification to user.
             $messagesend = \pulseaction_notification\helper::messagetouser(
                 $detail->recepient, $subject, $messageplain, $messagehtml, $pulse, $sender, $cc, $bcc
@@ -245,7 +245,7 @@ class schedule {
         $select[] = 'ns.id AS id'; // Set the schdule id as unique column.
 
         // Get columns not increase table queries.
-        // TODO: Fetch only used columns. Fetching all the fields in a query will make double the time of query result.
+        // ...TODO: Fetch only used columns. Fetching all the fields in a query will make double the time of query result.
         $tables = [
             'ns' => $DB->get_columns('pulseaction_notification_sch'),
             'ai' => $DB->get_columns('pulse_autoinstances'),
@@ -258,7 +258,7 @@ class schedule {
             'c' => $DB->get_columns('course'),
             'ctx' => $DB->get_columns('context'),
             'cm' => array_fill_keys(["id", "course", "module", "instance"], ""), // Make the values as keys.
-            'md' => array_fill_keys(['name'], "")
+            'md' => array_fill_keys(['name'], ""),
         ];
 
         foreach ($tables as $prefix => $table) {
@@ -327,7 +327,7 @@ class schedule {
             'status' => notification::STATUS_QUEUED,
             'current_timestamp' => time(),
             'timestart' => time(), 'timeend' => time(),
-            'startdate' => time(), 'enddate' => time()
+            'startdate' => time(), 'enddate' => time(),
         ] + $userparam;
 
         $schedules = $DB->get_records_sql($sql, $params, 0, $limit);
@@ -450,7 +450,7 @@ class schedule {
                     'lastnamephonetic' => '',
                     'middlename' => '',
                     'alternatename' => '',
-                    'maildisplay' => \core_user::MAILDISPLAY_EVERYONE
+                    'maildisplay' => \core_user::MAILDISPLAY_EVERYONE,
                 ];
             }
 

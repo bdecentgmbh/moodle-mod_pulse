@@ -74,6 +74,11 @@ class manage_instance extends \table_sql implements dynamic_table {
 
     }
 
+    /**
+     * Get the table context.
+     *
+     * @return void
+     */
     public function get_context(): \context {
         return \context_system::instance();
     }
@@ -90,20 +95,8 @@ class manage_instance extends \table_sql implements dynamic_table {
 
         // Define table headers and columns.
         $columns = ['checkbox', 'category', 'coursename', 'numberofinstance', 'actions'];
-
-        // At the very least, the manage instance table will be able to use bulk actions to add 'select' column.
-        //  $mastercheckbox = new \core\output\checkbox_toggleall('manageinstance-table', true, [
-        //     'id' => 'select-all-manageinstance',
-        //     'name' => 'select-all-manageinstance',
-        //     'label' => get_string('selectall'),
-        //     'labelclasses' => 'sr-only',
-        //     'classes' => 'm-1',
-        //     'checked' => false,
-        // ]);
-
         $headers = [
             '',
-            //$OUTPUT->render($mastercheckbox),
             get_string('coursecategory', 'pulse'),
             get_string('coursename', 'pulse'),
             get_string('numberofinstance', 'pulse'),
@@ -157,16 +150,19 @@ class manage_instance extends \table_sql implements dynamic_table {
         $from = "{course} c
                 JOIN {course_categories} cat ON c.category = cat.id
                 LEFT JOIN (
-                    SELECT courseid, count(*) AS numberofinstance FROM {pulse_autoinstances} WHERE templateid = ".$this->templateid." GROUP BY courseid
+                    SELECT courseid, count(*) AS numberofinstance FROM {pulse_autoinstances} WHERE
+                    templateid = ".$this->templateid." GROUP BY courseid
                 ) pai ON pai.courseid = c.id
                 LEFT JOIN (
-                    SELECT courseid, count(*) AS enabledinstance FROM {pulse_autoinstances} WHERE templateid =:templateid AND status <> 0 GROUP BY courseid
+                    SELECT courseid, count(*) AS enabledinstance FROM {pulse_autoinstances} WHERE
+                    templateid =:templateid AND status <> 0 GROUP BY courseid
                 ) pad ON pad.courseid = c.id
         ";
         $condition = "c.id <> 1 AND c.visible != 0";
         $inparams = ['templateid' => $this->templateid];
 
-        // When prevent the categories in the automation template, then show only the selected category courses in the instance management table.
+        // When prevent the categories in the automation template, then show only the selected category
+        // courses in the instance management table.
         $categories = json_decode($DB->get_field('pulse_autotemplates', 'categories', ['id' => $this->templateid]));
         if (!empty($categories)) {
             list($categoryinsql, $categoryinparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'cate');
@@ -203,7 +199,8 @@ class manage_instance extends \table_sql implements dynamic_table {
             $numofinstance = isset($values[0]) ? current($values) : '';
 
             if ($numofinstance !== null && ($numofinstance != '' || $numofinstance === 0)) {
-                $condition .= $numofinstance ? " AND pai.numberofinstance = :numberofinstance " : " AND pai.numberofinstance IS NULL " ;
+                $condition .= $numofinstance ? " AND pai.numberofinstance = :numberofinstance " :
+                " AND pai.numberofinstance IS NULL ";
                 $inparams += ['numberofinstance' => $numofinstance ?: ''];
             }
         }
@@ -212,7 +209,7 @@ class manage_instance extends \table_sql implements dynamic_table {
 
         parent::query_db($pagesize, $useinitialsbar);
 
-        // Filter the instance count.
+        // Filter the records by instance overrides count.
         if ($this->filterset->has_filter('numberofoverrides')) {
             $values = $this->filterset->get_filter('numberofoverrides')->get_filter_values();
             $numberofoverrides = isset($values[0]) ? current($values) : '';
@@ -226,7 +223,9 @@ class manage_instance extends \table_sql implements dynamic_table {
                     foreach ($instances as $instanceid => $instance) {
                         $insobj = new \mod_pulse\automation\instances($instance->id);
                         $formdata = (object) $insobj->get_instance_formdata();
-                        $overrides[$instance->courseid] = $formdata->overridecount;
+                        $count = $formdata->overridecount;
+                        $overrides[$instance->courseid] = isset($overrides[$instance->courseid])
+                            ? $overrides[$instance->courseid] + $count : $count;
                     }
                 }
                 // Filter the records by the number of overrides from the filter form.
@@ -254,20 +253,21 @@ class manage_instance extends \table_sql implements dynamic_table {
         // Count the number of instances in that course.
         $countcolorclass = $row->numberofinstance == 0 ? 'emptyinstance' : '';
 
-        $bulkcourseinput = array(
+        $bulkcourseinput = [
             'id' => 'courselistitem' . $row->id,
             'type' => 'checkbox',
             'name' => 'bc[]',
             'value' => $row->id,
             'class' => 'bulk-action-checkbox custom-control-input '. $countcolorclass,
-            'data-action' => 'select'
-        );
+            'data-action' => 'select',
+        ];
         $html .= html_writer::start_div('custom-control custom-checkbox mr-1 ');
         $html .= html_writer::empty_tag('input', $bulkcourseinput);
         $labeltext = html_writer::span(get_string('bulkactionselect', 'moodle'), 'sr-only');
-        $html .= html_writer::tag('label', $labeltext, array(
+        $html .= html_writer::tag('label', $labeltext, [
             'class' => 'custom-control-label',
-            'for' => 'courselistitem' . $row->id));
+            'for' => 'courselistitem' . $row->id,
+        ]);
         $html .= html_writer::end_div();
         return $html;
     }
@@ -290,7 +290,7 @@ class manage_instance extends \table_sql implements dynamic_table {
      * @param stdClass $row
      * @return string
      */
-    public function col_coursename(stdClass $row) : string{
+    public function col_coursename(stdClass $row) : string {
         return format_string($row->fullname);;
     }
 

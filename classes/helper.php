@@ -74,14 +74,14 @@ class helper {
         $course = clone $course;
         // Load course custom profuile fields.
         $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
-        // Load the course URL.
+        // Load the course url.
         if (!empty($course->id)) {
-            $courseURL = new moodle_url($CFG->wwwroot .'/course/view.php', array('id' => $course->id));
+            $url = new moodle_url($CFG->wwwroot .'/course/view.php', ['id' => $course->id]);
         }
         if (empty($CFG->allowthemechangeonurl)) {
-            $courseurl =  $courseURL;
+            $courseurl = $url;
         } else {
-            $courseurl = new moodle_url($courseURL);
+            $courseurl = new moodle_url($url);
         }
         $course->courseurl = $courseurl;
 
@@ -94,7 +94,7 @@ class helper {
         $vars = new pulse_email_vars($user, $course, $sender, $mod, $conditionvars);
 
         foreach ($amethods as $varscat => $placeholders) {
-            foreach($placeholders as $funcname) {
+            foreach ($placeholders as $funcname) {
                 $replacement = "{" . $funcname . "}";
                 // Message text placeholder update.
                 if (stripos($templatetext, $replacement) !== false) {
@@ -163,7 +163,7 @@ class helper {
                 JOIN {role} r ON ra.roleid = r.id
                 WHERE ra.userid = ? and c.contextlevel = ?
                 ORDER BY contextlevel DESC, contextid ASC, r.sortorder ASC";
-        $roleassignments = $DB->get_records_sql($sql, array($userid, CONTEXT_USER));
+        $roleassignments = $DB->get_records_sql($sql, [$userid, CONTEXT_USER]);
         if ($roleassignments) {
             foreach ($roleassignments as $role) {
                 if (in_array($role->roleid, $approvalroles)) {
@@ -191,7 +191,7 @@ class helper {
                 JOIN {role} r ON ra.roleid = r.id
                 WHERE ra.userid = ? and c.contextlevel = ?
                 ORDER BY contextlevel DESC, contextid ASC, r.sortorder ASC";
-        $roleassignments = $DB->get_records_sql($sql, array($USER->id, CONTEXT_USER));
+        $roleassignments = $DB->get_records_sql($sql, [$USER->id, CONTEXT_USER]);
         if ($roleassignments) {
             return true;
         }
@@ -211,7 +211,7 @@ class helper {
                                                 WHERE ra.userid = ?
                                                         AND ra.contextid = c.id
                                                         AND c.instanceid = u.id
-                                                        AND c.contextlevel = ".CONTEXT_USER, array($USER->id))) {
+                                                        AND c.contextlevel = ".CONTEXT_USER, [$USER->id])) {
 
             $users = [];
             foreach ($usercontexts as $usercontext) {
@@ -430,11 +430,11 @@ class helper {
     /**
      * Pulse form editor element options.
      *
+     * @param mixed $context Context
      * @return array
      */
     public static function get_editor_options($context=null) {
         global $PAGE;
-
         return [
             'trusttext' => true,
             'subdirs' => true,
@@ -575,6 +575,18 @@ class helper {
         return $result;
     }
 
-
+    /**
+     * Check if pulse Pro is installed.
+     *
+     * @return bool
+     */
+    public static function pulse_has_pro() {
+        global $CFG;
+        static $result;
+        if ($result == null) {
+            $result = array_key_exists('pulsepro', \core_component::get_plugin_list('local')) ? true : false;
+        }
+        return $result;
+    }
 
 }

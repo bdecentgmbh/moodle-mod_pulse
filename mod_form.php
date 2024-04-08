@@ -53,13 +53,13 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (!isset($this->current->instance) || $this->current->instance == '') {
             // Presets header.
             $mform->addElement('header', 'presets_header', get_string('presets', 'pulse'));
-            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', array('class' => 'spinner'));
+            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', ['class' => 'spinner']);
             $mform->addElement('html', '<div id="pulse-presets-data" data-listloaded="false">'.$loader.'</div>');
         }
         // General section.
         $mform->addElement('header', 'general', get_string('general') );
 
-        $mform->addElement('text', 'name', get_string('title', 'pulse'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('title', 'pulse'), ['size' => '64']);
         $mform->addRule('name', get_string('error'), 'required', '', 'client');
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
@@ -93,7 +93,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('diff_pulse', 'diffnotification', 'mod_pulse');
 
         // First reminder subject.
-        $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), array('size' => '64'));
+        $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), ['size' => '64']);
         $mform->setType('pulse_subject', PARAM_RAW);
         $mform->addHelpButton('pulse_subject', 'invitationsubject', 'mod_pulse');
 
@@ -176,7 +176,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->setDefault('completionself', 0);
         $mform->addHelpButton('completionself', 'completionself', 'mod_pulse');
 
-        $group = array();
+        $group = [];
         $group[] = $mform->createElement('checkbox', 'completionapproval', '',
                     get_string('completionrequireapproval', 'pulse'));
         $roles = $this->course_roles();

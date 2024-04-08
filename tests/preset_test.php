@@ -123,12 +123,12 @@ class preset_test extends \advanced_testcase {
         $preset = new \mod_pulse\preset($record->id, $this->course->id, $this->coursecontext);
 
         $configdata = [
-            'importmethod' => 'customize', 'presetid' => $record->id, 'name' => $customname, 'pulse_subject' => $subject
+            'importmethod' => 'customize', 'presetid' => $record->id, 'name' => $customname, 'pulse_subject' => $subject,
         ];
         $moduleid = $DB->get_field('modules', 'id', ['name' => 'pulse']);
         $pageparams = [
             'section' => '1', 'add' => 'pulse', 'module' => $moduleid,
-            'modulename' => 'pulse', 'id' => '', 'instance' => '', 'update' => 0
+            'modulename' => 'pulse', 'id' => '', 'instance' => '', 'update' => 0,
         ];
         $preset->set_modformdata($pageparams);
         $result = $preset->apply_presets($configdata);

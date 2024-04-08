@@ -29,25 +29,28 @@ use html_writer;
 use moodle_exception;
 use stdClass;
 
+/**
+ * Instance management class.
+ */
 class manage {
-    
+
     /**
      * Template ID
-     * 
-     * @param int
+     *
+     * @var int
      */
     public $templateid;
 
     /**
      * Course ID
-     * 
-     * @param int
+     *
+     * @var int
      */
     public $courseid;
 
     /**
      * Get the template id and course id.
-     * 
+     *
      * @param int $templateid Template ID
      * @param int $courseid Course ID
      */
@@ -60,24 +63,25 @@ class manage {
     /**
      * Create an instance of the template.
      *
-     * @param int $templateid The ID of the template.
+     * @param int $templateid The ID of the template
+     * @param int $courseid The ID of the course
      * @return self The instance of the template.
      */
     public static function create($templateid, $courseid) {
-        // TODO: template exist checks goes here.
+        // ...TODO: template exist checks goes here.
         return new self($templateid, $courseid);
     }
 
     /**
      * Delete all the auto template instance in the database table.
-     * 
+     *
      * @return bool
      */
     public function delete_auto_instances() {
         global $DB;
 
         $instances = $this->get_course_instances_record();
-        if (!empty($instances)) {     
+        if (!empty($instances)) {
             foreach ($instances as $instanceid => $instance) {
                 instances::create($instanceid)->delete_instance();
             }
@@ -88,11 +92,11 @@ class manage {
 
     /**
      * Delete the all instance in this course use the templateid.
-     * 
+     *
      * @return bool True if the deletion is successful, false otherwise
      */
     public function delete_course_instance() {
-        
+
         if ($this->delete_auto_instances()) {
             return true;
         }
@@ -117,19 +121,20 @@ class manage {
     public function get_course_instances_record() {
         global $DB;
 
-        if ($instances = $DB->get_records('pulse_autoinstances', ['templateid' => $this->templateid, 'courseid' => $this->courseid]) ) {
+        if ($instances = $DB->get_records('pulse_autoinstances',
+            ['templateid' => $this->templateid, 'courseid' => $this->courseid])) {
             return $instances;
         }
 
         return [];
     }
 
-    /** 
+    /**
      * Added the automation instance for this course.
      */
     public function add_course_instance() {
         global $DB;
-        
+
         $transaction = $DB->start_delegated_transaction();
 
         // Fetch the related template data.
@@ -158,12 +163,12 @@ class manage {
             $templatefields = $DB->get_columns('pulse_autotemplates_ins');
             $fields = array_keys($templatefields);
             $preventfields = ['id', 'triggerconditions', 'timemodified'];
-            
+
             // Clear unused fields from list.
             $fields = array_diff_key(array_flip($fields), array_flip($preventfields));
 
             $templatedata = array_intersect_key((array) $overriddenelements, $fields);
-            
+
             // Convert the elements array into json.
             array_walk($templatedata, function(&$value) {
                 if (is_array($value)) {
@@ -198,7 +203,7 @@ class manage {
         $transaction->allow_commit();
 
         return true;
-        
+
     }
 
     /**
@@ -211,12 +216,11 @@ class manage {
     public function update_instance_status(bool $status, bool $instance=false) {
         global $DB;
 
-       $instances = $this->get_course_instances_record();
+        $instances = $this->get_course_instances_record();
         foreach ($instances as $instanceid => $instance) {
             instances::create($instanceid)->update_status($status);
         }
         return true;
     }
 
-    
 }

@@ -187,7 +187,7 @@ require(['jquery', 'core/modal_factory', 'core/str', 'mod_pulse/modal_preset', '
                 statusElem.value = 'disable';
             }
 
-            if (typeof ModalFactory.createFromType === 'function') {
+            if (typeof PresetModal.registerModalType == 'undefined') {
                  var modalFn = ModalFactory.create({
                     type: ModalPreset.TYPE,
                     title: Str.get_string('updatetemplate', 'pulse'),

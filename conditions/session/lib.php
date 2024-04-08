@@ -46,7 +46,7 @@ function pulsecondition_session_extend_navigation_course(navigation_node $naviga
 
     // Verify the page is facetoface edit attendees page and the admin/teachers added user to signup from backend.
     // Trigger the pulse to get the list of new user signup in this session and create a schedule for those users.
-    $addselect = optional_param_array('addselect', array(), PARAM_INT);
+    $addselect = optional_param_array('addselect', [], PARAM_INT);
     if (optional_param('add', false, PARAM_BOOL) && !empty($addselect)) {
 
         if ($PAGE->pagetype == PULSE_SESSION_MOD_EDITPAGEID && $PAGE->cm->modname == PULSE_SESSION_MOD) {
@@ -66,7 +66,7 @@ function pulsecondition_session_extend_navigation_course(navigation_node $naviga
 
     // Verify the page is facetoface edit attendees page and the admin/teachers added user to signup from backend.
     // Trigger the pulse to get the list of new user signup in this session and create a schedule for those users.
-    $removeusers = optional_param_array('removeselect', array(), PARAM_INT);
+    $removeusers = optional_param_array('removeselect', [], PARAM_INT);
     if (optional_param('remove', false, PARAM_BOOL) && !empty($removeusers)) {
 
         if ($PAGE->pagetype == PULSE_SESSION_MOD_EDITPAGEID && $PAGE->cm->modname == PULSE_SESSION_MOD) {

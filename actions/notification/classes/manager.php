@@ -98,7 +98,7 @@ class manager extends \core\message\manager {
             unset($eventdata->userto->description);
             unset($eventdata->userfrom->description);
 
-            self::$buffer[] = array($eventdata, $savemessage, $processorlist);
+            self::$buffer[] = [$eventdata, $savemessage, $processorlist];
             return $savemessage->id;
         }
 

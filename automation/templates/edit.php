@@ -236,7 +236,9 @@ $PAGE->requires->js_amd_inline("require(['jquery'], function() {
         // Filter form display.
         var filterIcon = document.querySelector('#pulse-manageinstance-filter');
         var filterForm = document.querySelector('#pulse-automation-filterform');
-        filterIcon.onclick = (e) => filterForm.classList.toggle('hide');
+        if (filterIcon !== null) {
+            filterIcon.onclick = (e) => filterForm.classList.toggle('hide');
+        }
     })"
 );
 // Footer.

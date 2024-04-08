@@ -167,6 +167,22 @@ class extendpro {
         return $html;
     }
 
+    /**
+     * Call the extended pulse module reaction email placholder.
+     *
+     * @return array
+     */
+    public static function pulse_extend_reaction_placholder() {
+        $result = [];
+        $callbacks = get_plugins_with_function('extend_pulse_reaction_placeholder');
+        foreach ($callbacks as $type => $plugins) {
+            foreach ($plugins as $plugin => $pluginfunction) {
+                $result += $pluginfunction();
+            }
+        }
+        return $result;
+    }
+
 
     /**
      * Check the pulsepro extended the invitation method.

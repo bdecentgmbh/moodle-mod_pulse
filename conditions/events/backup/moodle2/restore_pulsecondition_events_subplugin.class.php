@@ -34,7 +34,7 @@ class restore_pulsecondition_events_subplugin extends restore_subplugin {
      */
     protected function define_pulse_autoinstances_subplugin_structure() {
 
-        $paths = array();
+        $paths = [];
 
         // We used get_recommended_name() so this works.
         $paths[] = new restore_path_element('pulsecondition_events',

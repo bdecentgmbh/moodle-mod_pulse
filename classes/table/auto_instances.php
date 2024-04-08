@@ -33,6 +33,7 @@ use moodle_url;
 use html_writer;
 use core_reportbuilder\manager;
 use core_reportbuilder\permission;
+use mod_pulse\automation\instances;
 
 /**
  * Automation instances table handler.
@@ -140,7 +141,7 @@ class auto_instances extends table_sql {
         global $OUTPUT;
 
         // TODO: Editable.
-        $editable = true;
+        $editable = $row->status != instances::STATUS_ORPHANED;
         $title = new \core\output\inplace_editable(
             'mod_pulse', 'instancetitle', $row->id, $editable, format_string($row->title),
             $row->title, 'Edit template title',  'New value for ' . format_string($row->title)
@@ -159,7 +160,7 @@ class auto_instances extends table_sql {
             'data-target' => 'notes-collapse',
             'data-notes' => html_writer::tag('p', format_string($row->notes)),
             'data-collapse' => 1,
-            'data-instance' => $row->id
+            'data-instance' => $row->id,
         ]) : '';
 
         return $collapseicon . implode(' ', array_column($actions, 'icon')) . $OUTPUT->render($title) .
@@ -189,15 +190,15 @@ class auto_instances extends table_sql {
 
         $baseurl = new \moodle_url('/mod/pulse/automation/instances/edit.php', [
             'instanceid' => $row->instanceid,
-            'sesskey' => \sesskey()
+            'sesskey' => \sesskey(),
         ]);
 
         $listurl = new \moodle_url('/mod/pulse/automation/instances/list.php', [
             'instanceid' => $row->instanceid,
-            'sesskey' => \sesskey()
+            'sesskey' => \sesskey(),
         ]);
 
-        $actions = array();
+        $actions = [];
 
         if ($row->status == \mod_pulse\automation\templates::STATUS_ORPHANED) {
 
@@ -205,26 +206,26 @@ class auto_instances extends table_sql {
 
         } else {
             // Edit.
-            $actions[] = array(
+            $actions[] = [
                 'url' => $baseurl,
                 'icon' => new \pix_icon('t/edit', \get_string('edit')),
-                'attributes' => array('class' => 'action-edit')
-            );
+                'attributes' => ['class' => 'action-edit'],
+            ];
 
             // Make the instance duplicate.
-            $actions[] = array(
+            $actions[] = [
                 'url' => new \moodle_url($listurl, ['action' => 'copy']),
                 'icon' => new \pix_icon('t/copy', \get_string('instancecopy', 'pulse')),
-                'attributes' => array('class' => 'action-copy')
-            );
+                'attributes' => ['class' => 'action-copy'],
+            ];
 
             // Instance reports builder view.
             if ($this->can_view_reports()) {
-                $actions[] = array(
+                $actions[] = [
                     'url' => new \moodle_url($listurl, ['action' => 'report']),
                     'icon' => new \pix_icon('i/calendar', \get_string('instancereport', 'pulse')),
-                    'attributes' => array('class' => 'action-report', 'target' => '_blank')
-                );
+                    'attributes' => ['class' => 'action-report', 'target' => '_blank'],
+                ];
             }
 
             // Show/Hide.
@@ -235,21 +236,21 @@ class auto_instances extends table_sql {
                 ) . html_writer::tag('span', '', ['class' => 'custom-control-label']),
                 'custom-control custom-switch'
             );
-            $statusurl = new \moodle_url($listurl, array('action' => ($row->status) ? 'disable' : 'enable'));
+            $statusurl = new \moodle_url($listurl, ['action' => ($row->status) ? 'disable' : 'enable']);
             $statusclass = 'pulse-instance-status-switch ';
             $statusclass .= $row->status ? 'action-hide' : 'action-show';
             $actions[] = html_writer::link($statusurl->out(false), $checkbox, ['class' => $statusclass]);
         }
 
         // Delete.
-        $actions[] = array(
-            'url' => new \moodle_url($listurl, array('action' => 'delete')),
+        $actions[] = [
+            'url' => new \moodle_url($listurl, ['action' => 'delete']),
             'icon' => new \pix_icon('t/delete', \get_string('delete')),
-            'attributes' => array('class' => 'action-delete'),
-            'action' => new \confirm_action(get_string('deleteinstance', 'pulse'))
-        );
+            'attributes' => ['class' => 'action-delete'],
+            'action' => new \confirm_action(get_string('deleteinstance', 'pulse')),
+        ];
 
-        $actionshtml = array();
+        $actionshtml = [];
         foreach ($actions as $action) {
             if (!is_array($action)) {
                 $actionshtml[] = $action;

@@ -25,16 +25,16 @@ defined('MOODLE_INTERNAL') || die();
 
 // Signup success and signup failed event observers for the "Session module Completion" condition in the pulse 2.0.
 $observers = [
-    array(
+    [
         'eventname' => '\mod_facetoface\event\signup_success',
         'callback' => '\pulsecondition_session\conditionform::signup_success',
-    ),
-    array(
+    ],
+    [
         'eventname' => '\mod_facetoface\event\signup_failed',
         'callback' => '\pulsecondition_session\conditionform::signup_success',
-    ),
-    array(
+    ],
+    [
         'eventname' => '\mod_facetoface\event\cancel_booking',
         'callback' => '\pulsecondition_session\conditionform::signup_success',
-    ),
+    ],
 ];

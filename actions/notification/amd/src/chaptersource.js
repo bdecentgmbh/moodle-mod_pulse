@@ -24,204 +24,204 @@
  */
 
 define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/fragment', 'core/str', 'core/modal_events'],
-    function($, Ajax, Notification, ModalFactory, Fragment, Str, ModalEvents) {
+    function ($, Ajax, Notification, ModalFactory, Fragment, Str, ModalEvents) {
 
-    const previewModalBody = function(contextID, userid = null) {
+        const previewModalBody = function (contextID, userid = null) {
 
-        var params;
-        if (window.tinyMCE !== undefined && window.tinyMCE.get('id_pulsenotification_headercontent_editor')) {
-            // EditorPlugin = window.tinyMCE;
-            params = {
-                contentheader: window.tinyMCE.get('id_pulsenotification_headercontent_editor').getContent(),
-                contentstatic: window.tinyMCE.get('id_pulsenotification_staticcontent_editor').getContent(),
-                contentfooter: window.tinyMCE.get('id_pulsenotification_footercontent_editor').getContent(),
-                userid: userid
+            var params;
+            if (window.tinyMCE !== undefined && window.tinyMCE.get('id_pulsenotification_headercontent_editor')) {
+                // EditorPlugin = window.tinyMCE;
+                params = {
+                    contentheader: window.tinyMCE.get('id_pulsenotification_headercontent_editor').getContent(),
+                    contentstatic: window.tinyMCE.get('id_pulsenotification_staticcontent_editor').getContent(),
+                    contentfooter: window.tinyMCE.get('id_pulsenotification_footercontent_editor').getContent(),
+                    userid: userid
+                };
+            } else {
+                // EditorPlugin = document;
+                params = {
+                    contentheader: document.querySelector('#id_pulsenotification_headercontent_editoreditable').innerHTML,
+                    contentstatic: document.querySelector('#id_pulsenotification_staticcontent_editoreditable').innerHTML,
+                    contentfooter: document.querySelector('#id_pulsenotification_footercontent_editoreditable').innerHTML,
+                    userid: userid
+                };
+            }
+
+            var dynamicparams = {};
+
+            if (document.querySelector('[name=pulsenotification_dynamiccontent]') !== null) {
+                dynamicparams = {
+                    contentdynamic: document.querySelector('[name=pulsenotification_dynamiccontent]').value,
+                    contenttype: document.querySelector('[name=pulsenotification_contenttype]').value,
+                    chapterid: document.querySelector('[name=pulsenotification_chapterid]').value,
+                    contentlength: document.querySelector('[name=pulsenotification_contentlength]').value,
+                };
+            }
+            // Get the form data.
+            var formData;
+            var form = document.forms['pulse-automation-template'];
+            var formdata = new FormData(form);
+            formdata = new URLSearchParams(formdata).toString();
+            formData = {
+                formdata: formdata
             };
-        } else {
-            // EditorPlugin = document;
-            params = {
-                contentheader: document.querySelector('#id_pulsenotification_headercontent_editoreditable').innerHTML,
-                contentstatic: document.querySelector('#id_pulsenotification_staticcontent_editoreditable').innerHTML,
-                contentfooter: document.querySelector('#id_pulsenotification_footercontent_editoreditable').innerHTML,
-                userid: userid
-            };
-        }
 
-        var dynamicparams = {};
+            var finalParams = { ...params, ...dynamicparams, ...formData };
 
-        if (document.querySelector('[name=pulsenotification_dynamiccontent]') !== null) {
-            dynamicparams = {
-                contentdynamic: document.querySelector('[name=pulsenotification_dynamiccontent]').value,
-                contenttype: document.querySelector('[name=pulsenotification_contenttype]').value,
-                chapterid: document.querySelector('[name=pulsenotification_chapterid]').value,
-                contentlength: document.querySelector('[name=pulsenotification_contentlength]').value,
-            };
-        }
-        // Get the form data.
-        var formData;
-        var form = document.forms['pulse-automation-template'];
-        var formdata = new FormData(form);
-        formdata = new URLSearchParams(formdata).toString();
-        formData = {
-            formdata: formdata
+            return Fragment.loadFragment('pulseaction_notification', 'preview_content', contextID, finalParams);
         };
 
-        var finalParams = {...params, ...dynamicparams, ...formData};
+        const previewModal = function (contextID) {
 
-        return Fragment.loadFragment('pulseaction_notification', 'preview_content', contextID, finalParams);
-    };
+            ModalFactory.create({
+                title: Str.get_string('preview', 'pulseaction_notification'),
+                body: previewModalBody(contextID),
+                large: true,
+            }).then((modal) => {
+                modal.show();
 
-    const previewModal = function(contextID) {
-
-        ModalFactory.create({
-            title: Str.get_string('preview', 'pulseaction_notification'),
-            body: previewModalBody(contextID),
-            large: true,
-        }).then((modal) => {
-            modal.show();
-
-            modal.getRoot().on(ModalEvents.bodyRendered, function() {
-                modal.getRoot().get(0).querySelector('[name=userselector]').addEventListener('change', (e) => {
-                    e.preventDefault();
-                    var target = e.target;
-                    modal.setBody(previewModalBody(contextID, target.value));
+                modal.getRoot().on(ModalEvents.bodyRendered, function () {
+                    modal.getRoot().get(0).querySelector('[name=userselector]').addEventListener('change', (e) => {
+                        e.preventDefault();
+                        var target = e.target;
+                        modal.setBody(previewModalBody(contextID, target.value));
+                    });
                 });
-            });
 
-            return;
-        }).catch();
-    };
-
-    const notificationModal = function(contextID, instance, userid) {
-
-        var params = {
-            instanceid: instance,
-            userid: userid
+                return;
+            }).catch();
         };
 
-        ModalFactory.create({
-            title: Str.get_string('preview', 'pulseaction_notification'),
-            body: Fragment.loadFragment('pulseaction_notification', 'preview_instance_content', contextID, params),
-            large: true,
-        }).then((modal) => {
-            modal.show();
-            return;
-        }).catch();
-    };
+        const notificationModal = function (contextID, instance, userid) {
 
-    return {
-
-        processResults: function(selector, modules) {
-            return modules;
-        },
-
-        transport: function(selector, query, success, failure) {
-
-            var mod = document.querySelector("#id_pulsenotification_dynamiccontent");
-
-            var promise = Ajax.call([{
-                methodname: 'pulseaction_notification_get_chapters',
-                args: {mod: mod.value}
-            }]);
-
-            promise[0].then(function(result) {
-                success(result);
-                return;
-            }).fail(failure);
-        },
-
-        updateChapter: function(ctxID, contentMods) {
-
-            const SELECTORS = {
-                chaperType: "#id_pulsenotification_contenttype",
-                mod: "#id_pulsenotification_dynamiccontent"
+            var params = {
+                instanceid: instance,
+                userid: userid
             };
 
-            // Disable the content type option for modules other than book and page.
-            if (contentMods !== null) {
-                var type = document.querySelector(SELECTORS.chaperType);
-                document.querySelector(SELECTORS.mod).addEventListener("change", (e) => {
-                    var target = e.currentTarget;
-                    var selected = target.value;
-                    if (contentMods.includes(selected.toString())) {
-                        Array.prototype.find.call(type.options, function(cmid) {
-                            if (cmid.value == '2') {
-                                cmid.disabled = false;
-                            }
-                        });
-                    } else {
-                        Array.prototype.find.call(type.options, function(cmid) {
-                            if (cmid.value == '2') {
-                                cmid.disabled = true;
-                            }
-                        });
-                    }
-                });
-            }
-
-            document.querySelector(SELECTORS.chaperType).addEventListener("change", () => resetChapter());
-            document.querySelector(SELECTORS.mod).addEventListener("change", () => resetChapter());
-            var chapter = document.querySelector("#id_pulsenotification_chapterid");
-
-            /**
-             *
-             */
-            function resetChapter() {
-                chapter.innerHTML = '';
-                chapter.value = '';
-                var event = new Event('change');
-                chapter.dispatchEvent(event);
-            }
-        },
-
-        previewNotification: function(contextid) {
-
-            var btn = document.querySelector('[name="pulsenotification_preview"]');
-
-            if (btn === null) {
+            ModalFactory.create({
+                title: Str.get_string('preview', 'pulseaction_notification'),
+                body: Fragment.loadFragment('pulseaction_notification', 'preview_instance_content', contextID, params),
+                large: true,
+            }).then((modal) => {
+                modal.show();
                 return;
-            }
+            }).catch();
+        };
 
-            btn.addEventListener('click', function() {
-                previewModal(contextid);
-            });
-        },
+        return {
 
-        reportModal: function(contextID) {
-            // View content.
-            /* var btn = document.querySelectorAll('[data-target="view-content"]');
+            processResults: function (selector, modules) {
+                return modules;
+            },
 
-            if (btn === null) {
-                return;
-            }
+            transport: function (selector, query, success, failure) {
 
-            btn.forEach((element) => {
-                element.addEventListener('click', function(e) {
+                var mod = document.querySelector("#id_pulsenotification_dynamiccontent");
 
-                    var target = e.target.closest('a');
+                var promise = Ajax.call([{
+                    methodname: 'pulseaction_notification_get_chapters',
+                    args: { mod: mod.value }
+                }]);
 
-                    var instance = target.dataset.instanceid;
-                    var userid = target.dataset.userid;
+                promise[0].then(function (result) {
+                    success(result);
+                    return;
+                }).fail(failure);
+            },
 
-                    notificationModal(contextID, instance, userid); // Notification modal.
-                });
-            });
- */
+            updateChapter: function (ctxID, contentMods) {
 
-            document.addEventListener('click', function(e) {
+                const SELECTORS = {
+                    chaperType: "#id_pulsenotification_contenttype",
+                    mod: "#id_pulsenotification_dynamiccontent"
+                };
 
-                if (e.target.closest('[data-target="view-content"]') !== null) {
-
-                    var target = e.target.closest('a');
-
-                    var instance = target.dataset.instanceid;
-                    var userid = target.dataset.userid;
-
-                    notificationModal(contextID, instance, userid); // Notification modal.
+                // Disable the content type option for modules other than book and page.
+                if (contentMods !== null) {
+                    var type = document.querySelector(SELECTORS.chaperType);
+                    document.querySelector(SELECTORS.mod).addEventListener("change", (e) => {
+                        var target = e.currentTarget;
+                        var selected = target.value;
+                        if (contentMods.includes(selected.toString())) {
+                            Array.prototype.find.call(type.options, function (cmid) {
+                                if (cmid.value == '2') {
+                                    cmid.disabled = false;
+                                }
+                            });
+                        } else {
+                            Array.prototype.find.call(type.options, function (cmid) {
+                                if (cmid.value == '2') {
+                                    cmid.disabled = true;
+                                }
+                            });
+                        }
+                    });
                 }
 
-            })
-        }
-    };
+                document.querySelector(SELECTORS.chaperType).addEventListener("change", () => resetChapter());
+                document.querySelector(SELECTORS.mod).addEventListener("change", () => resetChapter());
+                var chapter = document.querySelector("#id_pulsenotification_chapterid");
 
-});
+                /**
+                 *
+                 */
+                function resetChapter() {
+                    chapter.innerHTML = '';
+                    chapter.value = '';
+                    var event = new Event('change');
+                    chapter.dispatchEvent(event);
+                }
+            },
+
+            previewNotification: function (contextid) {
+
+                var btn = document.querySelector('[name="pulsenotification_preview"]');
+
+                if (btn === null) {
+                    return;
+                }
+
+                btn.addEventListener('click', function () {
+                    previewModal(contextid);
+                });
+            },
+
+            reportModal: function (contextID) {
+                // View content.
+                /* var btn = document.querySelectorAll('[data-target="view-content"]');
+
+                if (btn === null) {
+                    return;
+                }
+
+                btn.forEach((element) => {
+                    element.addEventListener('click', function(e) {
+
+                        var target = e.target.closest('a');
+
+                        var instance = target.dataset.instanceid;
+                        var userid = target.dataset.userid;
+
+                        notificationModal(contextID, instance, userid); // Notification modal.
+                    });
+                });
+     */
+
+                document.addEventListener('click', function (e) {
+
+                    if (e.target.closest('[data-target="view-content"]') !== null) {
+
+                        var target = e.target.closest('a');
+
+                        var instance = target.dataset.instanceid;
+                        var userid = target.dataset.userid;
+
+                        notificationModal(contextID, instance, userid); // Notification modal.
+                    }
+
+                })
+            }
+        };
+
+    });
