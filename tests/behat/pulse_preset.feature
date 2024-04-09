@@ -7,16 +7,16 @@ Feature: Preset create pulse with custom params.
 
   Background: Insert demo presets.
     Given the following "courses" exist:
-        | fullname| shortname | category |
-        | Test | C1 | 0 |
+      | fullname | shortname | category |
+      | Test     | C1        | 0        |
     And the following "users" exist:
-        | username | firstname | lastname | email |
-        | student1 | student | User 1 | student1@test.com |
-        | teacher | Teacher | User 1 | teacher1@test.com |
+      | username | firstname | lastname | email             |
+      | student1 | student   | User 1   | student1@test.com |
+      | teacher  | Teacher   | User 1   | teacher1@test.com |
     And the following "course enrolments" exist:
-        | user | course | role |
-        | teacher | C1 | editingteacher |
-        | student1 | C1 | student |
+      | user     | course | role           |
+      | teacher  | C1     | editingteacher |
+      | student1 | C1     | student        |
     Given I log in as "admin"
     And I create demo presets
     And I log out

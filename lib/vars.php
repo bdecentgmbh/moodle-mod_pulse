@@ -199,7 +199,7 @@ class pulse_email_vars {
             $this->assignment = $pluginbase->get_assignment_extension($this->course->id, $this->user->id);
         }
 
-        if (pulsehelper::pulse_has_pro()) {
+        if (pulsehelper::pulse_has_pro() && $this->pulse) {
             $this->reaction = $this->reaction_data();
         }
 
@@ -297,7 +297,9 @@ class pulse_email_vars {
 
             // Session data fields.
             $result += ['Mod_session' => self::session_fields()];
-        } else {
+        }
+
+        if (!$automation || $automation == 'all') {
             $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
         }
 
@@ -577,7 +579,7 @@ class pulse_email_vars {
                 $fields = array_keys($records);
 
                 array_walk($fields, function(&$value) {
-                    $value = $value;
+                    $value = "Mod_metadata".$value;
                 });
             }
 

@@ -181,6 +181,7 @@ function pulseaction_notification_output_fragment_preview_content($args) {
         $selector = html_writer::select($list, 'userselector', $user->id);
 
         $data = ['message' => $messagehtml, 'usersselector' => $selector];
+
         return $OUTPUT->render_from_template('pulseaction_notification/preview', ['data' => $data]);
     }
 }

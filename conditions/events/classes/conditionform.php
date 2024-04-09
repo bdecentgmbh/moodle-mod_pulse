@@ -283,16 +283,27 @@ class conditionform extends \mod_pulse\automation\condition_base {
         global $DB;
 
         $list = [];
+        $events = []; // Events added for observe.
+
         $eventscoditiondata = $DB->get_records('pulse_condition_overrides', ['triggercondition' => 'events']);
         foreach ($eventscoditiondata as $data) {
             $additional = json_decode($data->additional);
-            if (!isset($additional->event) || $additional->event != '') {
+            if (!isset($additional->event) || $additional->event == '') {
                 continue;
             }
+
+            // Verify the event is already observed in the pulse event condition, to prevent multiple observe of single event.
+            if (in_array($additional->event, $events)) {
+                continue;
+            }
+
             $list[] = [
                 'eventname' => $additional->event,
                 'callback' => '\pulsecondition_events\conditionform::pulse_event_condition_trigger',
             ];
+
+            // Prevent multiple event observer for one event.
+            $events[] = $additional->event;
         }
         return $list ?? [];
     }
@@ -470,4 +481,21 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $eventsfields->set_source_table('pulsecondition_events', ['instanceid' => \backup::VAR_PARENTID]);
     }
 
+    /**
+     * After save the condition form, clear the observers from cache and recreated the list.
+     *
+     * @param int $instanceid
+     * @param object $data
+     * @return void
+     */
+    public function process_instance_save($instanceid, $data) {
+        parent::process_instance_save($instanceid, $data);
+
+        // Remove the event observers and recreate.
+        $cache = \cache::make('core', 'observers');
+        $cache->delete('all');
+        // Build the observers again.
+        $list = \core\event\manager::get_all_observers();
+        purge_other_caches();
+    }
 }

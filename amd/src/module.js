@@ -66,11 +66,9 @@ define(['core_editor/events'], function() {
                 templatevars.forEach((elem) => {
                     elem.addEventListener('click', function(e) {
                         var target = e.currentTarget;
-                        if (branch <= "402") {
-                            var EditorInput = target.querySelector('[id*="_editoreditable"]');
-                        } else {
-                            var EditorInput = target.querySelector('textarea[id*="_content_editor"]');
-                        }
+                        var EditorInput = (branch <= "402")
+                            ? target.querySelector('[id*="_editoreditable"]')
+                            : target.querySelector('textarea[id*="_content_editor"]');
                         module.insertCaretActive(EditorInput);
                     });
                 });

@@ -805,7 +805,7 @@ class actionform extends \mod_pulse\automation\action_base {
      * @return array
      */
     public function assignment_data_fields() {
-        return [ 'Assignment_Extensions'];
+        return ['Assignment_Extensions'];
     }
 
     /**

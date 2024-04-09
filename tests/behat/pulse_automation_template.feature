@@ -9,18 +9,18 @@ Feature: Pulse automation templates
       | Cat 1 | 0        | CAT1     |
       | Cat 2 | 0        | CAT2     |
     And the following "course" exist:
-      | fullname    | shortname | category |
-      | Course 1    | C1        | 0        |
-      | Course 2    | C2        | CAT1     |
-      | Course 3    | C3        | CAT2     |
+      | fullname | shortname | category |
+      | Course 1 | C1        | 0        |
+      | Course 2 | C2        | CAT1     |
+      | Course 3 | C3        | CAT2     |
     And the following "users" exist:
-      | username | firstname | lastname | email |
-      | student1 | student | User 1 | student1@test.com |
-      | teacher1 | Teacher | User 1 | teacher1@test.com |
+      | username | firstname | lastname | email             |
+      | student1 | student   | User 1   | student1@test.com |
+      | teacher1 | Teacher   | User 1   | teacher1@test.com |
     And the following "course enrolments" exist:
-      | user     | course | role |
+      | user     | course | role           |
       | teacher1 | C1     | editingteacher |
-      | student1 | C1     | student |
+      | student1 | C1     | student        |
 
   @javascript
   Scenario: Check the automation template.
@@ -30,10 +30,10 @@ Feature: Pulse automation templates
     And I should see "Create new template"
     Then I click on "Create new template" "button"
     And I set the following fields to these values:
-      | Title     | WELCOME MESSAGE |
-      | Reference | Welcomemessage  |
-      | Visibility|  Show           |
-      | Status    |  Enabled        |
+      | Title      | WELCOME MESSAGE |
+      | Reference  | Welcomemessage  |
+      | Visibility | Show            |
+      | Status     | Enabled         |
     Then I press "Save changes"
     Then I should see "Template inserted successfully"
     Then I should see "Automation templates"
@@ -42,8 +42,8 @@ Feature: Pulse automation templates
     And I should see "Welcomemessage" in the "#pulse_automation_template .template-reference" "css_element"
     And "#pulse_automation_template .menu-item-actions .action-edit" "css_element" should exist
     Then I create automation template with the following fields to these values:
-      | Title     |  Triggers           |
-      | Reference | Conditiontriggers   |
+      | Title     | Triggers          |
+      | Reference | Conditiontriggers |
     Then I should see "Template inserted successfully"
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template tbody tr:nth-child(1)" "css_element"
     And I should see "Welcomemessage" in the "#pulse_automation_template tbody tr:nth-child(1) .template-reference" "css_element"
@@ -63,8 +63,8 @@ Feature: Pulse automation templates
     Then I click on ".action-edit" "css_element" in the "WELCOME MESSAGE" "table_row"
     Then I should see "Edit template"
     And I set the following fields to these values:
-      | Title     |  Triggers           |
-      | Reference | Conditiontriggers  |
+      | Title     | Triggers          |
+      | Reference | Conditiontriggers |
     Then I press "Save changes"
     Then I should see "Template updated successfully"
     And I should see "Triggers" in the "#pulse_automation_template tbody tr:nth-child(1)" "css_element"
@@ -74,9 +74,9 @@ Feature: Pulse automation templates
   Scenario: Check Visibility of automation template
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-      | Title     | WELCOME MESSAGE |
-      | Reference | Welcomemessage  |
-      | Visibility| Show            |
+      | Title      | WELCOME MESSAGE |
+      | Reference  | Welcomemessage  |
+      | Visibility | Show            |
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template" "css_element"
     And I am on "Course 1" course homepage
     Then I should see "Automation"
@@ -105,10 +105,10 @@ Feature: Pulse automation templates
   Scenario: Check Status of automation template
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-      | Title     | WELCOME MESSAGE |
-      | Reference | Welcomemessage  |
-      | Visibility| Show            |
-      | Status    | Enable          |
+      | Title      | WELCOME MESSAGE |
+      | Reference  | Welcomemessage  |
+      | Visibility | Show            |
+      | Status     | Enable          |
     And I should see "WELCOME MESSAGE" in the "#pulse_automation_template" "css_element"
     And I am on "Course 1" course homepage
     Then I should see "Automation"
@@ -137,9 +137,9 @@ Feature: Pulse automation templates
   Scenario: Check Available in course categories for automation template
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-        | Title                          | WELCOME MESSAGE |
-        | Reference                      | Welcomemessage  |
-        | Available in course categories | Category 1      |
+      | Title                          | WELCOME MESSAGE |
+      | Reference                      | Welcomemessage  |
+      | Available in course categories | Category 1      |
     And I am on "Course 1" course homepage
     Then I should see "Automation"
     And I follow "Automation"
@@ -187,12 +187,12 @@ Feature: Pulse automation templates
   Scenario: Check condition for automation template
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
-        | Title                          | WELCOME MESSAGE |
-        | Reference                      | Welcomemessage  |
-        | Available in course categories | Category 1      |
+      | Title                          | WELCOME MESSAGE |
+      | Reference                      | Welcomemessage  |
+      | Available in course categories | Category 1      |
     Then I create "Welcomemessage" template with the set the condition:
-        | Triggers         | Activity completion, Member in cohorts |
-        | Trigger operator | All                 |
+      | Triggers         | Activity completion, Member in cohorts |
+      | Trigger operator | All                                    |
     And I am on "Course 1" course homepage
     And I follow "Automation"
     When I open the autocomplete suggestions list
@@ -211,20 +211,20 @@ Feature: Pulse automation templates
     Given I log in as "admin"
     And I navigate to "Plugins > Activity modules > Pulse > Automation templates" in site administration
     Then I create automation template with the following fields to these values:
-        | Title                          | WELCOME MESSAGE |
-        | Reference                      | Welcomemessage  |
-        | Available in course categories | Category 1      |
+      | Title                          | WELCOME MESSAGE |
+      | Reference                      | Welcomemessage  |
+      | Available in course categories | Category 1      |
     Then I create "Welcomemessage" template with the set the condition:
-        | Triggers         | Activity completion, Member in cohorts |
-        | Trigger operator | All                                    |
+      | Triggers         | Activity completion, Member in cohorts |
+      | Trigger operator | All                                    |
     Then I create "Welcomemessage" template with the set the notification:
-        | Sender      |  Group teacher    |
-        | Interval    |  Once            |
-        | Cc          |  Teacher         |
-        | Bcc         |  Manager         |
-        | Subject     |  Demo MESSAGE    |
-        | Header content | Lorem Ipsum is therefore always free from repetition, injected humour|
-        | Static content | There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form |
+      | Sender         | Group teacher                                                                                                          |
+      | Interval       | Once                                                                                                                   |
+      | Cc             | Teacher                                                                                                                |
+      | Bcc            | Manager                                                                                                                |
+      | Subject        | Demo MESSAGE                                                                                                           |
+      | Header content | Lorem Ipsum is therefore always free from repetition, injected humour                                                  |
+      | Static content | There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form |
     Then I should see "Template updated successfully"
     And I am on "Course 1" course homepage
     And I follow "Automation"
@@ -252,25 +252,25 @@ Feature: Pulse automation templates
     And I click on "WELCOME MESSAGE" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | insreference | Welcomemessageinstance   |
+      | insreference | Welcomemessageinstance |
     And I press "Save changes"
     When I open the autocomplete suggestions list
     And I click on "WELCOME MESSAGE" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | insreference | Welcomemessageinstance2   |
+      | insreference | Welcomemessageinstance2 |
     And I press "Save changes"
     When I open the autocomplete suggestions list
     And I click on "WELCOME MESSAGE" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | insreference | Welcomemessageinstance3   |
+      | insreference | Welcomemessageinstance3 |
     And I press "Save changes"
     When I open the autocomplete suggestions list
     And I click on "Notification" item in the autocomplete list
     Then I click on "Add automation instance" "button"
     And I set the following fields to these values:
-      | insreference | notificationinstance   |
+      | insreference | notificationinstance |
     And I press "Save changes"
     And I navigate to "Plugins > Activity modules > Pulse > Automation templates" in site administration
     And I should see "3(0)" in the "WELCOME MESSAGE" "table_row"

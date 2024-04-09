@@ -212,4 +212,16 @@ class behat_pulse extends behat_base {
             ['Completion tracking', 'Show activity as complete when conditions are met']);
         }
     }
+
+
+    /**
+     * Switches to a pulse new window.
+     *
+     * @Given /^I switch to a pulse open window$/
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function switch_to_open_window() {
+        $names = $this->getSession()->getWindowNames();
+        $this->getSession()->switchToWindow(end($names));
+    }
 }

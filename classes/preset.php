@@ -665,7 +665,8 @@ class preset extends \moodleform {
             $formdata['course'] = $this->courseid;
             $formdata = array_filter($formdata, function($value) {
                 if (!is_array($value)) {
-                    return (trim($value) !== '') ? true : false;
+                    $value = $value != '' ? trim($value) : $value;
+                    return ($value !== '') ? true : false;
                 }
                 return true;
             });
@@ -738,7 +739,7 @@ class preset extends \moodleform {
         $this->modformdata = array_replace_recursive($this->modformdata, $data);
         // Replace the config data.
         $this->modformdata = array_map(function($value) {
-            return (!is_array($value)) ? trim($value) : $value;
+            return (!is_array($value) && $value != null) ? trim($value) : $value;
         }, $this->modformdata);
 
         $COURSE = $this->course;

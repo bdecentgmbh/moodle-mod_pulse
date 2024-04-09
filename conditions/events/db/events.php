@@ -28,5 +28,4 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-
 $observers = \pulsecondition_events\conditionform::get_events();

@@ -51,5 +51,21 @@ function xmldb_pulseaction_notification_upgrade($oldversion) {
         $dbman->change_field_precision($temptable, $timemodified);
     }
 
+    // Update the type of dynamic content.
+    $instable = new xmldb_table('pulseaction_notification');
+    $dynamiccontent = new xmldb_field('dynamiccontent', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
+    // Verify field exists.
+    if ($dbman->field_exists($instable, $dynamiccontent)) {
+        // Change the field.
+        $dbman->change_field_precision($instable, $dynamiccontent);
+    }
+
+    // Update the templates table dynamiccontent.
+    $temptable = new xmldb_table('pulseaction_notification_ins');
+    if ($dbman->field_exists($temptable, $dynamiccontent)) {
+        // Change the field.
+        $dbman->change_field_precision($temptable, $dynamiccontent);
+    }
+
     return true;
 }

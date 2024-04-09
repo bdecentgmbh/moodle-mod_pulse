@@ -319,7 +319,7 @@ class schedule {
             WHERE ns.status = :status AND ai.status <> 0
             AND active_enrols.activeenrolment <> 0
             AND c.visible = 1
-            AND c.startdate <= :startdate AND  (c.enddate = 0 OR c.enddate >= :enddate)
+            AND c.startdate <= :startdate AND (c.enddate = 0 OR c.enddate >= :enddate)
             AND ue.deleted = 0 AND ue.suspended = 0
             AND ns.suppressreached = 0 AND ns.scheduletime <= :current_timestamp $userwhere ORDER BY ns.timecreated ASC";
 

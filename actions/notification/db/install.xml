@@ -25,7 +25,7 @@
         <FIELD NAME="headercontentformat" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="staticcontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="staticcontentformat" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="dynamiccontent" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="dynamiccontent" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contentlength" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contenttype" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="footercontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -58,7 +58,7 @@
         <FIELD NAME="subject" TYPE="char" LENGTH="500" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="headercontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="staticcontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="dynamiccontent" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="dynamiccontent" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contentlength" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contenttype" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="chapterid" TYPE="int" LENGTH="9" NOTNULL="false" SEQUENCE="false"/>

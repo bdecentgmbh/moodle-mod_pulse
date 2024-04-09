@@ -38,3 +38,4 @@ $observers = [
         'callback' => '\pulsecondition_enrolment\conditionform::user_enrolled',
     ],
 ];
+

@@ -86,7 +86,7 @@ class helper {
         $course->courseurl = $courseurl;
 
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
-        $amethods = pulse_email_vars::vars(); // List of available placeholders.
+        $amethods = pulse_email_vars::vars('all'); // List of available placeholders.
         // Get formatted name of the category.
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
