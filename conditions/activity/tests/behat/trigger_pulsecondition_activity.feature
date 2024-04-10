@@ -4,30 +4,30 @@ Feature: Activity trigger event.
 
   Background:
     Given the following "course" exist:
-      | fullname    | shortname | category | enablecompletion |
-      | Course 1    | C1        | 0        |    1             |
+      | fullname | shortname | category | enablecompletion |
+      | Course 1 | C1        | 0        | 1                |
     And the following "activities" exist:
       | activity | name        | course | idnumber | completion |
-      | page     | TestPage 01 | C1     | page1    |    1       |
-      | page     | TestPage 02 | C1     | page2    |    1       |
+      | page     | TestPage 01 | C1     | page1    | 1          |
+      | page     | TestPage 02 | C1     | page2    | 1          |
     And the following "users" exist:
-      | username | firstname | lastname | email |
-      | student1 | student | User 1 | student1@test.com |
-      | teacher1 | Teacher | User 1 | teacher1@test.com |
+      | username | firstname | lastname | email             |
+      | student1 | student   | User 1   | student1@test.com |
+      | teacher1 | Teacher   | User 1   | teacher1@test.com |
     And the following "course enrolments" exist:
-      | user     | course | role |
+      | user     | course | role           |
       | teacher1 | C1     | editingteacher |
-      | student1 | C1     | student |
+      | student1 | C1     | student        |
 
   @javascript
   Scenario: Check the pluse condition activity trigger workflow
     Given I log in as "admin"
     Then I create automation template with the following fields to these values:
       | Title     | WELCOME MESSAGE 01 |
-      | Reference | Welcomemessage  |
+      | Reference | Welcomemessage     |
     Then I create automation template with the following fields to these values:
       | Title     | WELCOME MESSAGE 02 |
-      | Reference | Welcomemessage02  |
+      | Reference | Welcomemessage02   |
     Then I create "Welcomemessage" template with the set the condition:
       | Triggers         | Activity completion |
       | Trigger operator | All                 |
@@ -37,7 +37,7 @@ Feature: Activity trigger event.
     And I click on "WELCOME MESSAGE 01" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
-      | insreference | Welcomemessage   |
+      | insreference | Welcomemessage |
     Then I follow "Condition"
     Then I should see "Activity completion"
     Then the field "Activity completion" matches value "All"
@@ -50,7 +50,7 @@ Feature: Activity trigger event.
     And I click on "WELCOME MESSAGE 02" item in the autocomplete list
     Then I press "Add automation instance"
     And I set the following fields to these values:
-      | insreference | Welcomemessage2   |
+      | insreference | Welcomemessage2 |
     Then I follow "Condition"
     Then I should see "Activity completion"
     And I should not see "Select activities"

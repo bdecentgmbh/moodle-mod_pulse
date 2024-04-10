@@ -267,7 +267,6 @@ class automation_instance_form extends automation_template_form {
         $mform->addElement('html', html_writer::end_div()); // E.o of actions triggere tab.
     }
 
-
     /**
      * Load instance form elments for pulse action plugins.
      *

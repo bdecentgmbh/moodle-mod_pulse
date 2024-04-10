@@ -79,7 +79,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                     // Destroy the modal on hidden to reload the editors.
                     modal.getRoot().on(ModalEvents.hidden, function() {
                         modal.getRoot().get(0).querySelectorAll('form textarea').forEach(target => {
-                            if (tinyMCE != 'undefined') { // eslint-disable-line
+                            if (typeof tinyMCE !== 'undefined') {
                                 tinyMCE.EditorManager.get(target.id).remove(); // eslint-disable-line
                             }
                         });

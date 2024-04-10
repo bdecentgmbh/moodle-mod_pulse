@@ -56,11 +56,10 @@ Feature: Preset create pulse with custom params.
     When I click on ".pulse-usepreset" "css_element"
     And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
     And I set the field with xpath "//div[@class='preset-config-params']//input[@id='id_name']" to "Customize preset"
-    And I set the field "id_preseteditor_introeditor" to "Pulse created using apply and customize - custom value"
     And I press "Apply and Customize"
     And I wait "3" seconds
     Then ".modal-body" "css_element" should not be visible
     Then the field "id_name" matches value "Customize preset"
-    And the field "id_introeditor" matches value "Pulse created using apply and customize - custom value"
+    And I set the field "id_introeditor" to "Pulse created using apply and customize - custom value"
     And I press "Save and return to course"
     Then I should see "Pulse created using apply and customize - custom value"

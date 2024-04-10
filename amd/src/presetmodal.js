@@ -64,6 +64,6 @@ export default class PresetModal extends Modal {
     }
 }
 
-if (PresetModal.registerModalType !== 'undefined') {
+if (typeof PresetModal.registerModalType !== 'undefined') {
     PresetModal.registerModalType();
 }

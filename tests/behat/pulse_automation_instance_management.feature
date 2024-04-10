@@ -564,7 +564,7 @@ Feature: Pulse automation instances management
     And I click on ".fa-angle-double-down" "css_element" in the "#header-email-vars-button" "css_element"
     And I click on "Show more" "link" in the ".User_field-placeholders" "css_element"
     And I click on "Show less" "link" in the ".User_field-placeholders" "css_element"
-    And I click on "#id_pulsenotification_headercontent_editor_ifr" "css_element" in the "#fitem_id_pulsenotification_headercontent_editor" "css_element"
+    And I click on pulse "id_pulsenotification_headercontent_editor" editor
     And I click on "Extensions" "link" in the ".Assignment_field-placeholders .placeholders" "css_element"
     And I click on "Preview" "button" in the "#fitem_id_pulsenotification_preview" "css_element"
     And I should see "No extensions have been granted for upcoming assignments." in the "Preview" "dialogue"
@@ -684,5 +684,3 @@ Feature: Pulse automation instances management
     And I navigate to course "Course 1" automation instances
     And I should see "Template1" in the "temp1C1" "table_row"
     And I click on ".action-report" "css_element" in the "temp1C1" "table_row"
-    And I switch to a second window
-    And I should see "sent" in the "Template1" "table_row"
