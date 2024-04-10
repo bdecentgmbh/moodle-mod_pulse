@@ -236,7 +236,7 @@ class behat_pulse extends behat_base {
     public function i_click_on_pulse_editor($editor) {
         global $CFG;
 
-        if ($CFG->branch == "403") {
+        if ($CFG->branch >= 402) {
             $this->execute('behat_general::i_click_on_in_the',
                 ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
         } else {
