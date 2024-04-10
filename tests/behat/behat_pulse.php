@@ -229,15 +229,19 @@ class behat_pulse extends behat_base {
      * Switches to a pulse new window.
      *
      * @Given /^I click on pulse "([^"]*)" editor$/
+     *
+     * @param string $editor
      * @throws DriverException If there aren't exactly 2 windows open.
      */
     public function i_click_on_pulse_editor($editor) {
         global $CFG;
 
         if ($CFG->branch == "403") {
-            $this->execute('behat_general::i_click_on_in_the', ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
         } else {
-            $this->execute('behat_general::i_click_on_in_the', ['#'.$editor . 'editable', 'css_element', '#fitem_'.$editor, 'css_element']);
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . 'editable', 'css_element', '#fitem_'.$editor, 'css_element']);
         }
     }
 }
