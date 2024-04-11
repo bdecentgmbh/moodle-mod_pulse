@@ -466,3 +466,17 @@ div#pulsetemplates-tab-content .tab-pane.active {
 div#pulsetemplates-tab-content .tab-pane {
     display: none;
 }
+
+@media (min-width: 767px) and (max-width: 991px) {
+    .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+        width: auto;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 500px) {
+    .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+        width: auto;
+        max-width: 400px;
+    }
+}
