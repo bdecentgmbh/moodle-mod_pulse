@@ -112,7 +112,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             }
             return false;
         }
-        return true;
+        return false;
     }
 
     /**

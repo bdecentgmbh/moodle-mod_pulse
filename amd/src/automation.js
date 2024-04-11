@@ -53,11 +53,16 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
         var group = "checkboxgroupautomation";
 
         if (document.querySelectorAll('input[type=checkbox].' + group)
-            === null || document.querySelectorAll('[data-fieldtype="autocomplete"]') === null) {
+            === null || document.querySelectorAll('[data-fieldtype="autocomplete"], [data-fieldtype="tags"]') === null) {
             return true;
         }
 
-        document.querySelectorAll('[data-fieldtype="autocomplete"]').forEach((element) => {
+
+        var capinput = document.querySelector('input[name="hasinstanceeditcapability"]');
+        var hasCapability = (capinput && capinput.value) || capinput === null;
+
+        // Observer the autocomplete.
+        document.querySelectorAll('[data-fieldtype="autocomplete"], [data-fieldtype="tags"]').forEach((element) => {
 
             if (element === null) {
                 return true;
@@ -66,6 +71,12 @@ define("mod_pulse/automation", ['jquery', 'core/modal_factory', 'core/templates'
             var observer = new MutationObserver(function(mutations) {
                 mutations.forEach((mutation) => {
                     var target = mutation.target;
+
+                    // Not has capability to edit instance, then hide the autocomplete input text.
+                    if (!hasCapability && target.querySelector('input[data-fieldtype="autocomplete"]')) {
+                        target.querySelector('input[data-fieldtype="autocomplete"]').disabled = true;
+                    }
+
                     var overrideElement = target.querySelector('.custom-switch');
                     if (overrideElement === null) {
                         return;

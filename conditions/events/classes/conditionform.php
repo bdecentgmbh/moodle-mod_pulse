@@ -400,8 +400,10 @@ class conditionform extends \mod_pulse\automation\condition_base {
                 $vars['context'] = ($context) ? $context->get_context_name(true) : get_string('other');
 
                 // Event_Contextlinked.
-                if ($url = $context->get_url()) {
-                    $vars['contextlinked'] = \html_writer::link($url, $vars['context']);
+                if ($context instanceof \context) {
+                    if ($url = $context->get_url()) {
+                        $vars['contextlinked'] = \html_writer::link($url, $vars['context']);
+                    }
                 }
             }
             // Event_Affecteduserfullname.

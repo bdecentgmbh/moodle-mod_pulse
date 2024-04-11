@@ -114,7 +114,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
             return ($existingsignup) ? true : false;
         }
         // Not configured any session modules.
-        return true;
+        return false;
     }
 
     /**

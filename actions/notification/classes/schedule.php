@@ -177,8 +177,10 @@ class schedule {
             // Check the session condition are set for this notification. if its added then load the session data for placeholders.
             $sessionin = in_array('session', (array) $this->instancedata->template->triggerconditions);
             $sessionin = ($this->schedulerecord->con_isoverridden == 1) ? $this->schedulerecord->con_status : $sessionin;
-            if ($sessionin) {
-                $sessionconditiondata = (object) ['modules' => json_decode($this->schedulerecord->con_additional)->modules];
+            if ($sessionin && $this->schedulerecord->con_additional) {
+                $sessionaddional = json_decode($this->schedulerecord->con_additional);
+                $sessionmodules = !empty($sessionaddional->modules) ? $sessionaddional->modules : [];
+                $sessionconditiondata = (object) ['modules' => $sessionmodules];
                 $this->include_session_data($mod, $sessionconditiondata, $this->user->id);
             }
 
