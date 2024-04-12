@@ -153,5 +153,20 @@ class pulsecondition extends base {
         return $plugins;
     }
 
+    /**
+     * Delete the conditions instance overrides.
+     *
+     * @param int $instanceid
+     * @return void
+     */
+    public static function delete_condition_instance_overrides(int $instanceid) {
+        global $DB;
+
+        if ($DB->delete_records('pulse_condition_overrides', ['instanceid' => $instanceid])) {
+            return true;
+        }
+
+        return false;
+    }
 
 }

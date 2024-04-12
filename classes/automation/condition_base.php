@@ -120,10 +120,11 @@ abstract class condition_base {
      * @param int $instanceid The instance ID.
      * @param int $userid The user ID.
      * @param mixed $expectedtime The expected time for triggering.
+     * @param bool $newuser Is the trigger instance for new user.
      */
-    public function trigger_instance(int $instanceid, int $userid, $expectedtime=null) {
+    public function trigger_instance(int $instanceid, int $userid, $expectedtime=null, $newuser=false) {
 
-        \mod_pulse\automation\instances::create($instanceid)->trigger_action($userid, $expectedtime);
+        \mod_pulse\automation\instances::create($instanceid)->trigger_action($userid, $expectedtime, $newuser);
     }
 
     /**
@@ -135,6 +136,15 @@ abstract class condition_base {
      * @return bool True if user has completed, otherwise false.
      */
     public function is_user_completed($notification, int $userid) {
+        return true;
+    }
+
+    /**
+     * Status of the condition addon works based on the user enrolment.
+     *
+     * @return bool
+     */
+    public function is_user_enrolment_based() {
         return true;
     }
 
@@ -282,5 +292,15 @@ abstract class condition_base {
      * @return void
      */
     public function backup_define_structure(&$instances) {
+    }
+
+    /**
+     * Delete the records of condition for the custom instance.
+     *
+     * @param int $instanceid
+     * @return void
+     */
+    public function delete_condition_instance(int $instanceid) {
+        return false;
     }
 }

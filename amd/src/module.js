@@ -145,8 +145,7 @@ define(['core_editor/events'], function() {
                     return false;
                 }
                 iframes.forEach((iframe) => {
-                    iframe.contentDocument.addEventListener('click', function(e) {
-                        var currentFrame = e.target;
+                    iframe.contentDocument.addEventListener('click', function() {
                         iframes.forEach((frame) => {
                             var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
                             if (frameElem !== null) {
@@ -154,7 +153,7 @@ define(['core_editor/events'], function() {
                             }
                         });
 
-                        var contentBody = currentFrame.querySelector('body');
+                        var contentBody = iframe.contentDocument.querySelector('body');
                         if (contentBody !== null) {
                             contentBody.classList.add("insertatcaretactive");
                         }

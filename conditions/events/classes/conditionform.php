@@ -25,6 +25,7 @@
 namespace pulsecondition_events;
 
 use core\context\user;
+use core\reportbuilder\local\entities\context;
 use mod_pulse\automation\condition_base;
 
 /**
@@ -53,6 +54,45 @@ class conditionform extends \mod_pulse\automation\condition_base {
      */
     public function include_condition(&$option) {
         $option['events'] = get_string('eventscompletion', 'pulsecondition_events');
+    }
+
+    /**
+     * Status of the condition addon works based on the user enrolment.
+     *
+     * @return bool
+     */
+    public function is_user_enrolment_based() {
+        return false;
+    }
+
+    /**
+     * Gets available options. For events upcoming will be in top.
+     *
+     * @return array List of options.
+     */
+    public function get_options() {
+        return [
+            self::DISABLED => get_string('disable'),
+            self::FUTURE => get_string('upcoming', 'pulse'),
+            self::ALL => get_string('all'),
+        ];
+    }
+
+    /**
+     * Delete the records of condition for the custom instance.
+     *
+     * @param int $instanceid
+     * @return void
+     */
+    public function delete_condition_instance(int $instanceid) {
+        global $DB;
+
+        if ($DB->delete_records('pulsecondition_events', ['instanceid' => $instanceid])) {
+            purge_caches(['muc', 'other']);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -97,7 +137,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $cmlist = array_map(fn($cm) => $cm->get_name(), $cmlist);
 
         $mform->addElement('autocomplete', 'condition[events][modules]',
-            get_string('eventmodule', 'pulsecondition_events'), $cmlist);
+            get_string('eventmodule', 'pulsecondition_events'), [0 => ''] + $cmlist);
         $mform->hideIf('condition[events][modules]', 'condition[events][status]', 'eq', self::DISABLED);
 
         $mform->addElement('hidden', 'override[condition_events_modules]', 1);
@@ -186,7 +226,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         // Upcoming condition check.
         if (!empty($eventdata['upcomingtime'])) {
-            $sql .= 'AND timecreated > :upcomingtime';
+            $sql .= 'AND timecreated >= :upcomingtime';
             $params['upcomingtime'] = $eventdata['upcomingtime'];
         }
 
@@ -203,7 +243,36 @@ class conditionform extends \mod_pulse\automation\condition_base {
      */
     public static function pulse_event_condition_trigger($eventdata) {
         global $DB, $USER;
+
         $data = $eventdata->get_data();
+
+        // Commit the database transaction.
+        \core\event\manager::database_transaction_commited();
+
+        // Events are stored in the log using the shutdown manager, it store the data end of the script.
+        // Unfortuanlty the log will be stored to verify the event log to confirm the user is completed this conditions.
+        // To store the data before, trigger the conditions check.
+        // Fetch the log manager callback from shutdown handler and triggers the dispose method to store the event log data to DB.
+        $obj = new \core_shutdown_manager();
+        $reflection = new \ReflectionClass($obj);
+        $property = $reflection->getProperty('callbacks');
+        $property->setAccessible(true);
+        $callbacks = $property->getValue($obj);
+
+        // Get the log manager and trigger the dispose method.
+        foreach ($callbacks as $lists) {
+            foreach ($lists as $methods) {
+                if (empty($methods)) {
+                    continue;
+                }
+                list($callback, $method) = $methods;
+                if ($callback instanceof \tool_log\log\manager) {
+                    // Dispose the log manager to store the event entries.
+                    $callback->dispose();
+                    break;
+                }
+            }
+        }
 
         $eventname = $eventdata->eventname ?? '';
 
@@ -215,7 +284,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
 
         foreach ($instances as $key => $instance) {
 
-            $additional = json_decode($instance->additional);
+            $additional = $instance->additional ? json_decode($instance->additional) : (object)[];
 
             // Module configured for this instance event, and the event is not for this module, continue to next instance.
             if (property_exists($additional, 'modules') && $additional->modules &&
@@ -498,6 +567,7 @@ class conditionform extends \mod_pulse\automation\condition_base {
         $cache->delete('all');
         // Build the observers again.
         $list = \core\event\manager::get_all_observers();
-        purge_other_caches();
+        $cache->set('all', $list);
+        purge_caches(['muc', 'other']);
     }
 }

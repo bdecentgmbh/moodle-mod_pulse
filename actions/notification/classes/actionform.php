@@ -219,6 +219,10 @@ class actionform extends \mod_pulse\automation\action_base {
      */
     public function trigger_action($instancedata, $userid, $expectedtime=null, $newuser=false) {
 
+        if (!isset($instancedata->pulsenotification_id)) {
+            return false;
+        }
+
         $notification = notification::instance($instancedata->pulsenotification_id);
         $notificationinstance = (object) helper::filter_record_byprefix($instancedata, $this->config_shortname());
 

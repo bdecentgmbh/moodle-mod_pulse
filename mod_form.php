@@ -257,13 +257,15 @@ class mod_pulse_mod_form extends moodleform_mod {
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
+            $pulsecontent = isset($defaultvalues['pulse_content']) ?? '';
+            $pulsecontentformat = isset($defaultvalues['pulse_contentformat']) ?? 0;
             $defaultvalues['pulse_content_editor']['text'] =
                                     file_prepare_draft_area($draftitemid, $this->context->id,
                                     'mod_pulse', 'pulse_content', false,
                                     $editoroptions,
-                                    $defaultvalues['pulse_content']);
+                                    $pulsecontent);
 
-            $defaultvalues['pulse_content_editor']['format'] = $defaultvalues['pulse_contentformat'];
+            $defaultvalues['pulse_content_editor']['format'] = $pulsecontentformat;
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
         } else {
             $draftitemid = file_get_submitted_draft_itemid('pulse_content_editor');

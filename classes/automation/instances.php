@@ -280,6 +280,8 @@ class instances extends templates {
             $DB->delete_records('pulse_autotemplates_ins', ['instanceid' => $this->instanceid]);
             // Delete all its actions data for this instance.
             $this->delete_actions_instances($this->instanceid);
+            // Delete all its conditions data.
+            $this->delete_condition_instances($this->instanceid);
 
             return true;
         }
@@ -367,6 +369,25 @@ class instances extends templates {
     }
 
     /**
+     * Delete all the available actions linked with this template.
+     *
+     * Find the lis of actions and get linked template instance based template id and delete those actions.
+     *
+     * @param int $instanceid
+     * @return void
+     */
+    public function delete_condition_instances($instanceid) {
+        // Fetch the list of enabled action plugins.
+        $actionplugins = \mod_pulse\plugininfo\pulsecondition::get_list();
+        foreach ($actionplugins as $name => $plugin) {
+            $plugin->delete_condition_instance($instanceid);
+        }
+
+        // Delete the condition plugins overrides.
+        \mod_pulse\plugininfo\pulsecondition::delete_condition_instance_overrides($instanceid);
+    }
+
+    /**
      * Trigger the action for a user.
      *
      * @param int      $userid   The ID of the user.
@@ -444,11 +465,12 @@ class instances extends templates {
                 $userenroltime = $this->get_user_enrolment_createtime($userid, $instancedata->course);
                 // User enrolled before the condition is set as upcoming. then not need to verify the condition.
                 // User is passed this condition by default.
-                if ($userenroltime < $option['upcomingtime']) {
+                if ($condition->is_user_enrolment_based() && ($userenroltime < $option['upcomingtime'])) {
                     continue;
                 }
             }
 
+            // Verify the user is completed the condition.
             if ($condition->is_user_completed($instancedata, $userid, $completion)) {
 
                 $result++; // Increase completed condition count for this user.

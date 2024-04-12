@@ -684,3 +684,5 @@ Feature: Pulse automation instances management
     And I navigate to course "Course 1" automation instances
     And I should see "Template1" in the "temp1C1" "table_row"
     And I click on ".action-report" "css_element" in the "temp1C1" "table_row"
+    And I switch to a second window
+    And I should see "sent" in the "Template1" "table_row"
