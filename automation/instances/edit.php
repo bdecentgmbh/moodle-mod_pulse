@@ -135,7 +135,7 @@ if ($instanceid !== null && $instanceid > 0) {
         // Convert the trigger conditions to separate element.
         $conditions = $record->triggerconditions;
         foreach ($conditions as $condition) {
-            $record->{'condition['.$condition.'][status]'} = condition_base::ALL;
+            $record->{'condition['.$condition.'][status]'} = ($condition == 'events') ? condition_base::FUTURE : condition_base::ALL;
         }
         // Set the template data to the templates edit form.
         $templatesform->set_data($record);
