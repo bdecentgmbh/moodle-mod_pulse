@@ -1086,6 +1086,7 @@ class notification {
                     unset($newmod->cmid);
                     foreach ($newmod as $name => $value) {
                         $key = str_replace('local_metadata_field_', 'metadata', $name);
+                        $key = strtolower($key);
                         $mod->$key = $value;
                     }
                 }

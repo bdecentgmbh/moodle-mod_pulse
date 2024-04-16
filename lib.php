@@ -734,6 +734,7 @@ function pulse_email_placeholders($editor, $automation=true) {
             'vars' => $label,
             'showmore' => (count($label) > 6) ? true : false,
             'active' => $i,
+            'pretext' => ($key == "Mod_Metadata") ? '' : $key."_",
         ];
         $i++;
     }

@@ -47,7 +47,8 @@ define(['core_editor/events'], function() {
             var notificationheader = document.getElementById('admin-notificationheader');
             if (notificationheader !== null) {
                 notificationheader.addEventListener('click', function() {
-                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationheader_ifr');
+                    var EditorInput = (branch <= '402') ? document.getElementById('id_s_mod_pulse_notificationheadereditable')
+                    : document.getElementById('id_s_mod_pulse_notificationheader_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
@@ -55,7 +56,8 @@ define(['core_editor/events'], function() {
             var notificationfooter = document.getElementById('admin-notificationfooter');
             if (notificationfooter !== null) {
                 notificationfooter.addEventListener('click', function() {
-                    var EditorInput = document.getElementById('id_s_mod_pulse_notificationfooter_ifr');
+                    var EditorInput = (branch <= '402') ? document.getElementById('id_s_mod_pulse_notificationfootereditable')
+                    : document.getElementById('id_s_mod_pulse_notificationfooter_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
@@ -79,11 +81,11 @@ define(['core_editor/events'], function() {
             if (headertargetNode !== null) {
                 let observer = new MutationObserver(function() {
                     if (headertargetNode.style.display == 'none') {
-                        var headeriframe = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                        var headeriframe = document.querySelector('#admin-notificationheader iframe');
                         if (headeriframe !== null) {
-                            headeriframe.addEventListener('click', function(e) {
-                                var currentFrame = e.target;
-                                var headercontentBody = currentFrame.querySelector('body');
+                            var headercontent = document.querySelector('#admin-notificationheader iframe').contentDocument;
+                            headercontent.addEventListener('click', function() {
+                                var headercontentBody = headercontent.querySelector('body');
                                 if (headercontentBody !== null) {
                                     headercontentBody.classList.add("insertatcaretactive");
                                 }
@@ -105,11 +107,11 @@ define(['core_editor/events'], function() {
             if (footertargetNode !== null) {
                 let observer = new MutationObserver(function() {
                     if (footertargetNode.style.display == 'none') {
-                        var footeriframe = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                        var footeriframe = document.querySelector('#admin-notificationfooter iframe');
                         if (footeriframe !== null) {
-                            footeriframe.addEventListener('click', function(e) {
-                                var currentFrame = e.target;
-                                var footercontentBody = currentFrame.querySelector('body');
+                            var footercontent = document.querySelector('#admin-notificationfooter iframe').contentDocument;
+                            footercontent.addEventListener('click', function() {
+                                var footercontentBody = footercontent.querySelector('body');
                                 if (footercontentBody !== null) {
                                     footercontentBody.classList.add("insertatcaretactive");
                                 }
@@ -176,26 +178,28 @@ define(['core_editor/events'], function() {
                     navigator.clipboard.writeText(content);
 
                     if (iframes === null || !iframes.length) {
-                        if (branch <= '402') {
-                            module.insertAtCaret(content);
-                            return true;
-                        } else {
-                            // Header notification editor.
-                            var headerNode = document.querySelector('#admin-notificationheader iframe').contentDocument;
-                            if (headerNode !== null) {
-                                var headercontentBody = headerNode.querySelector("body");
-                                if (headercontentBody.classList.contains("insertatcaretactive")) {
-                                    headercontentBody.classList.add("insertatcaretactive");
-                                    const id = headercontentBody.dataset.id;
-                                    var headereditor = window.tinyMCE.get(id);
-                                    headereditor.selection.setContent(content);
-                                    return true;
+                        var headerNode = document.querySelector('#admin-notificationheader iframe');
+                        if (headerNode !== null) {
+                                // Header notification editor.
+                                var headerNodeiframe = headerNode.contentDocument;
+                                if (headerNodeiframe !== null) {
+                                    var headercontentBody = headerNodeiframe.querySelector("body");
+                                    if (headercontentBody.classList.contains("insertatcaretactive")) {
+                                        headercontentBody.classList.add("insertatcaretactive");
+                                        const id = headercontentBody.dataset.id;
+                                        var headereditor = window.tinyMCE.get(id);
+                                        headereditor.selection.setContent(content);
+                                        return true;
+                                    }
                                 }
-                            }
+                        }
+
+                        var footerNode = document.querySelector('#admin-notificationfooter iframe');
+                        if (footerNode !== null) {
                             // Footer notification editor.
-                            var footerNode = document.querySelector('#admin-notificationfooter iframe').contentDocument;
-                            if (footerNode !== null) {
-                                var footercontentBody = footerNode.querySelector("body");
+                            var footerNodeiframe = footerNode.contentDocument;
+                            if (footerNodeiframe !== null) {
+                                var footercontentBody = footerNodeiframe.querySelector("body");
                                 if (footercontentBody.classList.contains("insertatcaretactive")) {
                                     footercontentBody.classList.add("insertatcaretactive");
                                     const id = footercontentBody.dataset.id;

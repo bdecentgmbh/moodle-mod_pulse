@@ -105,7 +105,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse_content_editor', 'remindercontent', 'mod_pulse');
 
         // Email tempalte placholders.
-        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init', [$CFG->branch]);
 
         // Presets - JS.
         $section = optional_param('section', 0, PARAM_INT);
@@ -257,8 +257,8 @@ class mod_pulse_mod_form extends moodleform_mod {
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
-            $pulsecontent = isset($defaultvalues['pulse_content']) ?? '';
-            $pulsecontentformat = isset($defaultvalues['pulse_contentformat']) ?? 0;
+            $pulsecontent = $defaultvalues['pulse_content'] ?? '';
+            $pulsecontentformat = $defaultvalues['pulse_contentformat'] ?? 0;
             $defaultvalues['pulse_content_editor']['text'] =
                                     file_prepare_draft_area($draftitemid, $this->context->id,
                                     'mod_pulse', 'pulse_content', false,
