@@ -91,7 +91,6 @@ class helper {
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
 
-        $mod = clone $mod;
         if (!empty($mod->id)) {
             if ($DB->record_exists('course_modules', ['id' => $mod->id])) {
                 $module = $DB->get_record('course_modules', ['id' => $mod->id]);
