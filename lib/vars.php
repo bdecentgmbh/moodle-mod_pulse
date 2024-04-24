@@ -161,10 +161,11 @@ class pulse_email_vars {
      * @return void
      */
     public function __construct($user, $course, $sender, $pulse, $condition=null) {
-        global $CFG;
+        global $CFG, $USER;
 
+        $newuser = !empty($user->id) ? $user : $USER;
         self::convert_varstime_format($user);
-        $this->user =& $user;
+        $this->user =& $newuser;
 
         $this->sender =& $sender;
         $wwwroot = $CFG->wwwroot;
@@ -538,7 +539,11 @@ class pulse_email_vars {
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
                 'timemodified', 'enablecompletion',
             ];
-            $records = $DB->get_records('customfield_field', [], '', 'shortname');
+
+            $sql = "SELECT cf.shortname FROM {customfield_field} cf
+            JOIN {customfield_category} cc ON cc.id = cf.categoryid
+            WHERE cc.component = :component";
+            $records = $DB->get_records_sql($sql, ['component' => 'core_course']);
 
             $customfields = array_map(function($value) {
                 return 'customfield_'.$value;
