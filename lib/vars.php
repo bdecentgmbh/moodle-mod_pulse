@@ -561,7 +561,7 @@ class pulse_email_vars {
     public static function course_activities_data_fields() {
         return [
             // Activities Fields.
-            'Mod_Type', 'Mod_Name', 'Mod_Intro', 'Mod_Url', 'Mod_Duedate',
+            'Mod_Type', 'Mod_Name', 'Mod_Intro',
         ];
     }
 
