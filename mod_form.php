@@ -111,7 +111,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $section = optional_param('section', 0, PARAM_INT);
         $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id, $section]);
 
-        $placeholders = pulse_email_placeholders('content', false);
+        $placeholders = pulse_email_placeholders('content');
         $mform->addElement('html', $placeholders);
         // Show intro on course page always.
         $mform->addElement('hidden', 'showdescription', 1);

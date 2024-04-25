@@ -121,82 +121,6 @@ class behat_pulse extends behat_base {
         \mod_pulse\preset::pulse_create_presets();
     }
 
-
-    /**
-     * Open the automation templates listing page.
-     *
-     * @Given /^I navigate to automation templates$/
-     */
-    public function i_navigate_to_automation_templates() {
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ['Plugins > Activity modules > Pulse > Automation templates']);
-    }
-
-    /**
-     * Open the automation instance listing page for the course.
-     *
-     * @Given /^I navigate to course "(?P<coursename>(?:[^"]|\\")*)" automation instances$/
-     * @param string $coursename Coursename.
-     */
-    public function i_navigate_to_course_automation_instances($coursename) {
-        $this->execute('behat_navigation::i_am_on_course_homepage', [$coursename]);
-        $this->execute('behat_navigation::i_select_from_secondary_navigation', get_string('automation', 'pulse'));
-    }
-
-    /**
-     * Fills a automation template create form with field/value data.
-     *
-     * @Given /^I create automation template with the following fields to these values:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param TableNode $data
-     */
-    public function i_create_automation_template_with_the_following_fields_to_these_values(TableNode $data) {
-
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on", ["Create new template", "button"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
-    }
-
-
-    /**
-     * Fills a automation template condition form with field/value data.
-     *
-     * @Given /^I create "([^"]*)" template with the set the condition:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param string $reference
-     * @param TableNode $data
-     */
-    public function i_create_autoation_template_condition_to_these_values($reference, TableNode $data) {
-
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on_in_the", [".action-edit", "css_element", $reference, "table_row"]);
-        $this->execute("behat_general::click_link", ["Condition"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
-    }
-
-
-    /**
-     * Fills a automation template notification form with field/value data.
-     *
-     * @Given /^I create "([^"]*)" template with the set the notification:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param string $reference
-     * @param TableNode $data
-     */
-    public function i_create_automation_template_notification_to_these_values($reference, TableNode $data) {
-
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on_in_the", [".action-edit", "css_element", $reference, "table_row"]);
-        $this->execute("behat_general::i_click_on", ["#automation-tabs .nav-item:nth-child(3) a", "css_element"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
-    }
-
     /**
      * Select the conditions are met option on the activity completion tracking .
      *
@@ -210,38 +134,6 @@ class behat_pulse extends behat_base {
         } else {
             $this->execute('behat_forms::i_set_the_field_to',
             ['Completion tracking', 'Show activity as complete when conditions are met']);
-        }
-    }
-
-
-    /**
-     * Switches to a pulse new window.
-     *
-     * @Given /^I switch to a pulse open window$/
-     * @throws DriverException If there aren't exactly 2 windows open.
-     */
-    public function switch_to_open_window() {
-        $names = $this->getSession()->getWindowNames();
-        $this->getSession()->switchToWindow(end($names));
-    }
-
-    /**
-     * Switches to a pulse new window.
-     *
-     * @Given /^I click on pulse "([^"]*)" editor$/
-     *
-     * @param string $editor
-     * @throws DriverException If there aren't exactly 2 windows open.
-     */
-    public function i_click_on_pulse_editor($editor) {
-        global $CFG;
-
-        if ($CFG->branch >= 402) {
-            $this->execute('behat_general::i_click_on_in_the',
-                ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
-        } else {
-            $this->execute('behat_general::i_click_on_in_the',
-                ['#'.$editor . 'editable', 'css_element', '#fitem_'.$editor, 'css_element']);
         }
     }
 }

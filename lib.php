@@ -32,7 +32,6 @@ global $PAGE;
 require_once($CFG->libdir."/completionlib.php");
 require_once($CFG->dirroot.'/lib/filelib.php');
 require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
-require_once($CFG->dirroot.'/mod/pulse/classes/table/manage_instance.php');
 
 /**
  * Add pulse instance.
@@ -596,123 +595,15 @@ function mod_pulse_output_fragment_completionbuttons($args) {
 }
 
 /**
- * Update the automation templates and instance title during edited directly on table using inplace editable.
- *
- * @param  string $itemtype Template or Instance which is edited.
- * @param  int $itemid ID of the edited template or instance
- * @param  string $newvalue New value to updated
- * @return string Updated title of template or instance.
- */
-function mod_pulse_inplace_editable($itemtype, $itemid, $newvalue) {
-    global $DB, $PAGE;
-    $context = \context_system::instance();
-    $PAGE->set_context($context);
-    require_login();
-
-    if ($itemtype === 'templatetitle') {
-
-        $record = $DB->get_record('pulse_autotemplates', ['id' => $itemid], '*', MUST_EXIST);
-        // Check permission of the user to update this item.
-        require_capability('mod/pulse:addtemplate', context_system::instance());
-        // Clean input and update the record.
-        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
-        $DB->update_record('pulse_autotemplates', ['id' => $itemid, 'title' => $newvalue]);
-        // Prepare the element for the output.
-        $record->title = $newvalue;
-        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
-            format_string($record->title), $record->title, 'Edit template title',
-            'New value for ' . format_string($record->title));
-
-    } else if ($itemtype === 'instancetitle') {
-
-        $record = $DB->get_record('pulse_autotemplates_ins', ['instanceid' => $itemid], '*', MUST_EXIST);
-        // Check permission of the user to update this item.
-        require_capability('mod/pulse:addtemplateinstance', context_system::instance());
-        // Clean input and update the record.
-        $newvalue = clean_param($newvalue, PARAM_NOTAGS);
-        $DB->update_record('pulse_autotemplates_ins', ['id' => $record->id, 'title' => $newvalue]);
-        // Prepare the element for the output.
-        $record->title = $newvalue;
-        return new \core\output\inplace_editable('mod_pulse', 'title', $record->id, true,
-            format_string($record->title), $record->title, 'Edit template title',
-            'New value for ' . format_string($record->title));
-    }
-}
-
-/**
- * Add the link in course secondary navigation menu to open the automation instance list page.
- *
- * @param  navigation_node $navigation
- * @param  stdClass $course
- * @param  context_course $context
- * @return void
- */
-function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
-    global $PAGE;
-
-    $addnode = $context->contextlevel === CONTEXT_COURSE;
-    $addnode = $addnode && has_capability('mod/pulse:addtemplateinstance', $context); // TODO: Custom capability.
-    if ($addnode) {
-        $id = $context->instanceid;
-        $url = new moodle_url('/mod/pulse/automation/instances/list.php', [
-            'courseid' => $id,
-        ]);
-        $node = $navigation->create(get_string('automation', 'pulse'), $url, navigation_node::TYPE_SETTING, null, null);
-        $node->add_class('automation-templates');
-        $node->set_force_into_more_menu(false);
-        $node->set_show_in_secondary_navigation(true);
-        $node->key = 'automation-templates';
-        $navigation->add_node($node, 'gradebooksetup');
-        $PAGE->requires->js_call_amd('mod_pulse/automation', 'instanceMenuLink', []);
-    }
-}
-
-/**
- * Defines pulse automation template list nodes for my profile navigation tree.
- *
- * @param \core_user\output\myprofile\tree $tree Tree object
- * @param stdClass $user user object
- * @param bool $iscurrentuser is the user viewing profile, current user ?
- * @param stdClass $course course object
- *
- * @return bool
- */
-function mod_pulse_myprofile_navigation(tree $tree, $user, $iscurrentuser, $course) {
-    global $USER;
-
-    // Get the pulse category.
-    if (!array_key_exists('pulse', $tree->__get('categories'))) {
-        // Create the category.
-        $categoryname = get_string('pluginname', 'mod_pulse');
-        $category = new core_user\output\myprofile\category('pulse', $categoryname, 'privacyandpolicies');
-        $tree->add_category($category);
-    } else {
-        // Get the existing category.
-        $category = $tree->__get('categories')['pulse'];
-    }
-
-    if ($iscurrentuser) {
-        $systemcontext = \context_system::instance();
-        if (has_capability('mod/pulse:viewtemplateslist', $systemcontext)) {
-            $automationtemplate = new moodle_url('/mod/pulse/automation/templates/list.php');
-            $pulsenode = new core_user\output\myprofile\node('pulse', 'pulse',
-                get_string('pulsetemplink', 'mod_pulse'), null, $automationtemplate);
-            $tree->add_node($pulsenode);
-        }
-    }
-}
-
-/**
  * Add email placeholder fields in form fields.
  *
  * @param string $editor
- * @param bool $automation
  * @return void
  */
-function pulse_email_placeholders($editor, $automation=true) {
+function pulse_email_placeholders($editor) {
     global $OUTPUT;
 
-    $vars = \pulse_email_vars::vars($automation);
+    $vars = \pulse_email_vars::vars();
     $i = 0;
 
     foreach ($vars as $key => $var) {
@@ -743,23 +634,4 @@ function pulse_email_placeholders($editor, $automation=true) {
     $templatecontext['editor'] = $editor;
 
     return $OUTPUT->render_from_template('mod_pulse/vars', $templatecontext);
-}
-
-/**
- * Get the management instance table form the manageinstable table and return to the fragment.
- *
- * @param array $params
- * @return void
- */
-function mod_pulse_output_fragment_get_manageinstance_table(array $params) {
-    global $OUTPUT;
-
-    $templateid = $params['templateid'];
-    ob_start();
-    $table = new \mod_pulse\table\manage_instance($templateid);
-    $table->out(20, true);
-    $tablehtml = ob_get_contents();
-    ob_end_clean();
-
-    return $OUTPUT->render_from_template('mod_pulse/manageinstance_table', ['tablehtml' => $tablehtml]);
 }

@@ -42,14 +42,7 @@ class restore_pulse_activity_task extends restore_activity_task {
      * Define restore structure steps to restore to database from pulse.xml.
      */
     protected function define_my_steps() {
-
         $this->add_step(new restore_pulse_activity_structure_step('pulse_structure', 'pulse.xml'));
-
-        $fullpath = $this->get_taskbasepath();
-        $fullpath = rtrim($fullpath, '/') . '/pulseautomation.xml';
-        if (file_exists($fullpath)) {
-            $this->add_step(new restore_pulse_course_structure_step('pulse_automation', 'pulseautomation.xml'));
-        }
     }
 
     /**
@@ -63,8 +56,6 @@ class restore_pulse_activity_task extends restore_activity_task {
 
         \mod_pulse\extendpro::pulse_extend_restore_content($contents);
 
-        restore_pulse_course_structure_step::decode_contents($contents);
-
         return $contents;
     }
 
@@ -75,5 +66,4 @@ class restore_pulse_activity_task extends restore_activity_task {
     public static function define_decode_rules() {
         return [];
     }
-
 }

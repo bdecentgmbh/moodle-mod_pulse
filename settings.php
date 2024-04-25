@@ -39,8 +39,3 @@ if ($ADMIN->fulltree) {
 }
 $ADMIN->add('modpulse', $settings);
 $settings = null; // Reset the settings.
-
-// Include the external page automation settings.
-$automation = new admin_externalpage('pulseautomation', get_string('autotemplates', 'pulse', null, true),
-    new moodle_url('/mod/pulse/automation/templates/list.php'), 'mod/pulse:viewtemplateslist');
-$ADMIN->add('modpulse', $automation);

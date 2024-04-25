@@ -35,10 +35,4 @@ $observers = [
         'callback' => '\mod_pulse\eventobserver::user_enrolment_deleted',
     ],
 
-    // To create a automation instance schedule for new user.
-    [
-        'eventname' => 'core\event\user_enrolment_created',
-        'callback' => '\mod_pulse\eventobserver::user_enrolment_created',
-    ],
-
 ];

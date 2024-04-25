@@ -23,7 +23,6 @@
  */
 defined('MOODLE_INTERNAL') || die('No direct access');
 
-use mod_pulse\automation\helper;
 use mod_pulse\helper as pulsehelper;
 /**
  * Filter for notification content placeholders.
@@ -109,41 +108,6 @@ class pulse_email_vars {
     protected $orgcourse = null;
 
     /**
-     * Calendar data.
-     *
-     * @var object
-     */
-    public $calendar = null;
-
-    /**
-     * Assignment Extension data.
-     *
-     * @var object
-     */
-    public $assignment = null;
-
-    /**
-     * Conditions vars data.
-     *
-     * @var mixed
-     */
-    public $condition = null;
-
-    /**
-     * Event data.
-     *
-     * @var object
-     */
-    public $event = null;
-
-    /**
-     * Traning data.
-     *
-     * @var object
-     */
-    public $training = null;
-
-    /**
      * Reaction Data
      *
      * @var object
@@ -157,15 +121,13 @@ class pulse_email_vars {
      * @param mixed $course Course data object
      * @param mixed $sender Sender user record data.
      * @param mixed $pulse Pulse instance record data.
-     * @param mixed $condition Conditions data
      * @return void
      */
-    public function __construct($user, $course, $sender, $pulse, $condition=null) {
-        global $CFG, $USER;
+    public function __construct($user, $course, $sender, $pulse) {
+        global $CFG;
 
-        $newuser = !empty($user->id) ? $user : $USER;
         self::convert_varstime_format($user);
-        $this->user =& $newuser;
+        $this->user =& $user;
 
         $this->sender =& $sender;
         $wwwroot = $CFG->wwwroot;
@@ -190,21 +152,10 @@ class pulse_email_vars {
 
         $this->enrolment = $this->get_user_enrolment();
 
-        $this->calendar = $this->get_calendar();
-
-        $this->training = $this->training_data();
-
-        $actionplugins = new \mod_pulse\plugininfo\pulseaction();
-        $plugins = $actionplugins->get_plugins_base();
-        foreach ($plugins as $component => $pluginbase) {
-            $this->assignment = $pluginbase->get_assignment_extension($this->course->id, $this->user->id);
-        }
-
         if (pulsehelper::pulse_has_pro() && $this->pulse) {
             $this->reaction = $this->reaction_data();
         }
 
-        $this->condition = $condition;
     }
 
     /**
@@ -252,11 +203,10 @@ class pulse_email_vars {
     /**
      * Set up all the methods that can be called and used for substitution var in email templates.
      *
-     * @param bool $automation Display the vars related to the automation actions and conditions.
      * @return array
      *
      **/
-    public static function vars($automation=false) {
+    public static function vars() {
         global $DB, $SITE;
 
         $reflection = new ReflectionClass("pulse_email_vars");
@@ -272,37 +222,15 @@ class pulse_email_vars {
             'Sender' => self::sender_data_fields(),
             // Enrolment data fields.
             'Enrolment' => self::enrolement_data_fields(),
-            // Calendar data fields.
-            'Calendar' => self::calendar_data_fields(),
             // Site data fields.
             'Site' => self::site_data_fields(),
             // Course activities data fields.
             'Mod' => self::course_activities_data_fields(),
             // Meta fields.
             'Mod_Metadata' => self::module_meta_fields(),
-            // Training fields.
-            "Training" => self::training_data_fields(),
         ];
 
-        if ($automation) {
-            $actionplugins = new \mod_pulse\plugininfo\pulseaction();
-            $plugins = $actionplugins->get_plugins_base();
-            foreach ($plugins as $component => $pluginbase) {
-                $result += $pluginbase->get_email_placeholders();
-            }
-
-            $plugins = \mod_pulse\plugininfo\pulsecondition::instance()->get_plugins_base();
-            foreach ($plugins as $component => $pluginbase) {
-                $result += $pluginbase->get_email_placeholders();
-            }
-
-            // Session data fields.
-            $result += ['Mod_session' => self::session_fields()];
-        }
-
-        if (!$automation || $automation == 'all') {
-            $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
-        }
+        $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
 
         // Remove empty vars.
         $result = array_filter($result);
@@ -327,8 +255,6 @@ class pulse_email_vars {
 
                 if (method_exists($this, $object)) {
                     return $this->$object($property); // Call the method.
-                } else if (array_key_exists($object, $this->condition)) {
-                    return $this->condition[$object][$property] ?? $this->blank;
                 } else if ($this->$object == null) {
                     return $this->blank;
                 }
@@ -431,12 +357,9 @@ class pulse_email_vars {
             $firstinstance = current($enrolments);
             $percentage = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
             $progress = !empty($percentage) ? $percentage : 0;
-            $courseduedate = helper::create()->timemanagement_details(
-                'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
 
             return (object) [
                 'progress' => round($progress) .'%',
-                'courseduedate' => $courseduedate,
                 'status' => ($firstinstance->status == 1) ? get_string('suspended', 'mod_pulse') : get_string('active'),
                 'startdate' => $firstinstance->timestart
                     ? userdate($firstinstance->timestart, get_string('strftimedatetimeshort', 'langconfig')) : $emptystartdate,
@@ -445,33 +368,6 @@ class pulse_email_vars {
             ];
         }
         return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
-    }
-
-    /**
-     * Fetch the traning data.
-     *
-     * @return array
-     */
-    public function training_data() {
-        // Course user progress in percentage.
-        $percentage = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
-        $progress = !empty($percentage) ? $percentage : 0;
-        $eventdates = helper::create()->timemanagement_details(
-            'eventdates', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-        $upcomingmods = helper::create()->timemanagement_details(
-                'upcomingmods', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-        $courseduedate = helper::create()->timemanagement_details(
-            'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-        $activityduedate = helper::create()->timemanagement_details(
-            'activityduedate', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-
-        return (object) [
-            'upcomingmods' => $upcomingmods,
-            'courseprogress' => $progress ? round($progress) .'%' : '',
-            'eventdates' => $eventdates,
-            'coursedue' => $courseduedate,
-            'activityduedate' => $activityduedate,
-        ];
     }
 
     /**
@@ -539,11 +435,7 @@ class pulse_email_vars {
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
                 'timemodified', 'enablecompletion',
             ];
-
-            $sql = "SELECT cf.shortname FROM {customfield_field} cf
-            JOIN {customfield_category} cc ON cc.id = cf.categoryid
-            WHERE cc.component = :component";
-            $records = $DB->get_records_sql($sql, ['component' => 'core_course']);
+            $records = $DB->get_records('customfield_field', [], '', 'shortname');
 
             $customfields = array_map(function($value) {
                 return 'customfield_'.$value;
@@ -633,18 +525,6 @@ class pulse_email_vars {
     }
 
     /**
-     * Calendar information list.
-     *
-     * @return array
-     */
-    public static function calendar_data_fields() {
-        return [
-            // Calendar information fields.
-            'Calendar_UpcomingActivitiesList', 'Calendar_EventDatesList',
-        ];
-    }
-
-    /**
      * Enrolment information fields.
      *
      * @return array
@@ -652,7 +532,7 @@ class pulse_email_vars {
     public static function enrolement_data_fields() {
         return [
             // Sender information fields .
-            'Enrolment_Status', 'Enrolment_Progress', 'Enrolment_Startdate', 'Enrolment_Enddate', 'Enrolment_Courseduedate',
+            'Enrolment_Status', 'Enrolment_Progress', 'Enrolment_Startdate', 'Enrolment_Enddate',
         ];
     }
 
@@ -677,36 +557,6 @@ class pulse_email_vars {
         return [
             // Activities Fields.
             'Mod_Type', 'Mod_Name', 'Mod_Intro', 'Mod_Url', 'Mod_Duedate',
-        ];
-    }
-
-    /**
-     * Training fields. Timemanagement ltools support.
-     *
-     * @return array
-     */
-    public static function training_data_fields() {
-        return [
-            'Training_Upcomingmods', 'Training_Courseprogress', 'Training_Eventdates',
-            'Training_Coursedue', 'Training_Activityduedate',
-        ];
-    }
-
-    /**
-     * Get the Calendar data.
-     *
-     * @return array
-     */
-    public function get_calendar() {
-
-        $eventdates = helper::create()->timemanagement_details(
-            'eventdates', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-        $upcomingactivities = helper::create()->timemanagement_details(
-                'upcomingmods', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
-
-        return (object) [
-            'upcomingactivitieslist' => $upcomingactivities,
-            'eventdateslist' => $eventdates,
         ];
     }
 
@@ -742,10 +592,9 @@ if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
          * Set up all the methods that can be called and used for substitution var in email templates.
          * There is not use for this function, FIX for CI.
          *
-         * @param bool $automation
          * @return array
          **/
-        public static function vars($automation=false) {
+        public static function vars() {
             $test = ''; // FIX for Moodle CI codechecker.
             return parent::vars();
         }

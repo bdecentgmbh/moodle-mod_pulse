@@ -34,13 +34,4 @@ $functions = [
         'ajax' => true,
         'loginrequired' => true,
     ],
-
-    'mod_pulse_manage_instances' => [
-        'classname' => 'mod_pulse\external',
-        'methodname' => 'manage_instances',
-        'description' => 'Bulk deleted the automation instances in the instance management table',
-        'type' => 'write',
-        'ajax' => true,
-        'loginrequired' => true,
-    ],
 ];

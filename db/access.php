@@ -36,6 +36,7 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
+
     // Capability to view pulses.
     'mod/pulse:view' => [
         'captype' => 'read',
@@ -66,47 +67,4 @@ $capabilities = [
         'clonepermissionsfrom' => 'mod/pulse:addinstance',
     ],
 
-    'mod/pulse:addtemplate' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => [
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-
-    'mod/pulse:viewtemplateslist' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => [
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-
-    'mod/pulse:addtemplateinstance' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-
-    'mod/pulse:overridetemplateinstance' => [
-        'riskbitmask' => RISK_XSS,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-
-    'mod/pulse:manageinstance' => [
-        'riskbitmask' => RISK_XSS,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => [
-            'manager' => CAP_ALLOW,
-        ],
-    ],
 ];
