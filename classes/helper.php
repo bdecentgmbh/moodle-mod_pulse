@@ -92,18 +92,6 @@ class helper {
                 $module = $DB->get_record('course_modules', ['id' => $mod->id]);
                 $name = $DB->get_field('modules', 'name', ['id' => $module->module]);
                 $mod->url = new moodle_url("/mod/$name/view.php", ['id' => $mod->id]);
-
-                if (\mod_pulse\automation\helper::create()->timemanagement_installed()) {
-                    $userenrolments = ltool_timemanagement_get_course_user_enrollment($course->id, $user->id);
-                    if (!empty($userenrolments)) {
-                        $record = $DB->get_record('ltool_timemanagement_modules', ['cmid' => $mod->id ?? 0]);
-                        if ($record) {
-                            $dates = ltool_timemanagement_cal_coursemodule_managedates($record, $userenrolments[0]['timestart']);
-                            $duedate = isset($dates['duedate']) ? userdate($dates['duedate']) : '';
-                        }
-                    }
-                }
-                $mod->duedate = $duedate ?? '';
             }
         }
 
