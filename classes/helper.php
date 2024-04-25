@@ -51,14 +51,14 @@ class helper {
      * @return array Updated subject and message body content.
      */
     public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
-        global $DB, $CFG;
+        global $DB, $CFG, $USER;
 
         // Include placholders handler and user profile library.
         require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
         require_once($CFG->dirroot.'/user/profile/lib.php');
 
         // Load user profile field data.
-        $newuser = (object) ['id' => $user->id];
+        $newuser = (object) ['id' => !empty($user->id) ? $user->id : $USER->id];
         profile_load_data($newuser);
         // Make the profile custom field data to separate element of the user object.
         $newuserkeys = array_map(function($value) {
@@ -86,6 +86,26 @@ class helper {
         // Get formatted name of the category.
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
+
+        if (!empty($mod->id)) {
+            if ($DB->record_exists('course_modules', ['id' => $mod->id])) {
+                $module = $DB->get_record('course_modules', ['id' => $mod->id]);
+                $name = $DB->get_field('modules', 'name', ['id' => $module->module]);
+                $mod->url = new moodle_url("/mod/$name/view.php", ['id' => $mod->id]);
+
+                if (\mod_pulse\automation\helper::create()->timemanagement_installed()) {
+                    $userenrolments = ltool_timemanagement_get_course_user_enrollment($course->id, $user->id);
+                    if (!empty($userenrolments)) {
+                        $record = $DB->get_record('ltool_timemanagement_modules', ['cmid' => $mod->id ?? 0]);
+                        if ($record) {
+                            $dates = ltool_timemanagement_cal_coursemodule_managedates($record, $userenrolments[0]['timestart']);
+                            $duedate = isset($dates['duedate']) ? userdate($dates['duedate']) : '';
+                        }
+                    }
+                }
+                $mod->duedate = $duedate ?? '';
+            }
+        }
 
         $vars = new pulse_email_vars($user, $course, $sender, $mod);
 
