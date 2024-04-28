@@ -73,13 +73,16 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                     modal.attachmentPoint = attachmentPoint;
                     modal.show();
                     modal.getRoot().on(ModalEvents.bodyRendered, function() {
-                        THIS.reinitAvailability(SELECTOR.presetAvailability);
+
+                        if (modal.getRoot().get(0).querySelector("#id_availabilityconditionsjson") != null) {
+                            THIS.reinitAvailability(SELECTOR.presetAvailability);
+                        }
                         THIS.fieldChangedEvent();
                     });
                     // Destroy the modal on hidden to reload the editors.
                     modal.getRoot().on(ModalEvents.hidden, function() {
                         modal.getRoot().get(0).querySelectorAll('form textarea').forEach(target => {
-                            if (typeof tinyMCE !== 'undefined') {
+                            if (typeof tinyMCE !== 'undefined' && tinyMCE.EditorManager.get(target.id)) { // eslint-disable-line
                                 tinyMCE.EditorManager.get(target.id).remove(); // eslint-disable-line
                             }
                         });

@@ -230,7 +230,7 @@ class preset extends \moodleform {
      * @return void
      */
     public function load_forms(): void {
-        global $OUTPUT;
+        global $OUTPUT, $CFG;
 
         $configparams = (isset($this->preset->configparams)) ? json_decode($this->preset->configparams, true) : [];
         self::js_collection_requirement(); // End js collection.
@@ -271,14 +271,21 @@ class preset extends \moodleform {
                     $this->_form->addElement($elem);
                     $this->_form->addElement('hidden', $attributename.'_changed', false);
                 }
+
+                if ($element->_name == 'availabilityconditionsjson' || isset($elementname) && $elementname == 'availabilityconditionsjson') {
+                    $includeindicator = true;
+                }
             }
+
             // Availability loading indicator.
-            $loadingcontainer = $OUTPUT->container(
-                $OUTPUT->render_from_template('core/loading', []),
-                'd-flex justify-content-center py-5 icon-size-5',
-                'availabilityconditions-loading'
-            );
-            $this->_form->addElement('html', $loadingcontainer);
+            if (isset($includeindicator) && $includeindicator && $CFG->branch >= "403") {
+                $loadingcontainer = $OUTPUT->container(
+                    $OUTPUT->render_from_template('core/loading', []),
+                    'd-flex justify-content-center py-5 icon-size-5',
+                    'availabilityconditions-loading'
+                );
+                $this->_form->addElement('html', $loadingcontainer);
+            }
 
             $this->add_action_buttons(false, 's');
         }
