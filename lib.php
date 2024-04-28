@@ -601,10 +601,12 @@ function mod_pulse_output_fragment_completionbuttons($args) {
  * @return void
  */
 function pulse_email_placeholders($editor) {
-    global $OUTPUT;
+    global $OUTPUT, $PAGE;
 
     $vars = \pulse_email_vars::vars();
     $i = 0;
+
+    $output = $PAGE->get_renderer('core');
 
     foreach ($vars as $key => $var) {
         $label = str_replace($key.'_', '', $var);
@@ -613,7 +615,7 @@ function pulse_email_placeholders($editor) {
         $data = [
             'text' => get_string($key.'_vars_help', 'mod_pulse'),
             'alt' => $alt,
-            'icon' => (new \pix_icon('help', $alt, 'core', ['class' => 'iconhelp']))->export_for_template($OUTPUT),
+            'icon' => (new \pix_icon('help', $alt, 'core', ['class' => 'iconhelp']))->export_for_template($output),
             'ltr' => !right_to_left(),
         ];
         $helptext = $OUTPUT->render_from_template('core/help_icon', $data);
@@ -625,7 +627,7 @@ function pulse_email_placeholders($editor) {
             'vars' => $label,
             'showmore' => (count($label) > 6) ? true : false,
             'active' => $i,
-            'pretext' => ($key == "Mod_Metadata") ? '' : $key."_",
+            'pretext' => ($key == "Mod_Metadata" || $key == 'others' || $key == 'Reaction') ? '' : $key."_",
         ];
         $i++;
     }

@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_pulse';
-$plugin->version = 2024033004;
+$plugin->version = 2024033005;
 $plugin->requires = 2022112800; // Requires Moodle 4.1.
 $plugin->release = 'v2.1';
 $plugin->maturity = MATURITY_STABLE;

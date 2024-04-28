@@ -108,13 +108,6 @@ class pulse_email_vars {
     protected $orgcourse = null;
 
     /**
-     * Reaction Data
-     *
-     * @var object
-     */
-    public $reaction = null;
-
-    /**
      * Sets up and retrieves the API objects.
      *
      * @param mixed $user User data record
@@ -152,10 +145,6 @@ class pulse_email_vars {
         $this->site = $this->get_sitedata();
 
         $this->enrolment = $this->get_user_enrolment();
-
-        if (pulsehelper::pulse_has_pro() && $this->pulse) {
-            $this->reaction = $this->reaction_data();
-        }
 
     }
 
@@ -233,6 +222,8 @@ class pulse_email_vars {
 
         $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
 
+        $result += ['others' => ['siteurl', 'courseurl', 'linkurl', 'completionstatus']];
+
         // Remove empty vars.
         $result = array_filter($result);
 
@@ -305,13 +296,29 @@ class pulse_email_vars {
     }
 
     /**
+     * Provide the CourseURL method for templates.
+     *
+     * returns text;
+     *
+     **/
+    public function courseurl() {
+        global $CFG;
+
+        if (empty($CFG->allowthemechangeonurl)) {
+            return $this->course->url;
+        } else {
+            return new moodle_url($this->course->url);
+        }
+    }
+
+    /**
      * Reaction placeholders dynamic data.
      * Pro featuer extended from locla_pulsepro.
      *
-     * @return array
+     * @return void
      */
-    public function reaction_data() {
-        return (object)['reaction' => \mod_pulse\extendpro::pulse_extend_reaction($this)];
+    public function reaction() {
+        return \mod_pulse\extendpro::pulse_extend_reaction($this);
     }
 
     /**
@@ -392,11 +399,14 @@ class pulse_email_vars {
                 'institution',
             ];
 
+            $userdbfields = $DB->get_columns('user');
+
             $profilefields = array_map(function($value) {
                 return str_replace('profile_field', 'profilefield', $value);
             }, (new auth_plugin_base)->get_custom_user_profile_fields());
 
-            $fields = array_merge($userfields, array_values($profilefields));
+            $fields = array_merge($userfields, array_keys($userdbfields), array_values($profilefields));
+            $fields = array_unique($fields);
 
             array_walk($fields, function(&$value) {
                 $value = 'User_'.ucwords($value);
