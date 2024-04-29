@@ -292,3 +292,8 @@ $string['showless'] = "Show less";
 $string['vardocstr'] = "The full list of available placeholders can be found in the ";
 $string['placeholder'] = "Placeholders";
 $string['documentation'] = "documentation";
+
+// Added missing placeholders.
+$string['others_vars'] = 'Others';
+$string['others_vars_help'] = 'Additional placeholders';
+$string['completionenrolled'] = 'enrolled';
