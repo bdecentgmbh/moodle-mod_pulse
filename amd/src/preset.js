@@ -74,7 +74,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                     modal.show();
                     modal.getRoot().on(ModalEvents.bodyRendered, function() {
 
-                        if (modal.getRoot().get(0).querySelector("#id_availabilityconditionsjson") != null) {
+                        if (modal.getRoot().get(0).querySelector("#id_availabilityconditionsjson") !== null) {
                             THIS.reinitAvailability(SELECTOR.presetAvailability);
                         }
                         THIS.fieldChangedEvent();

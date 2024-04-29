@@ -272,7 +272,8 @@ class preset extends \moodleform {
                     $this->_form->addElement('hidden', $attributename.'_changed', false);
                 }
 
-                if ($element->_name == 'availabilityconditionsjson' || isset($elementname) && $elementname == 'availabilityconditionsjson') {
+                if ((isset($element->_name) && $element->_name == 'availabilityconditionsjson') || (isset($elementname)
+                    && $elementname == 'availabilityconditionsjson')) {
                     $includeindicator = true;
                 }
             }
