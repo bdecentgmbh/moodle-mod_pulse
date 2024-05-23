@@ -44,7 +44,7 @@ class external extends \external_api {
      */
     public static function get_chapters_parameters() {
         return new \external_function_parameters(
-            array('mod' => new \external_value(PARAM_INT, 'Book module cmid ', VALUE_OPTIONAL))
+            array('mod' => new \external_value(PARAM_INT, 'Book module cmid ', VALUE_DEFAULT))
         );
     }
 
