@@ -31,3 +31,6 @@ $string['condition_help'] = '<b>Cohort Membership:</b> This automation will be t
     selected cohorts.The options for cohort membership include:<br><b>Disabled:</b> Cohort membership condition is disabled.<br>
     <b>All:</b> Cohort membership condition applies to all enrolled users.<br><b>Upcoming:</b> Cohort membership condition only
     applies to future enrolments';
+
+$string['privacy:metadata:pulsecondition_cohort'] = 'The plugin does not store any personal data.';
+

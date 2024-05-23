@@ -33,3 +33,5 @@ $string['selectactivity'] = 'Select activities';
 $string['selectactivity_help'] = "The <b>Select Activities</b> setting allows you to choose from all available activities within
     your course that have completion configured. This selection determines which specific activities will trigger the automation
     when their completion conditions are met.";
+
+$string['privacy:metadata:pulsecondition_activity'] = 'The plugin does not store any personal data.';

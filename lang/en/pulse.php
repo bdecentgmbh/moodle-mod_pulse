@@ -182,6 +182,7 @@ $string['privacy:metadata:users:timecreated'] = 'Time of the invitation send to 
 $string['privacy:metadata:pulseusers'] = 'List of users invitation notified';
 $string['privacy:metadata:pulsemessageexplanation'] = 'Invitations are sent to students through the messaging system.';
 
+
 // Lang strings for the presets.
 $string['presets'] = "Pulse presets";
 $string['usepreset'] = 'Use preset';
