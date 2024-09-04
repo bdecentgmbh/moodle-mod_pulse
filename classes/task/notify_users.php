@@ -56,16 +56,16 @@ class notify_users extends \core\task\scheduled_task {
     /**
      * Pulse cron task to send notification for course users.
      *
-     * Here users are filtered by their activity avaialbility status.
-     * if the pulse instance are available to user then it will send the notificaion to the user.
+     * Here users are filtered by their activity availability status.
+     * If the pulse instance is available to user then it will send the notification to the user.
      *
-     * @param  mixed $extend Extend the pro invitation method.
-     * @return void
+     * @param  bool $extend Extend the pro invitation method.
+     * @return bool
      */
-    public static function pulse_cron_task($extend=true) {
+    public static function pulse_cron_task(bool $extend = true): bool {
         global $DB;
 
-        pulse_mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
+        pulse_mtrace('Fetching notification instance list - MOD-Pulse INIT');
 
         if ($extend && \mod_pulse\extendpro::pulse_extend_invitation()) {
             return true;
@@ -89,15 +89,16 @@ class notify_users extends \core\task\scheduled_task {
             JOIN {course} cu ON cu.id = nt.course
             RIGHT JOIN {context} ctx ON ctx.instanceid = cm.id and contextlevel = 70
             WHERE md.name = 'pulse' AND cm.visible = 1 AND cu.visible = 1 AND nt.pulse = 1
-            AND cu.startdate <= :startdate AND  (cu.enddate = 0 OR cu.enddate >= :enddate)";
+            AND cu.startdate <= :startdate AND (cu.enddate = 0 OR cu.enddate >= :enddate)";
 
         $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
         if (empty($records)) {
             pulse_mtrace('No pulse instance are added yet'."\n");
             return true;
         }
-        $modinfo = [];
-        foreach ($records as $key => $record) {
+
+
+        foreach ($records as $record) {
             $params = [];
             $record = (array) $record;
             $keys = array_keys($record);
@@ -108,24 +109,30 @@ class notify_users extends \core\task\scheduled_task {
             // Context.
             $ctxpos = array_search('contextid', $keys);
             $ctxendpos = array_search('locked', $keys);
-            $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
-            $context['id'] = $context['contextid']; unset($context['contextid']);
+            $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1);
+            $context['id'] = $context['contextid'];
+            unset($context['contextid']);
             // Course module.
             $cmpos = array_search('cmid', $keys);
             $cmendpos = array_search('deletioninprogress', $keys);
-            $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1 );
-            $cm['id'] = $cm['cmid']; unset($cm['cmid']);
+            $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1);
+            $cm['id'] = $cm['cmid'];
+            unset($cm['cmid']);
             // Course records.
             $coursepos = array_search('courseid', $keys);
             $course = array_slice($record, $coursepos);
             $course['id'] = $course['courseid'];
-            $course['groupmode'] = isset($course['coursegroupmode']) ? $course['coursegroupmode'] : '';
-            $course['idnumber'] = isset($course['courseidnumber']) ? $course['courseidnumber'] : '';
-            pulse_mtrace( 'Initiate pulse module - '.$pulse['name'].' course - '. $course['id'] );
+            $course['groupmode'] = $course['coursegroupmode'] ?? '';
+            $course['idnumber'] = $course['courseidnumber'] ?? '';
+            pulse_mtrace('Initiate pulse module - '.$pulse['name'].' course - '. $course['id']);
+            
+            // Restore the missing line
+            $courseid = $pulse['course'];
+
             // Get enrolled users with capability.
             $contextlevel = explode('/', $context['path']);
             list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
-            // Enrolled  users list.
+            // Enrolled users list.
             $usersql = "SELECT u.*
                     FROM {user} u
                     JOIN (SELECT DISTINCT eu1_u.id
@@ -145,7 +152,7 @@ class notify_users extends \core\task\scheduled_task {
                         SELECT userid FROM {pulse_users} WHERE pulseid = ? AND status = 1
                     ) ORDER BY u.lastname, u.firstname, u.id";
 
-            $params[] = $course['id'];
+            $params[] = $courseid; // Use $courseid here instead of $course['id']
             $params = array_merge($params, array_filter($inparams));
             $params = array_merge($params, array_filter($roleinparams));
             $params[] = time();
@@ -155,9 +162,7 @@ class notify_users extends \core\task\scheduled_task {
             $limit = get_config('mod_pulse', 'schedulecount') ?: 100;
             $students = $DB->get_records_sql($usersql, $params, 0, $limit);
 
-            $courseid = $pulse['course'];
-
-            $instance = new \stdclass();
+            $instance = new \stdClass();
             $instance->pulse = (object) $pulse;
             $instance->course = (object) $course;
             $instance->context = (object) $context;
@@ -175,13 +180,13 @@ class notify_users extends \core\task\scheduled_task {
     /**
      * Set adhoc task to send reminder notification for each instance
      *
-     * @param  mixed $instance
+     * @param  \stdClass $instance
      * @return void
      */
-    public static function pulse_set_notification_adhoc($instance) {
+    public static function pulse_set_notification_adhoc(\stdClass $instance): void {
         $task = new \mod_pulse\task\sendinvitation();
         $task->set_custom_data($instance);
-        $task->set_component('pulse');
+        $task->set_component('mod_pulse');
         \core\task\manager::queue_adhoc_task($task, true);
     }
 }

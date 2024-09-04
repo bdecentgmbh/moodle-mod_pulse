@@ -24,10 +24,18 @@
 
 namespace mod_pulse\task;
 
+use core\task\adhoc_task;
+use mod_pulse\helper;
+use core_user;
+use moodle_exception;
+use ReflectionProperty;
+use context_module;
+use stdClass;
+
 /**
  * Defined the invitation send method and filter methods.
  */
-class sendinvitation extends \core\task\adhoc_task {
+class sendinvitation extends adhoc_task {
 
     /**
      * Adhoc task execution.
@@ -42,28 +50,28 @@ class sendinvitation extends \core\task\adhoc_task {
         // Check pulse enabled.
 
         if (!$DB->record_exists('course_modules', ['id' => $instance->cm->id])) {
-            return true;
+            return;
         }
         // Filter users from course pariticipants by completion.
-        $listofusers = \mod_pulse\helper::get_course_students((array) $instance->students, $instance);
+        $listofusers = helper::get_course_students((array) $instance->students, $instance);
         // Extend the pulse pro version to send notifications on selected recipients.
         if (!empty($listofusers)) {
             $this->send_pulse($listofusers, $instance->pulse, $instance->course, $instance->context);
         } else {
-            pulse_mtrace('There is not users to send pulse');
+            pulse_mtrace('There are no users to send pulse');
         }
     }
 
     /**
      * Send pulse data.
      *
-     * @param  mixed $users Users data record.
-     * @param  mixed $pulse Pulse instance record.
-     * @param  mixed $course Course data record.
-     * @param  mixed $context Module Context data record.
+     * @param  array $users Users data record.
+     * @param  stdClass $pulse Pulse instance record.
+     * @param  stdClass $course Course data record.
+     * @param  stdClass $context Module Context data record.
      * @return void
      */
-    public function send_pulse($users, $pulse, $course, $context) {
+    public function send_pulse(array $users, stdClass $pulse, stdClass $course, stdClass $context): void {
         global $DB, $USER, $PAGE;
 
         // Store current user for update the user after filter.
@@ -76,21 +84,21 @@ class sendinvitation extends \core\task\adhoc_task {
         // Filtercodes plugin used $PAGE->course proprety for coursestartdate, course enddata and other course related shortcodes.
         // Tried to use $PAGE->set_course(), But the theme already completed the setup, so we can't use that moodle method.
         // For this reason, here updated the protected _course property using reflection.
-        if (\mod_pulse\helper::change_pagevalue()) {
+        if (helper::change_pagevalue()) {
 
-            $coursereflection = new \ReflectionProperty(get_class($PAGE), '_course');
+            $coursereflection = new ReflectionProperty(get_class($PAGE), '_course');
             $coursereflection->setAccessible(true);
             $coursereflection->setValue($PAGE, $course);
 
             // Setup the course module data to support filtercodes.
             $pulsecm = get_coursemodule_from_instance('pulse', $pulse->id);
-            $cmreflection = new \ReflectionProperty(get_class($PAGE), '_cm');
+            $cmreflection = new ReflectionProperty(get_class($PAGE), '_cm');
             $cmreflection->setAccessible(true);
             $cmreflection->setValue($PAGE, $pulsecm);
 
-            $contextreflection = new \ReflectionProperty(get_class($PAGE), '_context');
+            $contextreflection = new ReflectionProperty(get_class($PAGE), '_context');
             $contextreflection->setAccessible(true);
-            $context = \context_module::instance($pulsecm->id);
+            $context = context_module::instance($pulsecm->id);
             $contextreflection->setValue($PAGE, $context);
         }
 
@@ -114,7 +122,7 @@ class sendinvitation extends \core\task\adhoc_task {
                         $filearea = 'pulse_content';
                     }
                     // Replace the email text placeholders with data.
-                    list($subject, $messagehtml) = \mod_pulse\helper::update_emailvars($template, $subject, $course,
+                    list($subject, $messagehtml) = helper::update_emailvars($template, $subject, $course,
                         $student, $pulse, $sender);
                     // Rewrite the plugin file placeholders in the email text.
                     $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
@@ -139,20 +147,20 @@ class sendinvitation extends \core\task\adhoc_task {
 
                     try {
                         $transaction = $DB->start_delegated_transaction();
-                        if (\mod_pulse\helper::update_notified_user($userto->id, $pulse)) {
-                            $messagesend = \mod_pulse\helper::messagetouser(
+                        if (helper::update_notified_user($userto->id, $pulse)) {
+                            $messagesend = helper::messagetouser(
                                 $userto, $subject, $messageplain, $messagehtml, $pulse, $sender
                             );
                             if ($messagesend) {
                                 $notifiedusers[] = $userto->id;
                             } else {
-                                throw new \moodle_exception('mailnotsend', 'pulse');
+                                throw new moodle_exception('mailnotsend', 'pulse');
                             }
                         } else {
-                            throw new \moodle_exception('invitationDB', 'pulse');
+                            throw new moodle_exception('invitationDB', 'pulse');
                         }
                         $transaction->allow_commit();
-                    } catch (\Exception $e) {
+                    } catch (moodle_exception $e) {
                         // Return to current USER.
                         \core\session\manager::set_user($currentuser);
                         $transaction->rollback($e);
@@ -161,7 +169,7 @@ class sendinvitation extends \core\task\adhoc_task {
             }
         }
 
-        if (\mod_pulse\helper::change_pagevalue()) {
+        if (helper::change_pagevalue()) {
             // Return to current USER.
             \core\session\manager::set_user($currentuser);
 
@@ -179,11 +187,11 @@ class sendinvitation extends \core\task\adhoc_task {
     /**
      * Find the correct sender user from the course and group contacts.
      *
-     * @param  mixed $senderdata Listof course and group contact users
-     * @param  mixed $userid // Studnet user id
-     * @return object Sender user obejct
+     * @param  stdClass $senderdata Listof course and group contact users
+     * @param  int $userid // Studnet user id
+     * @return stdClass Sender user obejct
      */
-    public static function find_user_sender($senderdata, $userid) {
+    public static function find_user_sender(stdClass $senderdata, int $userid): stdClass {
 
         if (!empty($senderdata->groupcontact)) {
             $groups = $senderdata->groupcontact;
@@ -198,17 +206,17 @@ class sendinvitation extends \core\task\adhoc_task {
             }
         }
 
-        return (!empty($senderdata->coursecontact) ? $senderdata->coursecontact : \core_user::get_support_user());
+        return (!empty($senderdata->coursecontact) ? $senderdata->coursecontact : core_user::get_support_user());
     }
 
 
     /**
      * Get list of available senders users from group and course seperately.
      *
-     * @param  mixed $courseid
-     * @return object
+     * @param  int $courseid
+     * @return stdClass
      */
-    public static function get_sender($courseid) {
+    public static function get_sender(int $courseid): stdClass {
         global $DB;
         $rolesql = "SELECT rc.id, rc.roleid FROM {role_capabilities} rc
         JOIN {capabilities} cap ON rc.capability = cap.name
@@ -242,7 +250,7 @@ class sendinvitation extends \core\task\adhoc_task {
         $teacherids = array_keys($records);
         // If no teachers enroled in course then use the support user.
         if (empty($teacherids)) {
-            return [];
+            return new stdClass();
         }
 
         $coursecontact = current($records); // Get first course contact user.
@@ -264,7 +272,7 @@ class sendinvitation extends \core\task\adhoc_task {
             foreach ($teacherids as $id) {
                 if (!in_array($id, $users)) {
                     $coursecontact = $records[$id];
-                    continue;
+                    break;
                 }
             }
             $groups = [];
