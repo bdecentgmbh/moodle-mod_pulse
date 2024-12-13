@@ -27,6 +27,7 @@ namespace mod_pulse;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/externallib.php');
+require_once($CFG->libdir.'/completionlib.php');
 
 /**
  * Pulse preset external definitions.
@@ -84,5 +85,71 @@ class external extends \external_api {
      */
     public static function apply_presets_returns() {
         return new \external_value(PARAM_RAW, 'Count of Page user notes');
+    }
+
+    /**
+     * Manual completion confirmation configdata.
+     *
+     * @return void
+     */
+    public static function manual_completion_parameters() {
+        return new \external_function_parameters(
+            [
+                'id' => new \external_value(PARAM_INT, 'The id for the course module id'),
+            ]
+        );
+    }
+
+    /**
+     * Activity manual completion.
+     *
+     * @param int $id course module ID.
+     *
+     * @return array $message
+     */
+    public static function manual_completion($id) {
+        global $DB, $USER;
+        $params = self::validate_parameters(self::manual_completion_parameters(), ['id' => $id]);
+        $cm = get_coursemodule_from_id('pulse', $params['id']);
+        $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
+        $course = get_course($cm->course);
+        $message = '';
+        if ($record = $DB->get_record('pulse_completion', ['userid' => $USER->id, 'pulseid' => $cm->instance])) {
+            $record->selfcompletion = 1;
+            $record->selfcompletiontime = time();
+            $record->timemodified = time();
+            $result = $DB->update_record('pulse_completion', $record);
+        } else {
+            $record = new \stdclass();
+            $record->userid = $USER->id;
+            $record->pulseid = $cm->instance;
+            $record->selfcompletion = 1;
+            $record->selfcompletiontime = time();
+            $record->timemodified = time();
+            $result = $DB->insert_record('pulse_completion', $record);
+        }
+        if ($result) {
+            $completion = new \completion_info($course);
+            if ($completion->is_enabled($cm) && $pulse->completionself) {
+                $completion->update_state($cm, COMPLETION_COMPLETE, $USER->id);
+            }
+            $message = get_string('completionmessage', 'pulse');
+        }
+        return [
+            'message' => $message,
+        ];
+    }
+
+    /**
+     * Retuns the redirect message for manual completion.
+     *
+     * @return array message.
+     */
+    public static function manual_completion_returns() {
+        return new \external_single_structure(
+            [
+                'message' => new \external_value(PARAM_TEXT, 'Return message'),
+            ]
+        );
     }
 }

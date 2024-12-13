@@ -156,5 +156,6 @@ class restore_pulse_activity_structure_step extends restore_activity_structure_s
         // Add pulse related files.
         $this->add_related_files('mod_pulse', 'intro', null);
         $this->add_related_files('mod_pulse', 'pulse_content', null);
+        $this->add_related_files('mod_pulse', 'completionbtn_content', null);
     }
 }

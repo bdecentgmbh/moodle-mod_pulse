@@ -150,6 +150,9 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->setType('boxicon', PARAM_TEXT);
         $mform->hideIf('boxicon', 'displaymode', 'neq', 1);
 
+        // Mark as complete button options.
+        $this->definition_completionbuttonoption($mform);
+
         $this->standard_coursemodule_elements();
 
         // Email placeholders.
@@ -243,6 +246,13 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (isset($data->completionapprovalroles)) {
             $data->completionapprovalroles = json_encode($data->completionapprovalroles);
         }
+
+        $data->completionbtnconfirm = isset($data->completionbtnconfirm) ? 1 : 0;
+        if (isset($data->completionbtn_content_editor)) {
+            $data->completionbtn_contentformat = $data->completionbtn_content_editor['format'];
+            $data->completionbtn_content = $data->completionbtn_content_editor['text'];
+        }
+
         \mod_pulse\extendpro::pulse_extend_postprocessing($data);
     }
 
@@ -267,11 +277,29 @@ class mod_pulse_mod_form extends moodleform_mod {
 
             $defaultvalues['pulse_content_editor']['format'] = $pulsecontentformat;
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
+
+            $contentdraftitemid = file_get_submitted_draft_itemid('completionbtn_content');
+            $content = $defaultvalues['completionbtn_content'] ?? '';
+            $contentformat = $defaultvalues['completionbtn_contentformat'] ?? 0;
+            $defaultvalues['completionbtn_content_editor']['text'] =
+                                    file_prepare_draft_area($contentdraftitemid, $this->context->id,
+                                    'mod_pulse', 'completionbtn_content', false,
+                                    $editoroptions,
+                                    $content);
+            $defaultvalues['completionbtn_content_editor']['format'] = $contentformat;
+            $defaultvalues['completionbtn_content_editor']['itemid'] = $contentdraftitemid;
+
         } else {
             $draftitemid = file_get_submitted_draft_itemid('pulse_content_editor');
             file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'pulse_content', false);
             $defaultvalues['pulse_content_editor']['format'] = editors_get_preferred_format();
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
+
+            $draftitemid = file_get_submitted_draft_itemid('completionbtn_content_editor');
+            file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'completionbtn_content', false);
+            $defaultvalues['completionbtn_content_editor']['format'] = editors_get_preferred_format();
+            $defaultvalues['completionbtn_content_editor']['itemid'] = $draftitemid;
+
         }
 
         // Set up the completion checkbox which is not part of standard data.
@@ -313,4 +341,50 @@ class mod_pulse_mod_form extends moodleform_mod {
         }
         return $errors;
     }
+
+    /**
+     * Mark as completion option form fields.
+     *
+     * @param moodle_form $mform
+     */
+    public function definition_completionbuttonoption(&$mform) {
+        // Head: Mark as complete options.
+        $mform->addElement('header', 'markcompleteoption', get_string('markcompleteoptionheader', 'pulse'));
+
+        // Global config values.
+        $context = \context_system::instance();
+        $completebtnconfirmation = get_config('mod_pulse', 'completionbtnconfirmation');
+        $completionbtntext = get_config('mod_pulse', 'completionbtntext');
+        $completionbtncontent = get_config('mod_pulse', 'completionbtn_content');
+        $btncontenthtml = file_rewrite_pluginfile_urls($completionbtncontent, 'pluginfile.php', $context->id,
+            'mod_pulse', 'completionbtn_content', 0);
+        $btncontenthtml = format_text($btncontenthtml, FORMAT_HTML, ['trusted' => true, 'noclean' => true]);
+
+        // Require confirmation.
+        $mform->addElement('checkbox', 'completionbtnconfirmation', get_string('requireconfirm', 'pulse'));
+        $mform->addHelpButton('completionbtnconfirmation', 'requireconfirm', 'mod_pulse');
+        $mform->setDefault('completionbtnconfirmation', $completebtnconfirmation ?: false);
+
+        // Marke as complete button text.
+        $btntexts = [
+            BUTTON_TEXT_DEFAULT => get_string('markcompletebtnstring_default', 'pulse'),
+            BUTTON_TEXT_ACKNOWLEDGE => get_string('markcompletebtnstring_custom1', 'pulse'),
+            BUTTON_TEXT_CONFIRM => get_string('markcompletebtnstring_custom2', 'pulse'),
+            BUTTON_TEXT_CHOOSE => get_string('markcompletebtnstring_custom3', 'pulse'),
+            BUTTON_TEXT_APPROVE => get_string('markcompletebtnstring_custom4', 'pulse'),
+        ];
+        $mform->addElement('select', 'completionbtntext', get_string('btntext', 'pulse'), $btntexts);
+        $mform->setType('completionbtntext', PARAM_TEXT);
+        $mform->addHelpButton('completionbtntext', 'btntext', 'mod_pulse');
+        $mform->setDefault('completionbtntext', $completionbtntext ?: BUTTON_TEXT_DEFAULT);
+
+        // Confirmation modal text.
+        $editoroptions = \mod_pulse\helper::get_editor_options();
+        $content = $mform->addElement('editor', 'completionbtn_content_editor', get_string('confirmtext', 'pulse'),
+            ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
+        $mform->setType('completionbtn_content_editor', PARAM_RAW);
+        $mform->addHelpButton('completionbtn_content_editor', 'confirmtext', 'mod_pulse');
+        $content->setValue(['text' => $btncontenthtml ?? '', 'format' => 1]);
+    }
+
 }

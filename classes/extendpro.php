@@ -93,7 +93,8 @@ class extendpro {
         }
     }
 
-    /** Extende the pro plugins validation error messages.
+    /**
+     * Extende the pro plugins validation error messages.
      *
      * @param  mixed $data module form submitted data.
      * @param  mixed $files Module form submitted files.
@@ -108,7 +109,9 @@ class extendpro {
         }
     }
 
-    /** Inject form elements into mod instance form.
+    /**
+     * Inject form elements into mod instance form.
+     *
      * @param mform $mform the form to inject elements into.
      */
     public static function mod_pulse_extend_formdata($mform) {
@@ -120,7 +123,9 @@ class extendpro {
         }
     }
 
-    /** Extend form post process method from pro plugin.
+    /**
+     * Extend form post process method from pro plugin.
+     *
      * @param object $data module form submitted data object.
      */
     public static function pulse_extend_postprocessing($data) {

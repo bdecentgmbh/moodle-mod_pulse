@@ -27,6 +27,13 @@ defined( 'MOODLE_INTERNAL') || die(' No direct access ');
 
 define( 'MAX_PULSE_NAME_LENGTH', 50);
 
+// Mark as complete option button texts.
+define('BUTTON_TEXT_DEFAULT', 1); // Default.
+define('BUTTON_TEXT_ACKNOWLEDGE', 2); // Acknowledge.
+define('BUTTON_TEXT_CONFIRM', 3); // Confirm.
+define('BUTTON_TEXT_CHOOSE', 4); // Choose.
+define('BUTTON_TEXT_APPROVE', 5); // Approve.
+
 global $PAGE;
 
 require_once($CFG->libdir."/completionlib.php");
@@ -55,6 +62,11 @@ function pulse_add_instance($pulse) {
     }
     // Insert the instance in DB.
     $pulseid = $DB->insert_record('pulse', $pulse);
+
+    $pulse->id = $pulseid;
+    // Post update the editor files.
+    \mod_pulse\helper::postupdate_editor_files($pulse, $context);
+
     // Extend the pro features.
     \mod_pulse\extendpro::pulse_extend_add_instance($pulseid, $pulse);
 
@@ -95,8 +107,15 @@ function pulse_update_instance($pulse) {
         $message = get_string('resendnotificationdesc', 'mod_pulse');
         \core\notification::add($message, 'info');
     }
+
+    $pulse->completionbtnconfirmation = isset($pulse->completionbtnconfirmation) ?? 0;
+
     // Update instance data.
     $updates = $DB->update_record('pulse', $pulse);
+
+    // Post update the editor files.
+    \mod_pulse\helper::postupdate_editor_files($pulse, $context);
+
     // Extend the updated module instance pro features.
     \mod_pulse\extendpro::pulse_extend_update_instance($pulse, $context);
     return $updates;
@@ -192,14 +211,15 @@ function mod_pulse_cm_info_dynamic(cm_info &$cm) {
  * @param array $options additional options affecting the file serving
  * @return bool false if the file not found, just send the file otherwise and do not return anything
  */
-function pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=[]) {
+function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=[]) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
     if ($context->contextlevel != CONTEXT_MODULE && $context->contextlevel != CONTEXT_SYSTEM) {
         return false;
     }
     // Get extended plugins fileareas.
     $availablefiles = \mod_pulse\extendpro::pulse_extend_filearea();
-    $availablefiles += ['pulse_content', 'intro', 'notificationheader', 'notificationfooter'];
+    $availablefiles = array_merge($availablefiles, ['pulse_content', 'intro',
+        'notificationheader', 'notificationfooter', 'completionbtn_content']);
     // Make sure the filearea is one of those used by the plugin.
     if (!in_array($filearea, $availablefiles)) {
         return false;
@@ -469,7 +489,7 @@ function pulse_mtrace($message, $detail=false) {
  *
  * @param array $args Preset ID and Course ID with context.
  */
-function mod_pulse_output_fragment_get_preset_preview(array $args) : ?string {
+function mod_pulse_output_fragment_get_preset_preview(array $args): ?string {
     global $CFG;
     $context = $args['context'];
 
@@ -489,7 +509,7 @@ function mod_pulse_output_fragment_get_preset_preview(array $args) : ?string {
  *
  * @param array $args Custom config data and Current module form data with context.
  */
-function mod_pulse_output_fragment_apply_preset(array $args) : ?string {
+function mod_pulse_output_fragment_apply_preset(array $args): ?string {
     global $CFG;
     $context = $args['context'];
 
@@ -636,4 +656,38 @@ function pulse_email_placeholders($editor) {
     $templatecontext['editor'] = $editor;
 
     return $OUTPUT->render_from_template('mod_pulse/vars', $templatecontext);
+}
+
+/**
+ * Add the completion confirmation button js.
+ *
+ * @param  navigation_node $navigation
+ * @param  stdClass $course
+ * @param  context_course $context
+ * @return void
+ */
+function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
+    global $PAGE;
+
+    // Completion confirmation.
+    $PAGE->requires->js_call_amd('mod_pulse/confirmcompletion', 'init', ['contextid' => $context->id]);
+}
+
+/**
+ * Get the manual completion confirmation content.
+ *
+ * @param array $params
+ * @return void
+ */
+function mod_pulse_output_fragment_get_confirmation_content(array $params) {
+    global $DB;
+    $cm = get_coursemodule_from_id('pulse', $params['id']);
+    $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
+    $modulecontext = \context_module::instance($cm->id);
+    $content = !empty($pulse->completionbtn_content) ? $pulse->completionbtn_content :
+        get_string('completionconfirmation', 'pulse');
+    $contenthtml = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $modulecontext->id, 'mod_pulse',
+        'completionbtn_content', 0);
+    $contenthtml = format_text($contenthtml, $pulse->completionbtn_contentformat, ['trusted' => true, 'noclean' => true]);
+    return $contenthtml;
 }

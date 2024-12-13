@@ -112,5 +112,35 @@ function xmldb_pulse_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2021110200, 'pulse');
     }
 
+    if ($oldversion < 2024033008) {
+        // Mark as complete options.
+        $pulsetable = new xmldb_table('pulse');
+        $completionbtnconfirmation = new xmldb_field('completionbtnconfirmation', XMLDB_TYPE_INTEGER, '2', null, null, null,
+        '0', 'completionapprovalroles');
+        $completionbtntext = new xmldb_field('completionbtntext', XMLDB_TYPE_INTEGER, '2', null, null, null,
+        '0', 'completionbtnconfirmation');
+        $completionbtncontent = new xmldb_field('completionbtn_content', XMLDB_TYPE_TEXT, null, null, null,
+        null, null, 'completionbtntext');
+        $completionbtncontentformat = new xmldb_field('completionbtn_contentformat', XMLDB_TYPE_INTEGER, '2', null, null, null,
+        '0', 'completionbtn_content');;
+         // Completion button confiramtion option.
+        if (!$dbman->field_exists($pulsetable, $completionbtnconfirmation)) {
+            $dbman->add_field($pulsetable, $completionbtnconfirmation);
+        }
+        // Completion button text option.
+        if (!$dbman->field_exists($pulsetable, $completionbtntext)) {
+            $dbman->add_field($pulsetable, $completionbtntext);
+        }
+        // Completion button content option.
+        if (!$dbman->field_exists($pulsetable, $completionbtncontent)) {
+            $dbman->add_field($pulsetable, $completionbtncontent);
+        }
+        // Completion button content format option.
+        if (!$dbman->field_exists($pulsetable, $completionbtncontentformat)) {
+            $dbman->add_field($pulsetable, $completionbtncontentformat);
+        }
+        upgrade_mod_savepoint(true, 2024033008, 'pulse');
+    }
+
     return true;
 }

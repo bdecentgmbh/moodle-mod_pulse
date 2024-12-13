@@ -83,7 +83,7 @@ class provider implements
      * @param  int         $userid    The user to search.
      * @return contextlist $contextlist The list of contexts used in this plugin.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new \core_privacy\local\request\contextlist();
         // User completions.
         $sql = "SELECT c.id
@@ -270,7 +270,7 @@ class provider implements
             get_string('completionfor', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist) : bool {
+                function(stdClass $completion) use ($contextlist): bool {
                     return $completion->userid == $contextlist->get_user()->id;
                 }
             ),
@@ -281,7 +281,7 @@ class provider implements
             get_string('approvedby', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist) : bool {
+                function(stdClass $completion) use ($contextlist): bool {
                     return $completion->approvedby == $contextlist->get_user()->id;
                 }
             ),
@@ -393,7 +393,7 @@ class provider implements
     private static function group_by_property(array $classes, string $property): array {
         return array_reduce(
             $classes,
-            function (array $classes, stdClass $class) use ($property) : array {
+            function (array $classes, stdClass $class) use ($property): array {
                 $classes[$class->{$property}][] = $class;
                 return $classes;
             },

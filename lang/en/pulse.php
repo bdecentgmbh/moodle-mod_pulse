@@ -297,3 +297,32 @@ $string['documentation'] = "documentation";
 $string['others_vars'] = 'Others';
 $string['others_vars_help'] = 'Additional placeholders';
 $string['completionenrolled'] = 'enrolled';
+$string['suspended'] = 'Suspended';
+
+// Mark as complete options.
+$string['markcompleteoptionheader'] = "Mark as complete options";
+// Require confirmation.
+$string['requireconfirm'] = 'Require confirmation';
+$string['requireconfirm_help'] = '<b>Unchecked (Default):</b> No confirmation is required. Clicking the button will immediately mark the activity as complete.<br><b>Checked:</b> A confirmation modal will open, and the user must confirm or cancel the action before the activity is marked as complete.';
+// Button text.
+$string['btntext'] = 'Button text';
+$string['btntext_help'] = 'Choose the text that appears on the button users click to mark an activity as complete.';
+// Not completed state button texts.
+$string['markcompletebtnstring_default'] = 'Mark as complete';
+$string['markcompletebtnstring_custom1'] = 'Acknowledge';
+$string['markcompletebtnstring_custom2'] = 'Confirm';
+$string['markcompletebtnstring_custom3'] = 'Choose';
+$string['markcompletebtnstring_custom4'] = 'Approve';
+// Completed state labels.
+$string['markedcompletebtnstring_default'] = 'Self marked complete on {$a->date}';
+$string['markedcompletebtnstring_custom1'] = 'Completion acknowledged on {$a->date}';
+$string['markedcompletebtnstring_custom2'] = 'Completion confirmed on {$a->date}';
+$string['markedcompletebtnstring_custom3'] = 'Completion chosen on {$a->date}';
+$string['markedcompletebtnstring_custom4'] = 'Completion approved on {$a->date}';
+// Confiramtion modal text.
+$string['confirmation'] = "Confirmation";
+$string['confirmtext'] = 'Confirmation modal text';
+$string['confirmtext_help'] = "Enter the content that will appear in the confirmation modal.";
+$string['modalconfirm'] = 'Completion Confirmation';
+$string['completionconfirmation'] = 'Are you sure you want to mark this activity as complete?';
+$string['completionmessage'] = 'Marked as completed';

@@ -34,4 +34,13 @@ $functions = [
         'ajax' => true,
         'loginrequired' => true,
     ],
+
+    'mod_pulse_manual_completion' => [
+        'classname' => 'mod_pulse\external',
+        'methodname' => 'manual_completion',
+        'description' => 'Pulse activity manual confirmation completion',
+        'type' => 'write',
+        'ajax' => true,
+        'loginrequired' => true,
+    ],
 ];

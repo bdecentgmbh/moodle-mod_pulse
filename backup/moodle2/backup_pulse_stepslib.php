@@ -40,7 +40,9 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
             'pulse_contentformat', 'pulse', 'diff_pulse', 'displaymode',
             'boxtype', 'boxicon', 'cssclass', 'resend_pulse',
             'completionavailable', 'completionself', 'completionapproval',
-            'completionapprovalroles', 'timemodified',
+            'completionapprovalroles', 'completionbtnconfirmation',
+            'completionbtntext', 'completionbtn_content',
+            'completionbtn_contentformat', 'timemodified',
         ]);
 
         $notifiedusers = new backup_nested_element('notifiedusers');
@@ -79,6 +81,7 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         // Define file annotations.
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
+        $pulse->annotate_files('mod_pulse', 'completionbtn_content', null);
 
         $pulse = \mod_pulse\extendpro::pulse_extend_backup_steps($pulse, $userinfo);
 

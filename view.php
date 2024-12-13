@@ -43,7 +43,7 @@ require_login($course, true, $cm);
 
 global $USER;
 
-$context = context_course::instance($course->id);
+$context = \context_course::instance($course->id);
 if (class_exists('local_pulsepro\table\reactionreport') && has_capability('local/pulsepro:viewreports', $context, $USER->id)) {
     $redirecturl = new moodle_url('/local/pulsepro/report.php', ['courseid' => $course->id, 'cmid' => $cm->id]);
     redirect($redirecturl);

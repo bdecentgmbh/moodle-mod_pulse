@@ -34,6 +34,8 @@ use core_course_category;
 use stdclass;
 use context_course;
 
+require_once($CFG->dirroot.'/lib/formslib.php');
+
 /**
  * Commonly used method in pulse.
  */
@@ -344,15 +346,18 @@ class helper {
                 // Add self mark completed informations.
                 if (!class_exists('core_completion\activity_custom_completion')
                     && $date = self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
-                    $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
+                        $selfmarked = self::get_complete_state_button_text($pulse->completionbtntext, $date).'<br>';
                     $html .= html_writer::tag('div', $selfmarked,
                     ['class' => 'pulse-self-marked badge badge-success']);
                 } else if (!self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
-                    $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
-                    $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
-                        ['class' => 'btn btn-primary pulse-approve-users']
-                    );
-                    $html .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-approve-users']);
+                    $additionalclass = $pulse->completionbtnconfirmation ? 'confirmation-'. $moduleid : '';
+                    $buttontext = self::get_not_complete_state_button_text($pulse->completionbtntext);
+                    $selfcomplete = !$pulse->completionbtnconfirmation ?
+                        new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']) :
+                        'javascript:void(0);';
+                    $selfmarklink = html_writer::link($selfcomplete, $buttontext,
+                        [   'class' => 'btn btn-primary pulse-user-manualcompletion-btn '. $additionalclass]);
+                    $html .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-user-manualcompletion']);
                 }
             }
         } else {
@@ -583,6 +588,84 @@ class helper {
             $result = array_key_exists('pulsepro', \core_component::get_plugin_list('local')) ? true : false;
         }
         return $result;
+    }
+
+    /**
+     * Get the not completed state button text from the module form.
+     *
+     * @param int $value Button text value
+     */
+    public static function get_not_complete_state_button_text($value) {
+        global $CFG;
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        switch ($value){
+            case BUTTON_TEXT_ACKNOWLEDGE:
+                $buttontext = get_string('markcompletebtnstring_custom1', 'pulse');
+                break;
+            case BUTTON_TEXT_CONFIRM:
+                $buttontext = get_string('markcompletebtnstring_custom2', 'pulse');
+                break;
+            case BUTTON_TEXT_CHOOSE:
+                $buttontext = get_string('markcompletebtnstring_custom3', 'pulse');
+                break;
+            case BUTTON_TEXT_APPROVE:
+                $buttontext = get_string('markcompletebtnstring_custom4', 'pulse');
+                break;
+            default:
+                $buttontext = get_string('markcompletebtnstring_default', 'pulse');
+                break;
+        }
+        return $buttontext;
+    }
+
+    /**
+     * Get the completed state button text from the module form.
+     *
+     * @param int $value Button text value.
+     * @param int $date Completion date.
+     */
+    public static function get_complete_state_button_text($value, $date) {
+        global $CFG;
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        switch ($value){
+            case BUTTON_TEXT_ACKNOWLEDGE:
+                $buttontext = get_string('markedcompletebtnstring_custom1', 'pulse', ['date' => $date]);
+                break;
+            case BUTTON_TEXT_CONFIRM:
+                $buttontext = get_string('markedcompletebtnstring_custom2', 'pulse', ['date' => $date]);
+                break;
+            case BUTTON_TEXT_CHOOSE:
+                $buttontext = get_string('markedcompletebtnstring_custom3', 'pulse', ['date' => $date]);
+                break;
+            case BUTTON_TEXT_APPROVE:
+                $buttontext = get_string('markedcompletebtnstring_custom4', 'pulse', ['date' => $date]);
+                break;
+            default:
+                $buttontext = get_string('markedcompletebtnstring_default', 'pulse', ['date' => $date]);
+                break;
+        }
+        return $buttontext;
+    }
+
+    /**
+     * Postupdate the editor files.
+     *
+     * @param object $pulse
+     * @param mixed $context
+     */
+    public static function postupdate_editor_files($pulse, $context) {
+        global $DB;
+        $editors = ['completionbtn_content'];
+        $upd = new stdClass();
+        $upd->id = $pulse->id;
+        foreach ($editors as $editor) {
+            $editorformat = $editor . "format";
+            $pulse = file_postupdate_standard_editor($pulse, $editor, self::get_editor_options($context),
+                $context, 'mod_pulse', $editor, 0);
+            $upd->{$editor}       = $pulse->{$editor};
+            $upd->{$editorformat} = $pulse->{$editorformat};
+        }
+        $DB->update_record('pulse', $upd);
     }
 
 }
