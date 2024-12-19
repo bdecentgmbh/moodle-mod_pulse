@@ -28,17 +28,21 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/mod/pulse/lib.php');
 
+use core\task\scheduled_task;
+use mod_pulse\pulse_course_modinfo;
+use context_module;
+
 /**
  * Update user completion status for pulse. triggered from scheduled task.
  */
-class update_completion extends \core\task\scheduled_task {
+class update_completion extends scheduled_task {
 
     /**
      * Return the task's name as shown in admin screens.
      *
      * @return string
      */
-    public function get_name() {
+    public function get_name(): string {
         return get_string('updatecompletion', 'mod_pulse');
     }
 
@@ -47,9 +51,7 @@ class update_completion extends \core\task\scheduled_task {
      *
      * @return void
      */
-    public function execute() {
-        global $CFG;
-
+    public function execute(): void {
         $this->mod_pulse_completion_crontask();
     }
 
@@ -58,7 +60,7 @@ class update_completion extends \core\task\scheduled_task {
      *
      * @return void
      */
-    public function mod_pulse_completion_crontask() {
+    public function mod_pulse_completion_crontask(): void {
         global $DB, $USER, $CFG;
 
         pulse_mtrace('Pulse activity completion - Pulse Starting');
@@ -90,7 +92,7 @@ class update_completion extends \core\task\scheduled_task {
 
         if (empty($records)) {
             pulse_mtrace('No pulse instance are added yet'."\n");
-            return true;
+            return;
         }
         $modinfo = [];
         foreach ($records as $key => $record) {
@@ -148,7 +150,7 @@ class update_completion extends \core\task\scheduled_task {
             $pulse = (object) $pulse;
 
             if (!in_array($courseid, $modinfo)) {
-                $modinfo[$courseid] = new \mod_pulse\pulse_course_modinfo($course, 0);
+                $modinfo[$courseid] = new pulse_course_modinfo($course, 0);
             }
 
             if (empty($modinfo[$courseid]->cms[$cm['id']])) {
@@ -164,12 +166,12 @@ class update_completion extends \core\task\scheduled_task {
 
             if (!empty($students)) {
                 $completion = new \completion_info($course);
-                $context = \context_module::instance($cm->id);
+                $context = context_module::instance($cm->id);
                 foreach ($students as $key => $user) {
                     $modinfo[$course->id]->set_userid($user->id);
                     $md = $modinfo[$course->id];
                     // Get pulse module completion state for user.
-                    $currentstate = ($user->completionstate) ?? COMPLETION_INCOMPLETE;
+                    $currentstate = $user->completionstate ?? COMPLETION_INCOMPLETE;
                     $result = pulse_get_completion_state($course, $cm, $user->id, $currentstate, $pulse, $user, $md);
                     if (isset($user->completionstate) && $result == $currentstate) {
                         continue;
@@ -184,11 +186,10 @@ class update_completion extends \core\task\scheduled_task {
                     }
                 }
             } else {
-                pulse_mtrace('There is not users to update pulse module completion');
+                pulse_mtrace('There are no users to update pulse module completion');
             }
         }
 
-        pulse_mtrace('Course module completions are updated for all pulse module....');
-        return true;
+        pulse_mtrace('Course module completions are updated for all pulse modules....');
     }
 }
