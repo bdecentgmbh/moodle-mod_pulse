@@ -34,7 +34,7 @@ class mod_pulse_generator extends testing_module_generator {
      * @param  array $defaultoptions Default options.
      * @return void
      */
-    public function create_instance($record = null, array $defaultoptions = []) {
+    public function create_instance($record = null, ?array $options = null) {
         global $CFG;
 
         $record = (object) $record;

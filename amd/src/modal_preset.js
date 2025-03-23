@@ -1,5 +1,5 @@
 define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/modal', 'core/modal_registry', 'mod_pulse/events'],
-    function ($, Notification, CustomEvents, Modal, ModalRegistry, PresetEvents) {
+    function($, Notification, CustomEvents, Modal, ModalRegistry, PresetEvents) {
 
         var registered = false;
         var SELECTORS = {
@@ -13,19 +13,19 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
          *
          * @param {object} root The root jQuery element for the modal
          */
-        var ModalPreset = function (root) {
+        var ModalPreset = function(root) {
             Modal.call(this, root);
 
             if (!this.getFooter().find(SELECTORS.SAVE_BUTTON).length) {
-                Notification.exception({ message: 'No "Apply and save" button found' });
+                Notification.exception({message: 'No "Apply and save" button found'});
             }
 
             if (!this.getFooter().find(SELECTORS.CUSTOMIZE_BUTTON).length) {
-                Notification.exception({ message: 'No "Apply and customize" button found' });
+                Notification.exception({message: 'No "Apply and customize" button found'});
             }
 
             if (!this.getFooter().find(SELECTORS.CANCEL_BUTTON).length) {
-                Notification.exception({ message: 'No cancel button found' });
+                Notification.exception({message: 'No cancel button found'});
             }
         };
 
@@ -39,15 +39,15 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
          *
          * @method registerEventListeners
          */
-        ModalPreset.prototype.registerEventListeners = function () {
+        ModalPreset.prototype.registerEventListeners = function() {
             // Apply parent event listeners.
             Modal.prototype.registerEventListeners.call(this);
 
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.SAVE_BUTTON, function (event, data) {
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.SAVE_BUTTON, function(event, data) {
                 // Load the backupfile.
                 document.querySelectorAll('.preset-config-params form.mform').forEach(form => {
                     form.importmethod.value = 'save';
-                    form.addEventListener('submit', function (e) {
+                    form.addEventListener('submit', function(e) {
                         e.preventDefault();
                     });
                 });
@@ -67,7 +67,7 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
             }.bind(this));
 
 
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.CUSTOMIZE_BUTTON, function (event, data) {
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.CUSTOMIZE_BUTTON, function(event, data) {
                 // Add your logic for when the login button is clicked. This could include the form validation,
                 document.querySelectorAll('.preset-config-params form.mform').forEach(form => {
                     form.importmethod.value = 'customize';
@@ -83,7 +83,7 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
 
             }.bind(this));
 
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.CANCEL_BUTTON, function () {
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.CANCEL_BUTTON, function() {
                 this.destroy();
             }.bind(this));
         };

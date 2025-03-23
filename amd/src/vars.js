@@ -22,12 +22,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define("mod_pulse/vars", ["jquery", 'core/str'], (function ($, Str) {
+define("mod_pulse/vars", ["jquery", 'core/str'], (function($, Str) {
 
     /**
      * Toggle the placeholder container hide/show.
      */
-    const initPlaceholderToggle = function () {
+    const initPlaceholderToggle = function() {
 
         var selector = ".mod-pulse-emailvars-toggle";
 
@@ -58,7 +58,7 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function ($, Str) {
     /**
      * Email vars placeholders show more / show less.
      */
-    const initVarsExpand = function () {
+    const initVarsExpand = function() {
         var selector = '.mod-pulse-emailvars-toggle .pulse-email-placeholders li .button-show-more';
 
         var placeholders = document.querySelectorAll(selector);
@@ -77,12 +77,12 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function ($, Str) {
 
                 if (target.innerHTML == 'Show more') {
                     var showless = Str.get_string('showless', 'mod_pulse');
-                    showless.done(function (localizedShowlessString) {
+                    showless.done(function(localizedShowlessString) {
                         target.innerHTML = localizedShowlessString;
                     });
                 } else {
                     var showmore = Str.get_string('showmore', 'mod_pulse');
-                    showmore.done(function (localizedShowmoreString) {
+                    showmore.done(function(localizedShowmoreString) {
                         target.innerHTML = localizedShowmoreString;
                     });
                 }
@@ -92,7 +92,7 @@ define("mod_pulse/vars", ["jquery", 'core/str'], (function ($, Str) {
 
     return {
 
-        init: function () {
+        init: function() {
             initPlaceholderToggle();
             initVarsExpand();
         },
