@@ -23,7 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core_editor/events'], function() {
+define(['core_editor/events'], function () {
 
     return {
         /**
@@ -31,12 +31,12 @@ define(['core_editor/events'], function() {
          *
          * @param {integer} branch
          */
-        init: function(branch) {
+        init: function (branch) {
             var module = this;
 
             var templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             for (var l = 0; l < templatevars.length; l++) {
-                templatevars[l].addEventListener('click', function() {
+                templatevars[l].addEventListener('click', function () {
                     var EditorInput = document.getElementById('id_pulse_content_editoreditable');
                     if (EditorInput !== null) {
                         module.insertCaretActive(EditorInput);
@@ -46,18 +46,18 @@ define(['core_editor/events'], function() {
 
             var notificationheader = document.getElementById('admin-notificationheader');
             if (notificationheader !== null) {
-                notificationheader.addEventListener('click', function() {
+                notificationheader.addEventListener('click', function () {
                     var EditorInput = (branch <= '402') ? document.getElementById('id_s_mod_pulse_notificationheadereditable')
-                    : document.getElementById('id_s_mod_pulse_notificationheader_ifr');
+                        : document.getElementById('id_s_mod_pulse_notificationheader_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
 
             var notificationfooter = document.getElementById('admin-notificationfooter');
             if (notificationfooter !== null) {
-                notificationfooter.addEventListener('click', function() {
+                notificationfooter.addEventListener('click', function () {
                     var EditorInput = (branch <= '402') ? document.getElementById('id_s_mod_pulse_notificationfootereditable')
-                    : document.getElementById('id_s_mod_pulse_notificationfooter_ifr');
+                        : document.getElementById('id_s_mod_pulse_notificationfooter_ifr');
                     module.insertCaretActive(EditorInput);
                 });
             }
@@ -66,7 +66,7 @@ define(['core_editor/events'], function() {
             templatevars = document.getElementsByClassName("fitem_id_templatevars_editor");
             if (templatevars) {
                 templatevars.forEach((elem) => {
-                    elem.addEventListener('click', function(e) {
+                    elem.addEventListener('click', function (e) {
                         var target = e.currentTarget;
                         var EditorInput = (branch <= "402")
                             ? target.querySelector('[id*="_editoreditable"]')
@@ -79,12 +79,12 @@ define(['core_editor/events'], function() {
 
             var headertargetNode = document.querySelector('#id_s_mod_pulse_notificationheader');
             if (headertargetNode !== null) {
-                let observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function () {
                     if (headertargetNode.style.display == 'none') {
                         var headeriframe = document.querySelector('#admin-notificationheader iframe');
                         if (headeriframe !== null) {
                             var headercontent = document.querySelector('#admin-notificationheader iframe').contentDocument;
-                            headercontent.addEventListener('click', function() {
+                            headercontent.addEventListener('click', function () {
                                 var headercontentBody = headercontent.querySelector('body');
                                 if (headercontentBody !== null) {
                                     headercontentBody.classList.add("insertatcaretactive");
@@ -100,17 +100,17 @@ define(['core_editor/events'], function() {
                         }
                     }
                 });
-                observer.observe(headertargetNode, {attributes: true, childList: true});
+                observer.observe(headertargetNode, { attributes: true, childList: true });
             }
 
             var footertargetNode = document.querySelector('#id_s_mod_pulse_notificationfooter');
             if (footertargetNode !== null) {
-                let observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function () {
                     if (footertargetNode.style.display == 'none') {
                         var footeriframe = document.querySelector('#admin-notificationfooter iframe');
                         if (footeriframe !== null) {
                             var footercontent = document.querySelector('#admin-notificationfooter iframe').contentDocument;
-                            footercontent.addEventListener('click', function() {
+                            footercontent.addEventListener('click', function () {
                                 var footercontentBody = footercontent.querySelector('body');
                                 if (footercontentBody !== null) {
                                     footercontentBody.classList.add("insertatcaretactive");
@@ -126,18 +126,18 @@ define(['core_editor/events'], function() {
                         }
                     }
                 });
-                observer.observe(footertargetNode, {attributes: true, childList: true});
+                observer.observe(footertargetNode, { attributes: true, childList: true });
             }
 
             var targetNode = document.querySelector('textarea[id$=_editor]');
 
             if (targetNode !== null) {
-                let observer = new MutationObserver(function() {
+                let observer = new MutationObserver(function () {
                     if (targetNode.style.display == 'none') {
                         setTimeout(initIframeListeners, 100);
                     }
                 });
-                observer.observe(targetNode, {attributes: true, childList: true});
+                observer.observe(targetNode, { attributes: true, childList: true });
             }
 
             const initIframeListeners = () => {
@@ -147,7 +147,7 @@ define(['core_editor/events'], function() {
                     return false;
                 }
                 iframes.forEach((iframe) => {
-                    iframe.contentDocument.addEventListener('click', function() {
+                    iframe.contentDocument.addEventListener('click', function () {
                         iframes.forEach((frame) => {
                             var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
                             if (frameElem !== null) {
@@ -168,7 +168,7 @@ define(['core_editor/events'], function() {
 
             var clickforword = document.getElementsByClassName('clickforword');
             for (var i = 0; i < clickforword.length; i++) {
-                clickforword[i].addEventListener('click', function(e) {
+                clickforword[i].addEventListener('click', function (e) {
                     e.preventDefault(); // To prevent the default behaviour of a tag.
 
                     var content = "{" + this.getAttribute('data-text') + "}";
@@ -180,18 +180,18 @@ define(['core_editor/events'], function() {
                     if (iframes === null || !iframes.length) {
                         var headerNode = document.querySelector('#admin-notificationheader iframe');
                         if (headerNode !== null) {
-                                // Header notification editor.
-                                var headerNodeiframe = headerNode.contentDocument;
-                                if (headerNodeiframe !== null) {
-                                    var headercontentBody = headerNodeiframe.querySelector("body");
-                                    if (headercontentBody.classList.contains("insertatcaretactive")) {
-                                        headercontentBody.classList.add("insertatcaretactive");
-                                        const id = headercontentBody.dataset.id;
-                                        var headereditor = window.tinyMCE.get(id);
-                                        headereditor.selection.setContent(content);
-                                        return true;
-                                    }
+                            // Header notification editor.
+                            var headerNodeiframe = headerNode.contentDocument;
+                            if (headerNodeiframe !== null) {
+                                var headercontentBody = headerNodeiframe.querySelector("body");
+                                if (headercontentBody.classList.contains("insertatcaretactive")) {
+                                    headercontentBody.classList.add("insertatcaretactive");
+                                    const id = headercontentBody.dataset.id;
+                                    var headereditor = window.tinyMCE.get(id);
+                                    headereditor.selection.setContent(content);
+                                    return true;
                                 }
+                            }
                         }
 
                         var footerNode = document.querySelector('#admin-notificationfooter iframe');
@@ -212,7 +212,7 @@ define(['core_editor/events'], function() {
                     }
 
                     var tinyEditor;
-                    iframes.forEach(function(frame) {
+                    iframes.forEach(function (frame) {
                         var frameElem = frame.contentDocument.querySelector(".insertatcaretactive");
                         if (frameElem !== null) {
                             var contentBody = frame.contentDocument.querySelector('body');
@@ -251,7 +251,7 @@ define(['core_editor/events'], function() {
             }
         },
 
-        insertCaretActive: function(EditorInput) {
+        insertCaretActive: function (EditorInput) {
             if (EditorInput === null) {
                 return;
             }
@@ -267,7 +267,7 @@ define(['core_editor/events'], function() {
          * @param  {string} element
          * @returns {array} list of childNodes.
          */
-        getAllTextNodes: function(element) {
+        getAllTextNodes: function (element) {
             return Array.from(element.childNodes)
                 .filter(node => node.nodeType === 3 && node.textContent.trim().length > 1);
         },
@@ -296,7 +296,7 @@ define(['core_editor/events'], function() {
          * Insert the placeholder in selected caret place.
          * @param  {string} myValue
          */
-        insertAtCaret: function(myValue) {
+        insertAtCaret: function (myValue) {
             var caretelements = document.getElementsByClassName("insertatcaretactive");
             var sel, range;
             for (var n = 0; n < caretelements.length; n++) {

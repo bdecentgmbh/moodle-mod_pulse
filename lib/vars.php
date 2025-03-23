@@ -21,8 +21,10 @@
  * @copyright 2021, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die('No direct access');
 
+use mod_pulse\extendpro;
 use mod_pulse\helper as pulsehelper;
 /**
  * Filter for notification content placeholders.
@@ -108,24 +110,71 @@ class pulse_email_vars {
     protected $orgcourse = null;
 
     /**
+     * Calendar data.
+     *
+     * @var object
+     */
+    public $calendar = null;
+
+    /**
+     * Assignment Extension data.
+     *
+     * @var object
+     */
+    public $assignment = null;
+
+    /**
+     * Conditions vars data.
+     *
+     * @var mixed
+     */
+    public $condition = null;
+
+    /**
+     * Event data.
+     *
+     * @var object
+     */
+    public $event = null;
+
+    /**
+     * Traning data.
+     *
+     * @var object
+     */
+    public $training = null;
+
+    /**
+     * Email vars are udpated for the use of notification or content.
+     *
+     * @var string
+     */
+    public $type = 'notification';
+
+    /**
      * Sets up and retrieves the API objects.
      *
      * @param mixed $user User data record
      * @param mixed $course Course data object
      * @param mixed $sender Sender user record data.
      * @param mixed $pulse Pulse instance record data.
+     * @param mixed $condition Conditions data
+     * @param mixed $type Type of the email notification.
      * @return void
      */
-    public function __construct($user, $course, $sender, $pulse) {
+    public function __construct($user, $course, $sender, $pulse, $condition=null, $type='notification') {
         global $CFG, $USER;
 
         $newuser = !empty($user->id) ? $user : $USER;
-        self::convert_varstime_format($newuser);
+        self::convert_varstime_format($user);
         $this->user =& $newuser;
 
         $this->sender =& $sender;
         $wwwroot = $CFG->wwwroot;
         $this->pulse = $pulse;
+        if (!isset($this->pulse->options) && !empty($this->pulse->id)) {
+            $this->pulse->options = (object) \mod_pulse\options::init($this->pulse->id)->get_options();
+        }
 
         self::convert_varstime_format($pulse);
         $this->mod = $pulse; // Auomation templates pulse is used as module.
@@ -133,6 +182,9 @@ class pulse_email_vars {
         $this->orgcourse = clone $course; // Store the course record without before update its format.
         self::convert_varstime_format($course);
         $this->course = $course;
+        // Remove all the html tags from course summary.
+        $this->course->summaryplain = strip_tags($course->summary);
+
         // Course context.
         $this->coursecontext = \context_course::instance($this->course->id);
 
@@ -146,6 +198,9 @@ class pulse_email_vars {
 
         $this->enrolment = $this->get_user_enrolment();
 
+        $this->condition = $condition;
+
+        $this->type = $type;
     }
 
     /**
@@ -170,8 +225,10 @@ class pulse_email_vars {
         }
         // Update the timestamp to user readable time.
         array_walk($var, function(&$value, $key) {
-            if (in_array(strtolower($key), ['timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
-                'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime',
+
+            if (is_numeric($value) && in_array(strtolower($key), [
+                    'timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
+                    'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime',
                 ])) {
                 $value = $value ? userdate($value) : '';
             }
@@ -218,12 +275,15 @@ class pulse_email_vars {
             'Mod' => self::course_activities_data_fields(),
             // Meta fields.
             'Mod_Metadata' => self::module_meta_fields(),
+
         ];
 
-        $result += \mod_pulse\extendpro::pulse_extend_reaction_placholder();
+        $extendvars = \mod_pulse\extendpro::pulse_extend_general('get_email_placeholders');
+        array_map(function($value) use (&$result) {
+            $result += $value;
+        }, $extendvars);
 
         $result += ['others' => ['siteurl', 'courseurl', 'linkurl', 'completionstatus']];
-
         // Remove empty vars.
         $result = array_filter($result);
 
@@ -236,17 +296,21 @@ class pulse_email_vars {
      */
     public function __get($name) {
         if (isset($name)) {
+
             if (property_exists($this, $name)) {
                 return $this->$name;
             }
-            preg_match('/^(.*)_(.*)$/', $name, $matches);
-            if (isset($matches[1])) {
 
+            preg_match('/^(.*)_(.*)$/', $name, $matches);
+
+            if (isset($matches[1])) {
                 $object = strtolower($matches[1]);
                 $property = strtolower($matches[2]);
 
                 if (method_exists($this, $object)) {
                     return $this->$object($property); // Call the method.
+                } else if (array_key_exists($object, $this->condition)) {
+                    return $this->condition[$object][$property] ?? $this->blank;
                 } else if ($this->$object == null) {
                     return $this->blank;
                 }
@@ -260,6 +324,8 @@ class pulse_email_vars {
                 } else {
                     return $this->blank;
                 }
+            } else if ($this->get_extend_vars_list($name)) {
+                return $this->get_extend_vars_data($name); // Call the method.
             } else if (self::ok2call($name)) {
                 return $this->$name();
             }
@@ -267,9 +333,48 @@ class pulse_email_vars {
     }
 
     /**
+     * Get the extended variables list.
+     *
+     * @param string $name The name of the variable.
+     * @return bool True if the variable is in the list, false otherwise.
+     */
+    public function get_extend_vars_list($name) {
+        $list = extendpro::pulse_extend_general('get_email_placeholders');
+        $newlist = [];
+        array_map(function($v) use (&$newlist) {
+            $newlist += call_user_func_array('array_merge', array_values($v));
+        }, $list);
+
+        if (in_array($name, $newlist)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the extended variables data.
+     *
+     * @param string $name The name of the variable.
+     * @return mixed The value of the extended variable.
+     */
+    public function get_extend_vars_data($name) {
+        $list = extendpro::pulse_extend_general('get_email_placeholders');
+        foreach ($list as $component => $vars) {
+            if (in_array($name,  call_user_func_array('array_merge', array_values($vars)))) {
+                $component = strtolower($component);
+                $result = $component . '\instance::get_emailvars_definition_' . $name;
+                return $result($this);
+            }
+        }
+
+        return "";
+    }
+
+    /**
      * Provide the SiteURL method for templates.
      *
-     * returns text;
+     * @return string
      *
      **/
     public function siteurl() {
@@ -282,9 +387,8 @@ class pulse_email_vars {
     /**
      * Provide the LinkURL method for templates.
      *
-     * returns text;
-     *
-     **/
+     * @return text
+     */
     public function linkurl() {
         global $CFG;
 
@@ -298,9 +402,8 @@ class pulse_email_vars {
     /**
      * Provide the CourseURL method for templates.
      *
-     * returns text;
-     *
-     **/
+     * @return text
+     */
     public function courseurl() {
         global $CFG;
 
@@ -309,16 +412,6 @@ class pulse_email_vars {
         } else {
             return new moodle_url($this->course->url);
         }
-    }
-
-    /**
-     * Reaction placeholders dynamic data.
-     * Pro featuer extended from locla_pulsepro.
-     *
-     * @return void
-     */
-    public function reaction() {
-        return \mod_pulse\extendpro::pulse_extend_reaction($this);
     }
 
     /**
@@ -426,7 +519,6 @@ class pulse_email_vars {
         return $fields;
     }
 
-
     /**
      * List of course fields and custom fields.
      *
@@ -441,7 +533,7 @@ class pulse_email_vars {
             $fields = [];
 
             $coursefields = [
-                'fullname', 'shortname', 'summary', 'courseurl', 'startdate',
+                'fullname', 'shortname', 'summary', 'summaryplain', 'courseurl', 'startdate',
                 'enddate', 'id', 'category', 'idnumber', 'format', 'visible',
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
                 'timemodified', 'enablecompletion',
@@ -502,32 +594,6 @@ class pulse_email_vars {
     }
 
     /**
-     * Session fields
-     *
-     * @return array
-     */
-    public static function session_fields() {
-        global $CFG;
-        // Verify the face to face is installed. if not, prevent session placeholder inclusion.
-        if (!file_exists($CFG->dirroot.'/mod/facetoface/lib.php')) {
-            return [];
-        }
-
-        require_once($CFG->dirroot.'/mod/facetoface/lib.php');
-
-        $fields = [
-            'Starttime', 'Startdate', 'Enddate', 'Endtime', 'Link', 'Details',
-            'Discountcode', 'Capacity', 'Normalcost', 'Discountcost',
-            'Type',
-        ];
-        $customfields = facetoface_get_session_customfields();
-        foreach ($customfields as $field) {
-            $fields[] = 'customfield_' . $field->shortname;
-        }
-        return array_map(fn($field) => 'Mod_session_'.$field, $fields);
-    }
-
-    /**
      * Sender information fields.
      *
      * @return array
@@ -547,7 +613,7 @@ class pulse_email_vars {
     public static function enrolement_data_fields() {
         return [
             // Sender information fields .
-            'Enrolment_Status', 'Enrolment_Progress', 'Enrolment_Startdate', 'Enrolment_Enddate',
+            'Enrolment_Status', 'Enrolment_Progress', 'Enrolment_Startdate', 'Enrolment_Enddate', 'Enrolment_Courseduedate',
         ];
     }
 
@@ -571,7 +637,7 @@ class pulse_email_vars {
     public static function course_activities_data_fields() {
         return [
             // Activities Fields.
-            'Mod_Type', 'Mod_Name', 'Mod_Intro',
+            'Mod_Type', 'Mod_Name', 'Mod_Intro', 'Mod_Url',
         ];
     }
 
@@ -593,13 +659,11 @@ class pulse_email_vars {
 
 }
 
-
-
 // If the version is not iomad, set empty emailvars class for provide previous pro versions compatibility.
 if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
 
     /**
-     * EMAIL vars for support previous version pulsepro.
+     * EMAIL vars for support previous version pulse addon.
      */
     class EmailVars extends pulse_email_vars {
 
@@ -607,9 +671,10 @@ if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
          * Set up all the methods that can be called and used for substitution var in email templates.
          * There is not use for this function, FIX for CI.
          *
+         * @param bool $automation
          * @return array
          **/
-        public static function vars() {
+        public static function vars($automation=false) {
             $test = ''; // FIX for Moodle CI codechecker.
             return parent::vars();
         }

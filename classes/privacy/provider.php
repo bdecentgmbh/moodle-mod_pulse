@@ -382,7 +382,6 @@ class provider implements
         return [];
     }
 
-
     /**
      * Helper function to group an array of stdClasses by a common property.
      *

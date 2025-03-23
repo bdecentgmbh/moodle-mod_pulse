@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<presets>
+    <preset>
+        <title>Demo pro preset 1</title>
+        <description>This is demo preset 1 to test</description>
+        <configparams>["name","introeditor","reactiontype","reactiondisplay","first_reminder","second_reminder"]</configparams>
+        <preset_template>preset-demo-3.mbz</preset_template>
+        <status>1</status>
+        <icon>core:a/download_all</icon>
+        <order_no>1</order_no>
+    </preset>
+    <preset1>
+        <title>Demo pro preset 2</title>
+        <description>This is demo preset 2 to test</description>
+        <configparams>["name","introeditor","reactiontype","reactiondisplay","first_subject","second_subject"]</configparams>
+        <preset_template>preset-demo-4.mbz</preset_template>
+        <status>1</status>
+        <icon>core:a/add_file</icon>
+        <order_no>2</order_no>
+    </preset1>
+</presets>

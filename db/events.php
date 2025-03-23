@@ -35,4 +35,9 @@ $observers = [
         'callback' => '\mod_pulse\eventobserver::user_enrolment_deleted',
     ],
 
+    [
+        'eventname' => 'core\event\user_enrolment_created',
+        'callback' => '\mod_pulse\eventobserver::user_enrolment_created',
+    ],
+
 ];

@@ -45,8 +45,15 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
             'completionbtn_contentformat', 'timemodified',
         ]);
 
-        $notifiedusers = new backup_nested_element('notifiedusers');
+        $this->add_subplugin_structure('pulseaddon', $pulse, true);
 
+        // Pulse options.
+        $pulseoptions = new backup_nested_element('pulseoptions');
+        $pulseoption = new backup_nested_element('pulse_options', ['id'], [
+            'pulseid', 'name', 'value',
+        ]);
+
+        $notifiedusers = new backup_nested_element('notifiedusers');
         $pulseusers = new backup_nested_element('pulse_users', ['id'], [
             'pulseid', 'userid', 'timecreated',
         ]);
@@ -57,6 +64,9 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
             'userid', 'pulseid', 'approvalstatus', 'approveduser', 'approvaltime',
             'selfcompletion', 'selfcompletiontime', 'timemodified',
         ]);
+
+        $pulse->add_child($pulseoptions);
+        $pulseoptions->add_child($pulseoption);
 
         // Build the tree.
         $pulse->add_child($notifiedusers);
@@ -70,6 +80,9 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         // Define source to backup.
         $pulse->set_source_table('pulse', ['id' => backup::VAR_ACTIVITYID]);
 
+        // Pulse options.
+        $pulseoption->set_source_table('pulse_options', ['pulseid' => backup::VAR_PARENTID]);
+
         // All the rest of elements only happen if we are including user info.
         if ($userinfo) {
             $pulseusers->set_source_table('pulse_users', ['pulseid' => backup::VAR_PARENTID]);
@@ -82,8 +95,6 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
         $pulse->annotate_files('mod_pulse', 'completionbtn_content', null);
-
-        $pulse = \mod_pulse\extendpro::pulse_extend_backup_steps($pulse, $userinfo);
 
         // Return the root element (data), wrapped into standard activity structure.
         return $this->prepare_activity_structure($pulse);

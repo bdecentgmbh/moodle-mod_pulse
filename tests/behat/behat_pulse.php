@@ -129,11 +129,103 @@ class behat_pulse extends behat_base {
     public function i_set_the_activity_completion_tracking() {
         global $CFG;
 
-        if ($CFG->branch == "403") {
-            $this->execute('behat_forms::i_set_the_field_to', ['id_completion_2', '2']);
+        if ($CFG->branch >= "401") {
+            $this->execute('behat_forms::i_set_the_field_to', ['Add requirements', '1']);
         } else {
             $this->execute('behat_forms::i_set_the_field_to',
             ['Completion tracking', 'Show activity as complete when conditions are met']);
+        }
+    }
+
+    /**
+     * Switches to a pulse new window.
+     *
+     * @Given /^I switch to a pulse open window$/
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function switch_to_open_window() {
+        $names = $this->getSession()->getWindowNames();
+        $this->getSession()->switchToWindow(end($names));
+    }
+
+    /**
+     * Switches to a pulse new window.
+     *
+     * @Given /^I click on pulse "([^"]*)" editor$/
+     *
+     * @param string $editor
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function i_click_on_pulse_editor($editor) {
+        global $CFG;
+
+        if ($CFG->branch >= 402) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . 'editable', 'css_element', '#fitem_'.$editor, 'css_element']);
+        }
+    }
+
+    /**
+     * View assignment submission button.
+     *
+     * @Given /^I click on assignment submissions button$/
+     *
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function i_click_on_assignment_submissions_button() {
+        global $CFG;
+
+        if ($CFG->branch >= 405) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['Submissions', 'link', '.secondary-navigation', 'css_element']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['View all submissions', 'link', '.tertiary-navigation', 'css_element']);
+        }
+    }
+
+    /**
+     * Click on user edit menu button on submissions page.
+     *
+     * @Given /^I click on "([^"]*)" edit menu on submissions page$/
+     *
+     * @param string $user
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function i_click_on_user_edit_menu_on_submissions_page($user) {
+        global $CFG;
+
+        if ($CFG->branch >= 405) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#action-menu-toggle-0', 'css_element', $user, 'table_row']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['Edit', 'link', $user, 'table_row']);
+        }
+    }
+
+    /**
+     * Click on user edit menu button on submissions page.
+     *
+     * @Given /^I add pulse to course "([^"]*)" section "([^"]*)" with:$/
+     *
+     * @param string $coursename The course name.
+     * @param string $section The section number.
+     * @param TableNode $data The pulse data.
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function i_add_pulse_to_course_section($coursename, $section, TableNode $data) {
+        global $CFG;
+
+        if ($CFG->branch >= 405) {
+            $this->execute('behat_course::i_add_to_course_section_and_i_fill_the_form_with',
+                ['pulse', $coursename, $section, $data]);
+        } else {
+            $this->execute('behat_general::i_add_to_section_and_i_fill_the_form_with',
+                ['pulse', $section, $data]);
         }
     }
 }

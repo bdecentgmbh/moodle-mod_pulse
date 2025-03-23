@@ -20,7 +20,7 @@ Feature: Check pulse activity works
       | student1 | C1     | student        |
     Given I log in as "teacher1"
     And I am on "Test" course homepage with editing mode on
-    When I add a "pulse" to section "1" and I fill the form with:
+    When I add pulse to course "Test" section "1" with:
       | Title   | Test pulse         |
       | Content | Test pulse content |
     Then "Test pulse content" activity should be visible

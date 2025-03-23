@@ -27,7 +27,7 @@ namespace mod_pulse;
 /**
  * Pulse resource preset create and customize settings phpunit test cases defined.
  */
-class preset_test extends \advanced_testcase {
+final class preset_test extends \advanced_testcase {
 
     /**
      * Preset instance data
@@ -64,6 +64,9 @@ class preset_test extends \advanced_testcase {
      */
     public function setUp(): void {
         global $CFG;
+
+        parent::setUp();
+
         $this->resetAfterTest();
         $this->setAdminUser();
         $this->course = $this->getDataGenerator()->create_course(null, ['createsections' => true]);
@@ -76,7 +79,7 @@ class preset_test extends \advanced_testcase {
      * @covers ::pulse_create_presets
      * @return void
      */
-    public function test_pulse_create_presets() {
+    public function test_pulse_create_presets(): void {
         global $DB;
         \mod_pulse\preset::pulse_create_presets();
 
@@ -112,7 +115,7 @@ class preset_test extends \advanced_testcase {
      * @covers ::customize_preset
      * @return void
      */
-    public function test_apply_customize_preset() {
+    public function test_apply_customize_preset(): void {
         global $DB;
         \mod_pulse\preset::pulse_create_presets();
 

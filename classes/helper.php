@@ -34,25 +34,26 @@ use core_course_category;
 use stdclass;
 use context_course;
 
-require_once($CFG->dirroot.'/lib/formslib.php');
-
 /**
  * Commonly used method in pulse.
  */
 class helper {
-
     /**
      * Replace email template placeholders with dynamic datas.
      *
-     * @param  mixed $templatetext Email Body content with placeholders
-     * @param  mixed $subject Mail subject with placeholders.
-     * @param  mixed $course Course object data.
-     * @param  mixed $user User data object.
-     * @param  mixed $mod Pulse module data object.
-     * @param  mixed $sender Sender user data object. - sender is the first enrolled teacher in the course of module.
+     * @param mixed $templatetext Email Body content with placeholders
+     * @param mixed $subject Mail subject with placeholders.
+     * @param mixed $course Course object data.
+     * @param mixed $user User data object.
+     * @param mixed $mod Pulse module data object.
+     * @param mixed $sender Sender user data object. - sender is the first enrolled teacher in the course of module.
+     * @param array $conditionvars Condition variables.
+     * @param string $type Email type.
      * @return array Updated subject and message body content.
      */
-    public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender) {
+    public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender,
+        $conditionvars=[], $type='notification') {
+
         global $DB, $CFG, $USER;
 
         // Include placholders handler and user profile library.
@@ -66,12 +67,14 @@ class helper {
         $newuserkeys = array_map(function($value) {
             return str_replace('profile_field_', '', $value);
         }, array_keys((array) $newuser));
+
         $user->profilefield = (object) array_combine($newuserkeys, (array) $newuser);
         $user->fullname = fullname($user);
 
         $course = clone $course;
         // Load course custom profuile fields.
         $course->customfield = \core_course\customfield\course_handler::create()->export_instance_data_object($course->id);
+
         // Load the course url.
         if (!empty($course->id)) {
             $url = new moodle_url($CFG->wwwroot .'/course/view.php', ['id' => $course->id]);
@@ -89,7 +92,7 @@ class helper {
         $course->category = is_number($course->category)
             ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
 
-        $vars = new pulse_email_vars($user, $course, $sender, $mod);
+        $vars = new pulse_email_vars($user, $course, $sender, $mod, $conditionvars, $type);
 
         foreach ($amethods as $varscat => $placeholders) {
             foreach ($placeholders as $funcname) {
@@ -97,12 +100,30 @@ class helper {
                 // Message text placeholder update.
                 if (stripos($templatetext, $replacement) !== false) {
                     $val = $vars->$funcname;
+                    // Is the var is closure then call the function.
+                    if ($val instanceof \Closure) {
+                        $val = $val($mod, $user, $course);
+                    }
+
+                    if ($val instanceof moodle_url) {
+                        // Remove any URL scheme (http or https) from the text if it is followed by a placeholder.
+                        if (stripos($templatetext, 'http://'.$replacement) !== false
+                            || stripos($templatetext, 'https://'.$replacement) !== false) {
+                            $templatetext = str_ireplace('http://'.$replacement, $replacement, $templatetext);
+                            $templatetext = str_ireplace('https://'.$replacement, $replacement, $templatetext);
+                        }
+                    }
+
                     // Placeholder found on the text, then replace with data.
                     $templatetext = str_ireplace($replacement, $val, $templatetext);
                 }
                 // Replace message subject placeholder.
                 if (stripos($subject, $replacement) !== false) {
                     $val = $vars->$funcname;
+                    // Is the var is closure then call the function.
+                    if ($val instanceof \Closure) {
+                        $val = $val($mod, $user, $course);
+                    }
                     $subject = str_ireplace($replacement, $val, $subject);
                 }
             }
@@ -209,6 +230,7 @@ class helper {
                                                 WHERE ra.userid = ?
                                                         AND ra.contextid = c.id
                                                         AND c.instanceid = u.id
+                                                        AND u.deleted = 0 AND u.suspended = 0
                                                         AND c.contextlevel = ".CONTEXT_USER, [$USER->id])) {
 
             $users = [];
@@ -307,8 +329,6 @@ class helper {
         return $html;
     }
 
-
-
     /**
      * Add the completion and reaction buttons with pulse content on view page.
      *
@@ -346,11 +366,12 @@ class helper {
                 // Add self mark completed informations.
                 if (!class_exists('core_completion\activity_custom_completion')
                     && $date = self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
-                        $selfmarked = self::get_complete_state_button_text($pulse->completionbtntext, $date).'<br>';
+                    $selfmarked = self::get_complete_state_button_text($pulse->completionbtntext, $date).'<br>';
                     $html .= html_writer::tag('div', $selfmarked,
                     ['class' => 'pulse-self-marked badge badge-success']);
                 } else if (!self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
                     $additionalclass = $pulse->completionbtnconfirmation ? 'confirmation-'. $moduleid : '';
+
                     $buttontext = self::get_not_complete_state_button_text($pulse->completionbtntext);
                     $selfcomplete = !$pulse->completionbtnconfirmation ?
                         new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']) :
@@ -370,7 +391,9 @@ class helper {
             $instance->pulse = $pulse;
             $instance->pulse->id = $cm->instance;
             $instance->user = $USER;
-            $html .= \mod_pulse\extendpro::pulse_extend_reaction($instance, 'content');
+            $instance->pulse->options = (object) options::init($cm->instance)->get_options();
+
+            $html .= \mod_pulse\extendpro::pulse_extend_cm_infocontent($cm->instance, $instance);
         }
         return $html;
     }
@@ -398,6 +421,7 @@ class helper {
         }
         return false;
     }
+
     /**
      * Seperate the record data into context and course and cm.
      * In function mod_pulse_completion_crontask, data fetched using JOIN queries,
@@ -435,7 +459,9 @@ class helper {
      * @return array
      */
     public static function get_editor_options($context=null) {
-        global $PAGE;
+        global $PAGE, $CFG;
+
+        require_once($CFG->libdir.'/formslib.php');
         return [
             'trusttext' => true,
             'subdirs' => true,
@@ -466,7 +492,6 @@ class helper {
         }
         return false;
     }
-
 
     /**
      * Filter the users who has access to view the instance and not notified before.
@@ -577,20 +602,6 @@ class helper {
     }
 
     /**
-     * Check if pulse Pro is installed.
-     *
-     * @return bool
-     */
-    public static function pulse_has_pro() {
-        global $CFG;
-        static $result;
-        if ($result == null) {
-            $result = array_key_exists('pulsepro', \core_component::get_plugin_list('local')) ? true : false;
-        }
-        return $result;
-    }
-
-    /**
      * Get the not completed state button text from the module form.
      *
      * @param int $value Button text value
@@ -598,6 +609,7 @@ class helper {
     public static function get_not_complete_state_button_text($value) {
         global $CFG;
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
+
         switch ($value){
             case BUTTON_TEXT_ACKNOWLEDGE:
                 $buttontext = get_string('markcompletebtnstring_custom1', 'pulse');
@@ -666,6 +678,32 @@ class helper {
             $upd->{$editorformat} = $pulse->{$editorformat};
         }
         $DB->update_record('pulse', $upd);
+    }
+
+    /**
+     * Filter the record data by keys with a specific prefix.
+     *
+     * @param array|object $record The record data to be filtered.
+     * @param string $prefix The prefix to filter keys by.
+     *
+     * @return array The filtered data with the prefix removed from keys.
+     */
+    public static function filter_record_byprefix($record, $prefix) {
+
+        // Filter the data based on the shortname.
+        $filtered = array_filter((array) $record, function($key) use ($prefix) {
+            return strpos($key, $prefix.'_') === 0;
+        }, ARRAY_FILTER_USE_KEY);
+
+        // Remove the prefix from the keys.
+        $removedprefix = array_map(function($key) use ($prefix) {
+            return str_replace($prefix."_", '', $key);
+        }, array_keys($filtered));
+
+        // Combine the filtered values with prefix removed keys.
+        $final = array_combine(array_values($removedprefix), array_values($filtered));
+
+        return $final;
     }
 
 }

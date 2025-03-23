@@ -16,6 +16,12 @@
     position: relative;
     font-size: smaller;
 }
+#page-mod-pulse-addons-preset-presets table tbody tr td a {
+    display: inline-block;
+}
+#page-mod-pulse-addons-preset-presets table tbody tr td a i.icon {
+    margin-right: 0;
+}
 
 @media (max-width: 767px) {
     .path-mod-pulse .fcontainer .emailvars,
@@ -100,7 +106,8 @@
     background-color: #fff;
 }
 
-#page-mod-pulse-mod .preset-config-params [data-fieldtype="submit"] {
+#page-mod-pulse-mod .preset-config-params [data-fieldtype="submit"],
+#page-mod-pulse-mod .preset-config-params #fitem_id_submitbutton {
     display: none;
 }
 
@@ -133,12 +140,13 @@
     font-size: 1.5rem;
 }
 
-/* Pulse 2.1 email placeholders style */
+/* Pulse 2.1 */
 .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
     width: 400px;
     height: 25px;
     overflow: hidden;
 }
+
 .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders li {
     margin-bottom: 10px;
 }
@@ -206,14 +214,6 @@
     margin-bottom: 0;
     font-weight: normal;
 }
-
-div#pulsetemplates-tab-content .tab-pane.active {
-    display: block;
-}
-div#pulsetemplates-tab-content .tab-pane {
-    display: none;
-}
-
 @media (min-width: 767px) and (max-width: 991px) {
     .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
         width: auto;
@@ -226,4 +226,18 @@ div#pulsetemplates-tab-content .tab-pane {
         width: auto;
         max-width: 400px;
     }
+}
+/* Increase the height for the training data fields */
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders
+.placeholder-body .placeholders.less#firstcontent-Training_field-morebutton {
+    height: 60px;
+}
+
+/*Email placeholder expand tab*/
+.form-description .mod-pulse-emailvars-toggle .form-group > .col-md-3 {
+    display: none;
+}
+.form-description .mod-pulse-emailvars-toggle .form-group > .col-md-9 {
+    max-width: none;
+    flex: auto;
 }

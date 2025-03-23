@@ -23,7 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/fragment'], function(Fragment) {
+define(['core/fragment'], function (Fragment) {
 
     return {
 
@@ -31,7 +31,7 @@ define(['core/fragment'], function(Fragment) {
          * Update completion buttons for each activity based on user role.
          * This will load the template using fragment.
          */
-        updatecompletionbuttons: function() {
+        updatecompletionbuttons: function () {
             var instances = document.getElementsByClassName('modtype_pulse');
             var modules = []; var moduleid;
             for (var i = 0; i < instances.length; i++) {
@@ -40,7 +40,7 @@ define(['core/fragment'], function(Fragment) {
                 moduleid = parseInt(id.replace('module-', ''));
                 modules.push(moduleid);
             }
-            var params = {modules: JSON.stringify(modules)};
+            var params = { modules: JSON.stringify(modules) };
             if (modules.length > 0) {
                 let completionbuttons = Fragment.loadFragment('mod_pulse', 'completionbuttons', 1, params);
                 var approvebtn, element, referenceNode, completioncontent;
@@ -63,7 +63,7 @@ define(['core/fragment'], function(Fragment) {
         /**
          * If the page is course view page then call the completion buttons to insert.
          */
-        init: function() {
+        init: function () {
             if (document.body.classList.contains('path-course-view')) {
                 this.updatecompletionbuttons();
             }

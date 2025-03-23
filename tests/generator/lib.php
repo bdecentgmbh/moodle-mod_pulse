@@ -31,16 +31,37 @@ class mod_pulse_generator extends testing_module_generator {
      * Create pulse module instance.
      *
      * @param  mixed $record Module instance data.
-     * @param  array $options Additional options.
+     * @param  array $defaultoptions Default options.
      * @return void
      */
-    public function create_instance($record = null, array $options = null) {
+    public function create_instance($record = null, array $defaultoptions = []) {
+        global $CFG;
+
         $record = (object) $record;
         $record->showdescription = 1;
         $record->pulse = 1;
+
         if (!isset($record->diff_pulse)) {
             $record->diff_pulse = 0;
         }
-        return parent::create_instance($record, $options);
+        if (!isset($record->completionbtn_content_editor)) {
+            $record->completionbtn_content_editor = ['text' => '', 'format' => FORMAT_HTML];
+        }
+
+        $plugins = mod_pulse\plugininfo\pulseaddon::get_enabled_addons();
+        foreach ($plugins as $plugin => $version) {
+            if (!file_exists($CFG->dirroot . '/mod/pulse/addons/' . $plugin . '/tests/generator/lib.php')) {
+                continue;
+            }
+            require_once($CFG->dirroot . '/mod/pulse/addons/' . $plugin . '/tests/generator/lib.php');
+            $classname = 'pulseaddon_' . $plugin . '_generator';
+            if (class_exists($classname) && method_exists($classname, 'default_value')) {
+                $options = $classname::default_value();
+                $record = (object) array_merge((array) $record, $options);
+            }
+        }
+
+        $record = (object) array_merge((array) $record, $defaultoptions);
+        return parent::create_instance($record, $defaultoptions);
     }
 }

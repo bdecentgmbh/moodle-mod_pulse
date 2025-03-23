@@ -152,4 +152,5 @@ class external extends \external_api {
             ]
         );
     }
+
 }

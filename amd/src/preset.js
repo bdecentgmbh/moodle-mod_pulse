@@ -1,6 +1,6 @@
 define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/events', 'core/str', 'core/fragment', 'core/ajax',
     'core/templates', 'core/loadingicon', 'core/notification', 'core/modal_events', 'mod_pulse/presetmodal'],
-    function($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon,
+    function ($, Modal, ModalPreset, PresetEvents, Str, Fragment, AJAX, Templates, Loadingicon,
         Notification, ModalEvents, PresetModal) {
 
         var SELECTOR = {
@@ -13,14 +13,14 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
          * @param  {int} courseid
          * @param  {int} section
          */
-        var Preset = function(contextId, courseid, section) {
+        var Preset = function (contextId, courseid, section) {
             this.contextId = contextId;
             this.courseid = courseid;
             this.section = section;
             this.loadPresetsList();
         };
 
-        Preset.prototype.listElement = {'selector': 'pulse-presets-data', "loaded": "data-listloaded"};
+        Preset.prototype.listElement = { 'selector': 'pulse-presets-data', "loaded": "data-listloaded" };
 
         Preset.prototype.contextId = 0;
 
@@ -37,7 +37,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         /**
          * Setup the presets modal event listeners.
          */
-        Preset.prototype.setupmodal = function() {
+        Preset.prototype.setupmodal = function () {
 
             var THIS = this;
 
@@ -48,7 +48,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             triggerelement.forEach((element) => element.addEventListener('click', () => {
                 var presetid = element.getAttribute('data-presetid');
                 var presettitle = element.getAttribute('data-presettitle');
-                var params = {'presetid': presetid, 'courseid': THIS.courseid, 'section': THIS.section};
+                var params = { 'presetid': presetid, 'courseid': THIS.courseid, 'section': THIS.section };
 
                 document.body.prepend(attachmentPoint);
 
@@ -56,13 +56,13 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                 if (typeof PresetModal.registerModalType == 'undefined') {
                     modalFn = Modal.create({
                         type: ModalPreset.TYPE,
-                        title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
+                        title: Str.get_string('presetmodaltitle', 'pulse', { 'title': presettitle }),
                         body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
                         large: true,
                     });
                 } else {
                     modalFn = PresetModal.create({
-                        title: Str.get_string('presetmodaltitle', 'pulse', {'title': presettitle}),
+                        title: Str.get_string('presetmodaltitle', 'pulse', { 'title': presettitle }),
                         body: Fragment.loadFragment('mod_pulse', 'get_preset_preview', THIS.contextId, params),
                         large: true,
                     });
@@ -72,17 +72,14 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                     // Make the modal attachment point to overcome the restriction access condition.
                     modal.attachmentPoint = attachmentPoint;
                     modal.show();
-                    modal.getRoot().on(ModalEvents.bodyRendered, function() {
-
-                        if (modal.getRoot().get(0).querySelector("#id_availabilityconditionsjson") !== null) {
-                            THIS.reinitAvailability(SELECTOR.presetAvailability);
-                        }
+                    modal.getRoot().on(ModalEvents.bodyRendered, function () {
+                        THIS.reinitAvailability(SELECTOR.presetAvailability);
                         THIS.fieldChangedEvent();
                     });
                     // Destroy the modal on hidden to reload the editors.
-                    modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.getRoot().on(ModalEvents.hidden, function () {
                         modal.getRoot().get(0).querySelectorAll('form textarea').forEach(target => {
-                            if (typeof tinyMCE !== 'undefined' && tinyMCE.EditorManager.get(target.id)) { // eslint-disable-line
+                            if (typeof tinyMCE !== 'undefined') {
                                 tinyMCE.EditorManager.get(target.id).remove(); // eslint-disable-line
                             }
                         });
@@ -98,7 +95,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
                             var formdata = new FormData(form);
                             formdata = new URLSearchParams(formdata).toString();
                             var pageparams = new URLSearchParams(modformdata).toString();
-                            params = {formdata: formdata, pageparams: pageparams};
+                            params = { formdata: formdata, pageparams: pageparams };
 
                             Loadingicon.addIconToContainer(this.loadIconElement);
                             THIS.disableButtons();
@@ -162,7 +159,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
          * Reinitialize the availability javascript.
          * @param {string} selector
          */
-        Preset.prototype.reinitAvailability = function(selector = '.availability-field') {
+        Preset.prototype.reinitAvailability = function (selector = '.availability-field') {
             if (typeof M.core_availability.form !== "undefined" &&
                 document.getElementById('id_availabilityconditionsjson') !== null) {
                 this.resetRestrictPlugins();
@@ -171,7 +168,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             }
         };
 
-        Preset.prototype.resetRestrictPlugins = function() {
+        Preset.prototype.resetRestrictPlugins = function () {
             if (typeof M.core_availability.form !== "undefined" &&
                 document.getElementById('id_availabilityconditionsjson') !== null) {
                 M.core_availability.form.restrictByGroup = null;
@@ -193,7 +190,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
          * @param  {int} contextID
          * @param  {object} modal
          */
-        Preset.prototype.applyCustomize = function(params, contextID, modal) {
+        Preset.prototype.applyCustomize = function (params, contextID, modal) {
             Fragment.loadFragment('mod_pulse', 'apply_preset', contextID, params).done((html, js) => {
                 modal.destroy();
                 // Reset the availability to work for upcoming response html.
@@ -205,7 +202,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         /**
          * Disable the modal save and customize buttons to prevent reinit.
          */
-        Preset.prototype.disableButtons = function() {
+        Preset.prototype.disableButtons = function () {
             var buttons = document.querySelectorAll(this.actionbuttons);
             for (let $i in buttons) {
                 buttons[$i].disabled = true;
@@ -233,7 +230,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             var formdatastr = new URLSearchParams(formdata).toString();
             var promises = AJAX.call([{
                 methodname: 'mod_pulse_apply_presets',
-                args: {contextid: contextid, formdata: formdatastr}
+                args: { contextid: contextid, formdata: formdatastr }
             }]);
 
             promises[0].done((response) => {
@@ -247,12 +244,12 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
         /**
          * Load list of available presets.
          */
-        Preset.prototype.loadPresetsList = function() {
+        Preset.prototype.loadPresetsList = function () {
             var listParent = document.getElementById(this.listElement.selector);
 
             if (listParent !== null) {
                 if (listParent.getAttribute(this.listElement.loaded) == 'false') {
-                    Fragment.loadFragment('mod_pulse', 'get_presetslist', this.contextId, {'courseid': this.courseid})
+                    Fragment.loadFragment('mod_pulse', 'get_presetslist', this.contextId, { 'courseid': this.courseid })
                         .done((html, js) => {
                             Templates.replaceNodeContents(listParent, html, js);
                             listParent.setAttribute(this.listElement.loaded, 'true');

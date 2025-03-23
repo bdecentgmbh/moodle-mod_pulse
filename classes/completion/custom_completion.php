@@ -87,7 +87,6 @@ class custom_completion extends activity_custom_completion {
         return (isset($status) && $status) ? $status : COMPLETION_INCOMPLETE;
     }
 
-
     /**
      * Get pulse instance.
      *
@@ -97,7 +96,6 @@ class custom_completion extends activity_custom_completion {
         global $DB;
         return $DB->get_record('pulse', ['id' => $this->cm->instance]);
     }
-
 
     /**
      * Get pulse completion users status record for current user.

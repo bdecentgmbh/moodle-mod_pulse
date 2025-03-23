@@ -24,10 +24,27 @@
 
 namespace mod_pulse\task;
 
+use moodle_url;
+use mod_pulse\helper as pulsehelper;
+
 /**
  * Defined the invitation send method and filter methods.
  */
 class sendinvitation extends \core\task\adhoc_task {
+
+    /**
+     * List of notified users, Used to update the notified users status after reminders are send to all users.
+     *
+     * @var array
+     */
+    public $notifiedusers = [];
+
+    /**
+     * Current pulse instance record data.
+     *
+     * @var stdclass
+     */
+    public $instance;
 
     /**
      * Adhoc task execution.
@@ -38,129 +55,96 @@ class sendinvitation extends \core\task\adhoc_task {
         global $CFG, $DB;
 
         require_once($CFG->dirroot.'/mod/pulse/lib.php');
-        $instance = $this->get_custom_data();
-        // Check pulse enabled.
 
-        if (!$DB->record_exists('course_modules', ['id' => $instance->cm->id])) {
+        $customdata = $this->get_custom_data();
+
+        // Just return if the task is for previous pulse version.
+        // Recreate the task for new pulse version.
+        if (empty($customdata->type)) {
             return true;
         }
-        // Filter users from course pariticipants by completion.
-        $listofusers = \mod_pulse\helper::get_course_students((array) $instance->students, $instance);
-        // Extend the pulse pro version to send notifications on selected recipients.
-        if (!empty($listofusers)) {
-            $this->send_pulse($listofusers, $instance->pulse, $instance->course, $instance->context);
-        } else {
-            pulse_mtrace('There is not users to send pulse');
+
+        $pulseid = $customdata->pulseid;
+        $notification = new \mod_pulse\addon\notification();
+        $instances = $notification->get_instances('pl.id = :pulseid', ['pulseid' => $pulseid]);
+
+        $instance = $instances[$pulseid];
+        $this->instance = $instance;
+
+        if (empty($instance)) {
+            return true;
         }
+
+        if (!$DB->record_exists('pulse', ['id' => $this->instance->pulse->id])) {
+            return true;
+        }
+
+        $this->send_pulse($notification);
+
+        return true;
     }
 
     /**
      * Send pulse data.
      *
-     * @param  mixed $users Users data record.
-     * @param  mixed $pulse Pulse instance record.
-     * @param  mixed $course Course data record.
-     * @param  mixed $context Module Context data record.
+     * @param \mod_pulse\addon\notification $notification Notification instance.
      * @return void
      */
-    public function send_pulse($users, $pulse, $course, $context) {
+    public function send_pulse(\mod_pulse\addon\notification $notification) {
         global $DB, $USER, $PAGE;
+
+        $instance = $this->instance;
 
         // Store current user for update the user after filter.
         $currentuser = $USER;
+
         // Store the current page course and cm for support the filtercodes.
         $currentcourse = $PAGE->course;
         $currentcm = $PAGE->cm;
         $currentcontext = $PAGE->context;
+
         // Set the current pulse course as page course. Support for filter shortcodes.
         // Filtercodes plugin used $PAGE->course proprety for coursestartdate, course enddata and other course related shortcodes.
         // Tried to use $PAGE->set_course(), But the theme already completed the setup, so we can't use that moodle method.
         // For this reason, here updated the protected _course property using reflection.
+        // Only if filtercodes fitler plugin installed and enabled.
         if (\mod_pulse\helper::change_pagevalue()) {
 
             $coursereflection = new \ReflectionProperty(get_class($PAGE), '_course');
             $coursereflection->setAccessible(true);
-            $coursereflection->setValue($PAGE, $course);
+            $coursereflection->setValue($PAGE, $instance->course);
 
             // Setup the course module data to support filtercodes.
-            $pulsecm = get_coursemodule_from_instance('pulse', $pulse->id);
+            $pulsecm = get_coursemodule_from_instance('pulse', $instance->pulse->id);
             $cmreflection = new \ReflectionProperty(get_class($PAGE), '_cm');
             $cmreflection->setAccessible(true);
             $cmreflection->setValue($PAGE, $pulsecm);
 
+            $context = \context_module::instance($pulsecm->id);
             $contextreflection = new \ReflectionProperty(get_class($PAGE), '_context');
             $contextreflection->setAccessible(true);
-            $context = \context_module::instance($pulsecm->id);
             $contextreflection->setValue($PAGE, $context);
         }
 
-        if (!empty($pulse) && !empty($users)) {
-            // Get course module using instanceid.
-            $senderdata = self::get_sender($course->id, $context->id);
-            if ($pulse->pulse == true) {
-                $notifiedusers = [];
-                // Collect list of available enrolled students in course module.
-                pulse_mtrace('Sending pulse to enrolled users in course '.$course->fullname."\n");
-                foreach ($users as $key => $student) {
-                    $sender = self::find_user_sender($senderdata, $student->id);
-                    $userto = $student; // Send to.
-                    $subject = $pulse->pulse_subject ?: get_string('pulse_subject', 'pulse'); // Message subject.
-                    // Use intro content as message text, if different pulse disabled.
-                    $template = $pulse->intro;
-                    $filearea = 'intro';
-                    if ($pulse->diff_pulse) {
-                        // Email template content.
-                        $template = $pulse->pulse_content;
-                        $filearea = 'pulse_content';
-                    }
-                    // Replace the email text placeholders with data.
-                    list($subject, $messagehtml) = \mod_pulse\helper::update_emailvars($template, $subject, $course,
-                        $student, $pulse, $sender);
-                    // Rewrite the plugin file placeholders in the email text.
-                    $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php',
-                        $context->id, 'mod_pulse', $filearea, 0);
+        // Pulse moodle trace.
+        $instance->users = $notification->get_invitation_student_users($instance);
 
-                    // Set current student as user, filtercodes plugin uses current User data.
-                    \core\session\manager::set_user($student);
-                    if (isset($student->lang)) {
-                        $oldforcelang = force_current_language($student->lang); // Force the session lang to user lang.
-                    }
-                    // Format filter supports. filter the enabled filters.
-                    $subject = format_text($subject, FORMAT_HTML);
-                    $messagehtml = format_text($messagehtml, FORMAT_HTML);
-                    $messageplain = html_to_text($messagehtml); // Plain text.
-                    // After format the message and subject return back to previous lang.
-                    if (isset($oldforcelang)) {
-                        force_current_language($oldforcelang);
-                    }
-
-                    // Send message to user.
-                    pulse_mtrace("Sending pulse to the user ". fullname($userto) ."\n" );
-
-                    try {
-                        $transaction = $DB->start_delegated_transaction();
-                        if (\mod_pulse\helper::update_notified_user($userto->id, $pulse)) {
-                            $messagesend = \mod_pulse\helper::messagetouser(
-                                $userto, $subject, $messageplain, $messagehtml, $pulse, $sender
-                            );
-                            if ($messagesend) {
-                                $notifiedusers[] = $userto->id;
-                            } else {
-                                throw new \moodle_exception('mailnotsend', 'pulse');
-                            }
-                        } else {
-                            throw new \moodle_exception('invitationDB', 'pulse');
-                        }
-                        $transaction->allow_commit();
-                    } catch (\Exception $e) {
-                        // Return to current USER.
-                        \core\session\manager::set_user($currentuser);
-                        $transaction->rollback($e);
+        if (!empty($instance->users)) {
+            foreach ($instance->users as $user) {
+                if (isset($user->id)) {
+                    $condition = ['userid' => $user->id, 'pulseid' => $instance->pulse->id, 'status' => 1];
+                    if (!$DB->record_exists('pulse_users', $condition)) {
+                        pulse_mtrace(
+                            'Prepare invitation eventdata for the user - '. $user->id. ' for the pulse '.
+                            $instance->pulse->name
+                        );
+                        $this->send_notification($user, $instance);
                     }
                 }
             }
         }
 
+        // Only for filter codes.
         if (\mod_pulse\helper::change_pagevalue()) {
             // Return to current USER.
             \core\session\manager::set_user($currentuser);
@@ -174,6 +158,90 @@ class sendinvitation extends \core\task\adhoc_task {
             // Setup the module context to support filtercodes.
             $contextreflection->setValue($PAGE, $currentcontext);
         }
+
+        return true;
+    }
+
+    /**
+     * Send reminder notification to available users. Users are filter by selected fixed date or relative date.
+     * Once the reminders and invitations are send then it will updates the notified users list in availability table.
+     *
+     * @param  \stdclass $user User record data
+     * @param  stdclass $instance Pulse instance record.
+     * @return void
+     */
+    protected function send_notification($user, $instance) {
+        global $DB, $CFG, $USER, $PAGE;
+
+        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        // Store current user for update the user after filter.
+        $currentuser = $USER;
+
+        $course = (object) $instance->course;
+        $context = (object) $instance->context;
+        $pulse = (object) $instance->pulse;
+        $filearea = 'invitation_content';
+
+        if (!empty($pulse) && !empty($user)) {
+
+            // Use intro content as message text, if different pulse disabled.
+            $subject = ($instance->pulse->diff_pulse) ? $instance->pulse->pulse_subject : $pulse->name;
+            $template = ($instance->pulse->diff_pulse) ? $instance->pulse->pulse_content : $pulse->intro;
+            $filearea = ($instance->pulse->diff_pulse) ? 'pulse_content' : 'intro';
+
+            // Find the sender for that user.
+            $sender = self::find_user_sender($instance->sender, $user->id);
+
+            // Replace the email text placeholders with data.
+            if (!empty($pulse->id)) {
+                $pulse->url = new moodle_url("/mod/pulse/view.php", ['id' => $pulse->id]);
+                $pulse->type = 'pulse';
+            }
+            list($subject, $messagehtml) = pulsehelper::update_emailvars($template, $subject, $course, $user, $pulse, $sender);
+
+            // Rewrite the plugin file placeholders in the email text.
+            $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php', $context->id, 'mod_pulse', $filearea, 0);
+
+            // Set current student as user, filtercodes plugin uses current User data.
+            \core\session\manager::set_user($user);
+            if (isset($user->lang)) {
+                $oldforcelang = force_current_language($user->lang); // Force the session lang to user lang.
+            }
+            // Format filter supports. filter the enabled filters.
+            $subject = format_text($subject, FORMAT_HTML);
+            $messagehtml = format_text($messagehtml, FORMAT_HTML);
+            $messageplain = html_to_text($messagehtml); // Plain text.
+            // After format the message and subject return back to previous lang.
+            if (isset($oldforcelang)) {
+                force_current_language($oldforcelang);
+            }
+
+            // Send message to user.
+            pulse_mtrace("Sending pulse to the user ". fullname($user) ."\n" );
+
+            try {
+                $transaction = $DB->start_delegated_transaction();
+                if (\mod_pulse\helper::update_notified_user($user->id, $pulse)) {
+                    $messagesend = \mod_pulse\helper::messagetouser(
+                        $user, $subject, $messageplain, $messagehtml, $pulse, $sender
+                    );
+                    if ($messagesend) {
+                        $notifiedusers[] = $user->id;
+                    } else {
+                        throw new \moodle_exception('mailnotsend', 'pulse');
+                    }
+                } else {
+                    throw new \moodle_exception('invitationDB', 'pulse');
+                }
+                $transaction->allow_commit();
+            } catch (\Exception $e) {
+                // Return to current USER.
+                \core\session\manager::set_user($currentuser);
+                $transaction->rollback($e);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -200,7 +268,6 @@ class sendinvitation extends \core\task\adhoc_task {
 
         return (!empty($senderdata->coursecontact) ? $senderdata->coursecontact : \core_user::get_support_user());
     }
-
 
     /**
      * Get list of available senders users from group and course seperately.
@@ -281,4 +348,6 @@ class sendinvitation extends \core\task\adhoc_task {
 
         return (object) ['coursecontact' => $coursecontact, 'groupcontact' => $groups];
     }
+
+
 }

@@ -22,10 +22,11 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use core_user\output\myprofile\tree;
+use mod_pulse\options;
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
+defined('MOODLE_INTERNAL') || die(' No direct access ');
 
-define( 'MAX_PULSE_NAME_LENGTH', 50);
+define('MAX_PULSE_NAME_LENGTH', 50);
 
 // Mark as complete option button texts.
 define('BUTTON_TEXT_DEFAULT', 1); // Default.
@@ -43,8 +44,8 @@ require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
 /**
  * Add pulse instance.
  *
- * @param  mixed $pulse
- * @return void
+ * @param  mixed $pulse Form submitted data of module.
+ * @return int $pulseid New instance id.
  */
 function pulse_add_instance($pulse) {
     global $DB;
@@ -64,11 +65,16 @@ function pulse_add_instance($pulse) {
     $pulseid = $DB->insert_record('pulse', $pulse);
 
     $pulse->id = $pulseid;
+
     // Post update the editor files.
     \mod_pulse\helper::postupdate_editor_files($pulse, $context);
 
+    if (!empty($pulse->options)) {
+        \mod_pulse\options::init($pulseid)->manage_options($pulse->options);
+    }
+
     // Extend the pro features.
-    \mod_pulse\extendpro::pulse_extend_add_instance($pulseid, $pulse);
+    \mod_pulse\extendpro::pulse_extend_instance($pulse->id, $pulse, 'add');
 
     // Retrun new instance id.
     return $pulseid;
@@ -107,24 +113,26 @@ function pulse_update_instance($pulse) {
         $message = get_string('resendnotificationdesc', 'mod_pulse');
         \core\notification::add($message, 'info');
     }
-
-    $pulse->completionbtnconfirmation = isset($pulse->completionbtnconfirmation) ?? 0;
-
     // Update instance data.
     $updates = $DB->update_record('pulse', $pulse);
 
     // Post update the editor files.
     \mod_pulse\helper::postupdate_editor_files($pulse, $context);
 
+    if (!empty($pulse->options)) {
+        \mod_pulse\options::init($pulse->id)->manage_options($pulse->options);
+    }
+
     // Extend the updated module instance pro features.
-    \mod_pulse\extendpro::pulse_extend_update_instance($pulse, $context);
+    \mod_pulse\extendpro::pulse_extend_instance($pulse->id, $pulse, 'update');
+
     return $updates;
 }
 
 /**
- * Delete Pulse instnace
+ * Delete Pulse instance.
  *
- * @param  mixed $pulseid
+ * @param  int $pulseid
  * @return bool
  */
 function pulse_delete_instance($pulseid) {
@@ -133,7 +141,8 @@ function pulse_delete_instance($pulseid) {
         $cm = get_coursemodule_from_instance('pulse', $pulseid);
 
         if ($DB->delete_records('pulse', ['id' => $pulseid])) {
-            \mod_pulse\extendpro::pulse_extend_delete_instance($cm->id, $pulseid);
+            // Trigger deletion of pulse addons.
+            \mod_pulse\extendpro::pulse_extend_instance($pulseid, null, 'delete');
             return true;
         }
     }
@@ -217,9 +226,17 @@ function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedo
         return false;
     }
     // Get extended plugins fileareas.
-    $availablefiles = \mod_pulse\extendpro::pulse_extend_filearea();
+    $availablefiles = \mod_pulse\extendpro::pulse_extend_general('pluginfile_fileareas', []);
+
+    // Merge all the fileareas.
+    $availablefiles = call_user_func_array('array_merge', array_values($availablefiles));
+
+    // Extend the fileareas from the sub plugins - Quick Fix.
+    $availablefiles += \mod_pulse\extendpro::pulse_extend_filearea();
+
     $availablefiles = array_merge($availablefiles, ['pulse_content', 'intro',
         'notificationheader', 'notificationfooter', 'completionbtn_content']);
+
     // Make sure the filearea is one of those used by the plugin.
     if (!in_array($filearea, $availablefiles)) {
         return false;
@@ -239,6 +256,7 @@ function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedo
     // Retrieve the file from the Files API.
     $fs = get_file_storage();
     $file = $fs->get_file($context->id, 'mod_pulse', $filearea, $itemid, $filepath, $filename);
+
     if (!$file) {
         return false; // The file does not exist.
     }
@@ -449,7 +467,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
     $user = clone $USER; // Prevent the cache issues.
     list($subject, $content) = \mod_pulse\helper::update_emailvars($content, '', $course,
-                            $user, $pulse, $sender);
+                            $user, $pulse, $sender, [], 'content');
     $cm->set_content($content);
     if (isset($pulse->cssclass) && $pulse->cssclass) {
         $cm->set_extra_classes($pulse->cssclass);
@@ -463,6 +481,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     }
 
     $completionbtn = \mod_pulse\helper::cm_completionbuttons($cm, $pulse);
+
     if (!empty($completionbtn)) {
         $content = $cm->get_formatted_content();
         $content .= html_writer::tag('div', $completionbtn, ['class' => 'pulse-completion-btn']);
@@ -479,7 +498,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
  */
 function pulse_mtrace($message, $detail=false) {
     $showdetail = get_config('mod_pulse', 'detailedlog');
-    if ($showdetail || $detail) {
+    if (($showdetail || $detail) && !AJAX_SCRIPT) {
         mtrace($message);
     }
 }
@@ -490,16 +509,18 @@ function pulse_mtrace($message, $detail=false) {
  * @param array $args Preset ID and Course ID with context.
  */
 function mod_pulse_output_fragment_get_preset_preview(array $args): ?string {
-    global $CFG;
+
     $context = $args['context'];
 
     if ($context->contextlevel !== CONTEXT_COURSE && $context->contextlevel !== CONTEXT_MODULE) {
         return null;
     }
+
     $presetid = $args['presetid'];
     $courseid = $args['courseid'];
     $sectionid = $args['section'];
     $preset = new \mod_pulse\preset($presetid, $courseid, $context, $sectionid);
+
     return $preset->output_fragment();
 }
 
@@ -580,6 +601,7 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                     }
                 }
             }
+
             // Generate self mark completion buttons for students.
             if (\mod_pulse\helper::pulse_is_uservisible($moduleid, $USER->id, $data->course)) {
                 if ($data->completionself == 1 && \mod_pulse\helper::pulse_user_isstudent($moduleid)
@@ -607,23 +629,42 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                 $instance->pulse = $data;
                 $instance->pulse->id = $data->instance;
                 $instance->user = $USER;
-                $html[$moduleid] .= \mod_pulse\extendpro::pulse_extend_reaction($instance, 'content');
+                $instance->pulse->options = (object) options::init($data->instance)->get_options();
+
+                $html[$moduleid] .= \mod_pulse\extendpro::pulse_extend_cm_infocontent($data->instance, $instance, 'content');
             }
         }
     }
     return json_encode($html);
 }
 
+
+/**
+ * Include the confirm completion amd to display the completion modal.
+ *
+ * @param  navigation_node $navigation
+ * @param  stdClass $course
+ * @param  context_course $context
+ * @return void
+ */
+function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
+    global $PAGE;
+
+    // Completion confirmation.
+    $PAGE->requires->js_call_amd('mod_pulse/confirmcompletion', 'init', ['contextid' => $context->id]);
+}
+
 /**
  * Add email placeholder fields in form fields.
  *
  * @param string $editor
+ * @param bool $automation
  * @return void
  */
-function pulse_email_placeholders($editor) {
+function pulse_email_placeholders($editor, $automation=true) {
     global $OUTPUT, $PAGE;
 
-    $vars = \pulse_email_vars::vars();
+    $vars = \pulse_email_vars::vars($automation);
     $i = 0;
 
     $output = $PAGE->get_renderer('core');
@@ -659,35 +700,20 @@ function pulse_email_placeholders($editor) {
 }
 
 /**
- * Add the completion confirmation button js.
- *
- * @param  navigation_node $navigation
- * @param  stdClass $course
- * @param  context_course $context
- * @return void
- */
-function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClass $course, $context) {
-    global $PAGE;
-
-    // Completion confirmation.
-    $PAGE->requires->js_call_amd('mod_pulse/confirmcompletion', 'init', ['contextid' => $context->id]);
-}
-
-/**
  * Get the manual completion confirmation content.
  *
  * @param array $params
- * @return void
+ * @return htmstring Confirmation modal body content.
  */
 function mod_pulse_output_fragment_get_confirmation_content(array $params) {
     global $DB;
     $cm = get_coursemodule_from_id('pulse', $params['id']);
     $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
-    $modulecontext = \context_module::instance($cm->id);
+    $modulecontext = context_module::instance($cm->id);
     $content = !empty($pulse->completionbtn_content) ? $pulse->completionbtn_content :
         get_string('completionconfirmation', 'pulse');
-    $contenthtml = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $modulecontext->id, 'mod_pulse',
-        'completionbtn_content', 0);
+    $contenthtml = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $modulecontext->id,
+        'mod_pulse', 'completionbtn_content', 0);
     $contenthtml = format_text($contenthtml, $pulse->completionbtn_contentformat, ['trusted' => true, 'noclean' => true]);
     return $contenthtml;
 }

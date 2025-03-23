@@ -31,7 +31,7 @@ class eventobserver {
 
     /**
      * course module deleted event observer.
-     * Remove the user and instance records for the deleted modules from pulsepro tables.
+     * Remove the user and instance records for the deleted modules from pulse addon tables.
      *
      * @param  mixed $event
      * @return void
@@ -39,6 +39,9 @@ class eventobserver {
     public static function course_module_deleted($event) {
         global $CFG, $DB;
         if ($event->other['modulename'] == 'pulse') {
+
+            extendpro::pulse_extend_general('event_course_module_deleted', ['event' => $event]);
+
             $pulseid = $event->other['instanceid'];
             $courseid = $event->courseid;
             // Remove pulse user completion records.
@@ -63,7 +66,12 @@ class eventobserver {
      */
     public static function user_enrolment_deleted($event) {
         global $CFG, $DB;
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
+
+        // Pulse extend enrolment deleted event.
+        extendpro::pulse_extend_general('event_user_enrolment_deleted', ['event' => $event]);
+
         $userid = $event->relateduserid; // Unenrolled user id.
         $courseid = $event->courseid;
         // Retrive list of pulse instance added in course.
@@ -81,4 +89,16 @@ class eventobserver {
         return true;
     }
 
+    /**
+     * User enrolment trigger actions.
+     *
+     * @param [type] $event
+     * @return void
+     */
+    public static function user_enrolment_created($event) {
+
+        // Pulse extend enrolment created event.
+        extendpro::pulse_extend_general('event_user_enrolment_created', ['event' => $event]);
+
+    }
 }

@@ -27,7 +27,7 @@ namespace mod_pulse;
 /**
  * Pulse resource phpunit test cases defined.
  */
-class lib_test extends \advanced_testcase {
+final class lib_test extends \advanced_testcase {
 
     /**
      * Course instance data
@@ -65,13 +65,16 @@ class lib_test extends \advanced_testcase {
     public function setUp(): void {
         global $CFG;
 
+        parent::setUp();
+
         $this->resetAfterTest();
+        $this->setAdminUser();
         // Remove the output display of cron task.
         $CFG->mtrace_wrapper = 'mod_pulse_remove_mtrace_output';
         $this->course = $this->getDataGenerator()->create_course();
         $this->module = $this->getDataGenerator()->create_module('pulse', [
             'course' => $this->course->id, 'intro' => $this->intro,
-        ]);
+        ], []);
         $this->cm = get_coursemodule_from_instance('pulse', $this->module->id);
     }
 
@@ -80,7 +83,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::\mod_pulse\helper::pulse_user_isstudent
      * @return void
      */
-    public function test_is_studentuser() {
+    public function test_is_studentuser(): void {
         // Student.
         $user = self::getDataGenerator()->create_and_enrol($this->course, 'student');
         $this->setUser($user);
@@ -99,7 +102,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::get_course_students
      * @return void
      */
-    public function test_get_course_students() {
+    public function test_get_course_students(): void {
         $students[] = $this->getDataGenerator()->create_and_enrol($this->course, 'student', [
             'email' => 'student1@test.com',
             'username' => 'student1',
@@ -126,7 +129,7 @@ class lib_test extends \advanced_testcase {
      * @covers \mod_pulse\task\sendinvitation::find_user_sender
      * @return void
      */
-    public function test_course_sender() {
+    public function test_course_sender(): void {
         // Set force group mode.
         $course = $this->getDataGenerator()->create_course(['groupmode' => 1, 'groupmodeforce' => 1]);
         $user = $this->getDataGenerator()->create_and_enrol($course, 'student', [
@@ -155,7 +158,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::update_emailvars
      * @return void
      */
-    public function test_pulse_update_email_vars() {
+    public function test_pulse_update_email_vars(): void {
         $user = $this->getDataGenerator()->create_user(['email' => 'testuser1@test.com', 'username' => 'testuser1']);
         $sender = $this->getDataGenerator()->create_and_enrol($this->course, 'editingteacher', [
             'email' => 'sender1@test.com', 'username' => 'sender1',
@@ -193,7 +196,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::send_message
      * @return void
      */
-    public function test_pulse_sending_messages() {
+    public function test_pulse_sending_messages(): void {
         global $CFG, $DB;
         $user = $this->getDataGenerator()->create_and_enrol($this->course, 'student', [
             'email' => 'testuser2@test.com',
@@ -224,7 +227,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::pulse_different_message
      * @return void
      */
-    public function test_pulse_different_message() {
+    public function test_pulse_different_message(): void {
         global $CFG;
         $this->setAdminUser();
 
@@ -238,7 +241,7 @@ class lib_test extends \advanced_testcase {
             'diff_pulse' => 1,
             'pulse_content_editor' => $instancemessage,
             'pulse_subject' => $subject,
-        ]);
+        ], []);
         $user = $this->getDataGenerator()->create_and_enrol($this->course, 'student', [
             'email' => 'testuser2@test.com', 'username' => 'testuser2',
         ]);
@@ -259,7 +262,7 @@ class lib_test extends \advanced_testcase {
      * @covers ::send_message
      * @return void
      */
-    public function test_user_inactive_enrolment() {
+    public function test_user_inactive_enrolment(): void {
         $timestart = strtotime('+1 day');
         $timeend = strtotime('-1 day');
 

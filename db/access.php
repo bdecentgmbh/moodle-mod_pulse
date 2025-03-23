@@ -36,7 +36,6 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
-
     // Capability to view pulses.
     'mod/pulse:view' => [
         'captype' => 'read',
@@ -66,5 +65,4 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => 'mod/pulse:addinstance',
     ],
-
 ];

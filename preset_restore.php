@@ -47,9 +47,6 @@ class preset_customize_restore extends restore_structure_step {
         $module = new restore_path_element('module', '/module');
         $paths[] = $module;
         $paths[] = new restore_path_element('pulse', '/activity/pulse');
-        if ($this->get_name() == 'pulsepro') {
-            $paths[] = new restore_path_element('local_pulsepro', '/activity/pulse/pulse_pro/local_pulsepro');
-        }
 
         return $paths;
     }
@@ -76,14 +73,4 @@ class preset_customize_restore extends restore_structure_step {
         $this->data = $data;
     }
 
-    /**
-     * Process the puslepro element restore.
-     * The data is set as class level using this we can able to fetch the pulsepro data from XML.
-     *
-     * @param array $data
-     * @return void
-     */
-    public function process_local_pulsepro($data) {
-        $this->data = $data;
-    }
 }
