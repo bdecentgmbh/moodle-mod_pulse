@@ -31,7 +31,7 @@ class mod_pulse_generator extends testing_module_generator {
      * Create pulse module instance.
      *
      * @param  mixed $record Module instance data.
-     * @param  array $defaultoptions Default options.
+     * @param  array|null $options Default options.
      * @return void
      */
     public function create_instance($record = null, ?array $options = null) {
@@ -60,6 +60,8 @@ class mod_pulse_generator extends testing_module_generator {
                 $record = (object) array_merge((array) $record, $options);
             }
         }
+
+        $defaultoptions = [];
 
         $record = (object) array_merge((array) $record, $defaultoptions);
         return parent::create_instance($record, $defaultoptions);

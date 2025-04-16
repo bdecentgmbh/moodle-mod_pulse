@@ -220,7 +220,7 @@ class behat_pulse extends behat_base {
     public function i_add_pulse_to_course_section($coursename, $section, TableNode $data) {
         global $CFG;
 
-        if ($CFG->branch >= 405) {
+        if ($CFG->branch >= 404) {
             $this->execute('behat_course::i_add_to_course_section_and_i_fill_the_form_with',
                 ['pulse', $coursename, $section, $data]);
         } else {

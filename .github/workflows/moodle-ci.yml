@@ -32,11 +32,14 @@ jobs:
        include:
           - php: '8.3'
             moodle-branch: 'MOODLE_405_STABLE'
-            database: 'pgsql'       
-          - php: '8.2'
-            moodle-branch: 'MOODLE_405_STABLE'
             database: 'mariadb'
-          - php: '8.1'
+          - php: '8.3'
+            moodle-branch: 'MOODLE_405_STABLE'
+            database: 'pgsql'
+          - php: '8.2'
+            moodle-branch: 'MOODLE_404_STABLE'
+            database: 'mariadb'
+          - php: '8.2'
             moodle-branch: 'MOODLE_404_STABLE'
             database: 'pgsql'
 
@@ -75,12 +78,10 @@ jobs:
         run: moodle-plugin-ci phplint
 
       - name: PHP Copy/Paste Detector
-        continue-on-error: true # This step will show errors but will not fail
         if: ${{ always() }}
         run: moodle-plugin-ci phpcpd
 
       - name: PHP Mess Detector
-        continue-on-error: true # This step will show errors but will not fail
         if: ${{ always() }}
         run: moodle-plugin-ci phpmd
 
@@ -102,16 +103,16 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ always() }}
-        run: moodle-plugin-ci mustache || true
+        run: moodle-plugin-ci mustache
 
       - name: Grunt
         if: ${{ always() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt
 
       - name: PHPUnit tests
         if: ${{ always() }}
-        run: moodle-plugin-ci phpunit --fail-on-warning
+        run: moodle-plugin-ci phpunit
 
       - name: Behat features
         if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome --auto-rerun 0
+        run: moodle-plugin-ci behat --profile chrome

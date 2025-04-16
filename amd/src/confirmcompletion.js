@@ -28,7 +28,7 @@ define(["jquery", 'core/str', "core/modal_factory", 'core/notification', 'core/a
          * Show mark as completion button confirmation modal.
          * @param {init} contextid
          */
-        const ButtonConfirmation = function(contextid) {
+        const buttonconfirmation = function(contextid) {
             if (document.body.classList.contains('path-course-view')) {
                 var buttons = document.querySelectorAll('.pulse-user-manualcompletion-btn');
                 buttons.forEach(function(element) {
@@ -61,10 +61,12 @@ define(["jquery", 'core/str', "core/modal_factory", 'core/notification', 'core/a
             }).then(function(modal) {
                 modal.show();
 
-                Fragment.loadFragment('mod_pulse', 'get_confirmation_content', contextid, args).then(function(html) {
+                var confirmation = Fragment.loadFragment('mod_pulse', 'get_confirmation_content', contextid, args);
+
+                confirmation.then((html) => {
                     modal.setBody(html);
                     return html;
-                }).catch(notification.exception);
+                });
 
                 modal.setButtonText('save', Str.get_string('yes'));
 
@@ -106,7 +108,7 @@ define(["jquery", 'core/str', "core/modal_factory", 'core/notification', 'core/a
 
         return {
             init: function(contextid) {
-                ButtonConfirmation(contextid);
+                buttonconfirmation(contextid);
             },
         };
     }));

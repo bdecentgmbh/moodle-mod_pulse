@@ -20,7 +20,7 @@ define(['jquery', 'core/modal_factory', 'mod_pulse/modal_preset', 'mod_pulse/eve
             this.loadPresetsList();
         };
 
-        Preset.prototype.listElement = {'selector': 'pulse-presets-data', "loaded": "data-listloaded" };
+        Preset.prototype.listElement = {'selector': 'pulse-presets-data', "loaded": "data-listloaded"};
 
         Preset.prototype.contextId = 0;
 
