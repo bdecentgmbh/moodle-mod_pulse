@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/pulse/db" VERSION="20230914" COMMENT="XMLDB file for Moodle mod/pulse"
+<XMLDB PATH="mod/pulse/db" VERSION="20241231" COMMENT="XMLDB file for Moodle mod/pulse"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -24,6 +24,10 @@
         <FIELD NAME="completionself" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="completionapproval" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="completionapprovalroles" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="completionbtnconfirmation" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="completionbtntext" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="completionbtn_content" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="completionbtn_contentformat" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
@@ -80,69 +84,16 @@
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="pulse_autotemplates" COMMENT="pulse_autotemplates table retrofitted from MySQL">
+    <TABLE NAME="pulse_options" COMMENT="pulse_options table retrofitted from MySQL">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="reference" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="visible" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="tags" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="tenants" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="categories" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="triggerconditions" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="triggeroperator" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="pulseid" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="value" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="id" TYPE="primary" FIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="pulse_autoinstances" COMMENT="pulse_autoinstances table retrofitted from MySQL">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="templateid" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="9" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="id" TYPE="primary" FIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="pulse_autotemplates_ins" COMMENT="pulse_autotemplates_ins table retrofitted from MySQL">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="instanceid" TYPE="int" LENGTH="18" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="insreference" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="tags" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="tenants" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="categories" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="triggerconditions" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="triggeroperator" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="id" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="instanceid" TYPE="unique" FIELDS="instanceid"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="pulse_condition_overrides" COMMENT="pulse_condition_overrides table retrofitted from MySQL">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="18" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="instanceid" TYPE="int" LENGTH="18" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="triggercondition" TYPE="char" LENGTH="200" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="upcomingtime" TYPE="int" LENGTH="18" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="additional" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="isoverridden" TYPE="int" LENGTH="8" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="id" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="instanceid" TYPE="unique" FIELDS="instanceid, triggercondition"/>
+        <KEY NAME="pulseid" TYPE="unique" FIELDS="pulseid, name"/>
       </KEYS>
     </TABLE>
   </TABLES>

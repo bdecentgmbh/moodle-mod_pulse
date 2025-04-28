@@ -1,0 +1,7 @@
+#page-mod-pulse-addons-preset-presets .availability-field.fcontainer {
+    display: none;
+}
+
+.preset-config-params span.config-param {
+    display: block;
+}

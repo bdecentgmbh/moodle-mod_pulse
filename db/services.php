@@ -24,14 +24,23 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$functions = array(
+$functions = [
 
-    'mod_pulse_apply_presets' => array(
+    'mod_pulse_apply_presets' => [
         'classname' => 'mod_pulse\external',
         'methodname' => 'apply_presets',
         'description' => 'Apply presets in mod pulse form',
         'type' => 'write',
         'ajax' => true,
         'loginrequired' => true,
-    ),
-);
+    ],
+
+    'mod_pulse_manual_completion' => [
+        'classname' => 'mod_pulse\external',
+        'methodname' => 'manual_completion',
+        'description' => 'Pulse activity manual confirmation completion',
+        'type' => 'write',
+        'ajax' => true,
+        'loginrequired' => true,
+    ],
+];

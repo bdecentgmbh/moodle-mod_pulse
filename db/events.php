@@ -25,20 +25,19 @@
 defined('MOODLE_INTERNAL') || die();
 
 $observers = [
-    array(
+    [
         'eventname' => 'core\event\course_module_deleted',
         'callback' => '\mod_pulse\eventobserver::course_module_deleted',
-    ),
+    ],
 
-    array(
+    [
         'eventname' => 'core\event\user_enrolment_deleted',
         'callback' => '\mod_pulse\eventobserver::user_enrolment_deleted',
-    ),
+    ],
 
-    // To create a automation instance schedule for new user.
-    array(
+    [
         'eventname' => 'core\event\user_enrolment_created',
         'callback' => '\mod_pulse\eventobserver::user_enrolment_created',
-    ),
+    ],
 
 ];

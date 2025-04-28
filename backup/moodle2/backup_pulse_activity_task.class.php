@@ -35,7 +35,7 @@ class backup_pulse_activity_task extends backup_activity_task {
      * No specific settings for this activity
      */
     public function define_my_settings() {
-        // Pulse don't have any specified settings.
+        // No particular settings for this activity.
     }
 
     /**
@@ -44,6 +44,9 @@ class backup_pulse_activity_task extends backup_activity_task {
     public function define_my_steps() {
         // Only single structure step.
         $this->add_step(new backup_pulse_activity_structure_step('pulse_structure', 'pulse.xml'));
+
+        $this->add_step(new backup_pulse_activity_structure_step('pulse_addons', 'pulseaddons.xml'));
+
     }
 
     /**

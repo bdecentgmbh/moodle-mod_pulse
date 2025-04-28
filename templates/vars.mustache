@@ -1,0 +1,87 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+
+    @template mod_pulse/vars
+
+    This template placeholder email vars.
+
+    Example context (json):
+    {
+    }
+}}
+
+{{! Email vars block }}
+<div id="emailvars" class="mod-pulse-emailvars-toggle">
+    <div class='form-group row fitem'>
+        <div class='col-md-3'></div>
+        <div class='col-md-9'>
+            <div class="emailvars-body">
+                {{! Placeholder head block }}
+                <div  class='emailvars-head'>
+                    <a id="{{editor}}-email-vars-button" class="email-vars-button" role="button" aria-expanded="false" href="#{{editor}}-emailvarsbody">
+                        {{#str}} placeholder, pulse {{/str}} <i class="fa fa-fw fa-angle-double-down"></i>
+                    </a>
+                </div>
+                {{! End of placeholder head block }}
+
+                {{! Email vars body collapse block }}
+                <div class="emailvars-content collapse" id="{{editor}}-emailvarsbody">
+                    <div class="card card-body">
+                        <ul class="pulse-email-placeholders" id="email-vars-tab" role="tablist">
+                            {{#emailvars}}
+                                <li class="{{key}}field-placeholders row" role="presentation">
+                                    <div class="col-md-3">
+                                        <div class='placeholder-head'>
+                                            <div class="title"><h6> {{name}} </h6></div>
+                                            <div class="help-text">
+                                                {{#helptext}}
+                                                    {{{helptext}}}
+                                                {{/helptext}}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-9">
+                                        <div class="placeholder-body">
+                                            <div class='placeholders less' id="{{editor}}-{{key}}field-morebutton">
+                                                {{#vars}}
+                                                    <a href='#' data-text='{{pretext}}{{.}}' class='clickforword' id={{.}}>
+                                                        <span data-toggle="tooltip" data-placement="top" title={{pretext}}{{.}}>{{.}}</span>
+                                                    </a>
+                                                {{/vars}}
+                                            </div>
+                                            <div class='showmore'>
+                                                <a class="button-{{#showmore}}show-more{{/showmore}}" role="button" href="#{{editor}}-{{key}}field-morebutton">{{#showmore}}{{#str}} showmore, pulse {{/str}}{{/showmore}}</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            {{/emailvars}}
+                        </ul>
+                        <div class="placeholders-document">
+                            <h6>{{#str}} vardocstr, pulse {{/str}}<a href="https://github.com/bdecentgmbh/moodle-mod_pulse/wiki/Pulse-2.0#pulse-email-placeholders" target= "_blank">{{#str}} documentation, pulse {{/str}}</a></h6>
+                        </div>
+                    </div>
+                </div>
+                {{! End of email vars body collapse block }}
+            </div>
+        </div>
+    </div>
+</div>
+{{! End of email vars block }}
+

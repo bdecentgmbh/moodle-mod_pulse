@@ -42,6 +42,7 @@ class restore_pulse_activity_task extends restore_activity_task {
      * Define restore structure steps to restore to database from pulse.xml.
      */
     protected function define_my_steps() {
+
         $this->add_step(new restore_pulse_activity_structure_step('pulse_structure', 'pulse.xml'));
     }
 
@@ -50,11 +51,11 @@ class restore_pulse_activity_task extends restore_activity_task {
      * processed by the link decoder
      */
     public static function define_decode_contents() {
-        $contents = array();
+        $contents = [];
 
-        $contents[] = new restore_decode_content('pulse', array('intro', 'pulse_content'), 'pulse');
+        $contents[] = new restore_decode_content('pulse', ['intro', 'pulse_content', 'completionbtn_content'], 'pulse');
 
-        \mod_pulse\extendpro::pulse_extend_restore_content($contents);
+        \mod_pulse\extendpro::pulse_extend_general('restore_decode_contents', [$contents]);
 
         return $contents;
     }
@@ -64,6 +65,7 @@ class restore_pulse_activity_task extends restore_activity_task {
      * to the activity to be executed by the link decoder
      */
     public static function define_decode_rules() {
-        return array();
+        return [];
     }
+
 }

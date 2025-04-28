@@ -87,7 +87,6 @@ class custom_completion extends activity_custom_completion {
         return (isset($status) && $status) ? $status : COMPLETION_INCOMPLETE;
     }
 
-
     /**
      * Get pulse instance.
      *
@@ -97,7 +96,6 @@ class custom_completion extends activity_custom_completion {
         global $DB;
         return $DB->get_record('pulse', ['id' => $this->cm->instance]);
     }
-
 
     /**
      * Get pulse completion users status record for current user.
@@ -145,8 +143,9 @@ class custom_completion extends activity_custom_completion {
             if ($this->is_available('completionself') ) {
                 $state = $this->get_state('completionself');
                 if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
+                    $pulse = $this->get_pulse();
                     $date = \mod_pulse\helper::pulse_already_selfcomplete($this->cm->instance, $this->userid);
-                    $selfstring = get_string('selfmarked', 'pulse', ['date' => $date]);
+                    $selfstring = \mod_pulse\helper::get_complete_state_button_text($pulse->completionbtntext, $date);
                 }
             }
             // Approval completion description.

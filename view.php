@@ -22,20 +22,22 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_pulse\extendpro;
+
 require_once("../../config.php");
 
 $id = optional_param('id', 1, PARAM_INT); // Course Module ID.
 
-$PAGE->set_url('/mod/pulse/index.php', array('id' => $id));
+$PAGE->set_url('/mod/pulse/index.php', ['id' => $id]);
 if (!$cm = get_coursemodule_from_id('pulse', $id)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if (!$course = $DB->get_record("course", array("id" => $cm->course))) {
+if (!$course = $DB->get_record("course", ["id" => $cm->course])) {
     throw new moodle_exception('coursemisconf');
 }
 
-if (!$pulse = $DB->get_record("pulse", array("id" => $cm->instance))) {
+if (!$pulse = $DB->get_record("pulse", ["id" => $cm->instance])) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
@@ -44,11 +46,9 @@ require_login($course, true, $cm);
 global $USER;
 
 $context = context_course::instance($course->id);
-if (class_exists('local_pulsepro\table\reactionreport') && has_capability('local/pulsepro:viewreports', $context, $USER->id)) {
-    $redirecturl = new moodle_url('/local/pulsepro/report.php', ['courseid' => $course->id, 'cmid' => $cm->id]);
-    redirect($redirecturl);
-} else {
-    $sectionnumber = $DB->get_record('course_sections', ['id' => $cm->section]);
-    $redirecturl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $sectionnumber->section]);
-    redirect($redirecturl);
-}
+
+extendpro::pulse_extend_general('pulse_view_hook', [$context, $cm, $course]);
+
+$sectionnumber = $DB->get_record('course_sections', ['id' => $cm->section]);
+$redirecturl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $sectionnumber->section]);
+redirect($redirecturl);

@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
- define([], function() {
+define([], function() {
     return {
         save: 'mod_pulse-preset:save',
         customize: 'mod_pulse-preset:customize',

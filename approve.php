@@ -33,12 +33,17 @@ $PAGE->set_url( new moodle_url('/mod/pulse/approve.php', ['cmid' => $cmid]) );
 $modulecontext = context_module::instance($cmid);
 
 $cm = get_coursemodule_from_id('pulse', $cmid);
+if (!$cm) {
+    throw new moodle_exception('invalidcoursemodule');
+}
+
 $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
 $course = get_course($cm->course);
 $PAGE->set_course($course);
 $PAGE->set_cm($cm);
 $PAGE->set_context($modulecontext);
 $PAGE->set_heading(get_string('approveuser', 'pulse', ['course' => $course->fullname]));
+
 // List of approval roles selected in pulse module.
 $approvalroles = json_decode($pulse->completionapprovalroles);
 $roles = get_user_roles($modulecontext, $USER->id);
@@ -89,17 +94,29 @@ if ($action == 'approve' && $userid) {
         redirect($PAGE->url, get_string('approvedsuccess', 'mod_pulse'));
     }
 } else if ($action == 'decline') {
+    $record = new stdclass();
+    $record->userid = $userid;
+    $record->pulseid = $cm->instance;
     // Make the user approve status to declined.
-    if ($record = $DB->get_record('pulse_completion', ['userid' => $userid, 'pulseid' => $cm->instance])) {
+    if ($existrecord = $DB->get_record('pulse_completion', (array) $record)) {
+        $record->id = $existrecord->id;
         $record->approvalstatus = 0;
         $record->approveduser = $USER->id;
+        $record->timemodified = time();
         $result = $DB->update_record('pulse_completion', $record);
-        $completion = new completion_info($course);
-        if ($completion->is_enabled($cm) && $pulse->completionapproval) {
-            $completion->update_state($cm, COMPLETION_INCOMPLETE, $userid);
-        }
-        redirect($PAGE->url, get_string('approvedeclined', 'mod_pulse'));
+    } else {
+        $record->approvalstatus = 0;
+        $record->approveduser = $USER->id;
+        $record->timemodified = time();
+        $DB->insert_record('pulse_completion', $record);
     }
+
+    $completion = new completion_info($course);
+    if ($completion->is_enabled($cm) && $pulse->completionapproval) {
+        $completion->update_state($cm, COMPLETION_INCOMPLETE, $userid);
+    }
+
+    redirect($PAGE->url, get_string('approvedeclined', 'mod_pulse'));
 
 } else if ($action == 'selfcomplete') {
 
@@ -123,7 +140,7 @@ if ($action == 'approve' && $userid) {
         if ($completion->is_enabled($cm) && $pulse->completionself) {
             $completion->update_state($cm, COMPLETION_COMPLETE, $userid);
         }
-        redirect(new moodle_url('/course/view.php', ['id' => $course->id]), 'Marked as completed');
+        redirect(new moodle_url('/course/view.php', ['id' => $course->id]), get_string('markedcomplete', 'mod_pulse'));
     }
 }
 

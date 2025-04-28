@@ -24,71 +24,45 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
+$capabilities = [
     // Capability to add new pulse instances.
-    'mod/pulse:addinstance' => array(
+    'mod/pulse:addinstance' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-        'clonepermissionsfrom' => 'moodle/course:manageactivities'
-    ),
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/course:manageactivities',
+    ],
     // Capability to view pulses.
-    'mod/pulse:view' => array(
+    'mod/pulse:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'user' => CAP_ALLOW,
-            'guest' => CAP_ALLOW
-        )
-    ),
+            'guest' => CAP_ALLOW,
+        ],
+    ],
     // Capability to recieve notifications.
-    'mod/pulse:notifyuser' => array(
+    'mod/pulse:notifyuser' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'student' => CAP_ALLOW,
-        )
-    ),
+        ],
+    ],
 
-    'mod/pulse:sender' => array(
+    'mod/pulse:sender' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'teacher' => CAP_PREVENT
-        ),
-        'clonepermissionsfrom' => 'mod/pulse:addinstance'
-    ),
-
-    'mod/pulse:addtemplate' => array(
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
-    ),
-
-    'mod/pulse:viewtemplateslist' => array(
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
-    ),
-
-    'mod/pulse:addtemplateinstance' => array(
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-    ),
-
-);
+            'teacher' => CAP_PREVENT,
+        ],
+        'clonepermissionsfrom' => 'mod/pulse:addinstance',
+    ],
+];

@@ -24,127 +24,43 @@
 
 namespace mod_pulse;
 
+use mod_pulse\plugininfo\pulseaddon;
+
 /**
  * Extend the pro feature to pulse instances.
  */
 class extendpro {
 
     /**
+     * Get addon instances.
+     *
+     * @return array List of addon instances.
+     */
+    protected static function get_addon_instances(): array {
+        $subplugins = \core_component::get_plugin_list_with_class('pulseaddon', 'instance');
+        $enabledaddons = \mod_pulse\plugininfo\pulseaddon::get_enabled_addons();
+        $subplugins = array_filter($subplugins, function($fullclassname) use ($enabledaddons) {
+            return in_array($fullclassname, array_values($enabledaddons));
+        }, ARRAY_FILTER_USE_KEY);
+
+        return $subplugins;
+    }
+
+    /**
      * Trigger the add pulse instance.
      *
-     * @param  mixed $pulseid
-     * @param  mixed $pulse
+     * @param int $pulseid Pulse instance id.
+     * @param mixed $pulse Pulse instance data.
+     * @param mixed $method Method name to trigger.
      * @return void
      */
-    public static function pulse_extend_add_instance($pulseid, $pulse) {
-        $callbacks = get_plugins_with_function('extend_pulse_add_instance');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($pulseid, $pulse);
-            }
-        }
-    }
-
-    /**
-     * Trigger pulse extended plugins to do their own update steps.
-     *
-     * @param  mixed $pulse Pulse instance data.
-     * @param  mixed $context Context module.
-     * @return void
-     */
-    public static function pulse_extend_update_instance($pulse, $context) {
-        $callbacks = get_plugins_with_function('extend_pulse_update_instance');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($pulse, $context);
-            }
-        }
-    }
-
-    /**
-     * Trigger pulse extended plugins delete function to do their own delete steps.
-     *
-     * @param  mixed $cmid Module context id
-     * @param  mixed $pulseid Pulse instance id.
-     * @return void
-     */
-    public static function pulse_extend_delete_instance($cmid, $pulseid) {
-        $callbacks = get_plugins_with_function('extend_pulse_delete_instance');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($cmid, $pulseid);
-            }
-        }
-    }
-
-    /** Inject form elements into mod instance form.
-     *
-     * @param  mform $mform the form to inject elements into.
-     * @param  mixed $instance Pulse instance.
-     * @param  mixed $method Method of form fields (=reaction only returns the reaction form fields)
-     * @return void
-     */
-    public static function mod_pulse_extend_form($mform, $instance, $method='') {
-        $callbacks = get_plugins_with_function('extend_pulse_form');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($mform, $instance, $method);
-            }
-        }
-    }
-
-    /** Extende the pro plugins validation error messages.
-     *
-     * @param  mixed $data module form submitted data.
-     * @param  mixed $files Module form submitted files.
-     * @return array list of validation errors.
-     */
-    public static function mod_pulse_extend_formvalidation($data, $files) {
-        $callbacks = get_plugins_with_function('extend_pulse_validation');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                return $pluginfunction($data, $files);
-            }
-        }
-    }
-
-    /** Inject form elements into mod instance form.
-     * @param mform $mform the form to inject elements into.
-     */
-    public static function mod_pulse_extend_formdata($mform) {
-        $callbacks = get_plugins_with_function('extend_pulse_formdata');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($mform);
-            }
-        }
-    }
-
-    /** Extend form post process method from pro plugin.
-     * @param object $data module form submitted data object.
-     */
-    public static function pulse_extend_postprocessing($data) {
-        $callbacks = get_plugins_with_function('extend_pulse_postprocessing');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($data);
-            }
-        }
-    }
-
-    /**
-     * Extended the support of data processing before defalut values are set to form.
-     *
-     * @param  mixed $defaultvalues Current default values.
-     * @param  mixed $currentinstance status of instance is current (true/false)
-     * @param  mixed $context Module context data record.
-     * @return void
-     */
-    public static function pulse_extend_preprocessing(&$defaultvalues, $currentinstance, $context) {
-        $callbacks = get_plugins_with_function('extend_pulse_preprocessing');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $pluginfunction($defaultvalues, $currentinstance, $context);
+    public static function pulse_extend_instance($pulseid, $pulse, $method) {
+        // Inlcude component callback implementation.
+        $subplugins = self::get_addon_instances();
+        $method = 'instance_' . $method;
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $classpath::init($pulseid)->$method($pulse);
             }
         }
     }
@@ -152,81 +68,141 @@ class extendpro {
     /**
      * Call the extended email placeholder filters to replace the content.
      *
-     * @param  mixed $instance Pulse instance data object.
-     * @param  mixed $displaytype Location to display the reaction.
+     * @param int $pulseid Pulse id.
+     * @param mixed $instance Pulse instance.
      * @return string $html
      */
-    public static function pulse_extend_reaction($instance, $displaytype='notification') {
+    public static function pulse_extend_cm_infocontent($pulseid, $instance) {
         $html = '';
-        $callbacks = get_plugins_with_function('extend_pulse_reaction');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $html .= $pluginfunction($instance, $displaytype);
+
+        $subplugins = self::get_addon_instances();
+        $method = 'get_cm_infocontent';
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $html .= $classpath::init($pulseid)->$method($instance);
             }
         }
         return $html;
     }
 
-
     /**
-     * Check the pulsepro extended the invitation method.
-     * if extended the invitation then the invitations are send using pulse pro plugin.
+     * Inject form elements into mod instance form.
+     *
+     * @param MoodleQuickForm $mform the form to inject elements into.
+     * @param mod_pulse_mod_form $instance Pulse instance.
+     * @param string $method Method of form fields (=reaction only returns the reaction form fields)
+     * @param array $args additional arguments to pass to the method
      * @return void
      */
-    public static function pulse_extend_invitation() {
-        $callbacks = get_plugins_with_function('extend_pulse_invitation');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                return $pluginfunction();
+    public static function pulse_extend_form(\MoodleQuickForm $mform, \mod_pulse_mod_form $instance, string $method, $args=[]) {
+
+        // Inlcude component callback implementation.
+        $subplugins = self::get_addon_instances();
+        $method = 'form_' . $method;
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $classpath::$method($mform, $instance, ...$args);
             }
         }
     }
 
     /**
-     * List of extended the function used in the backup steps.
+     * Extend form post process method from pro plugin.
      *
-     * @param  mixed $pulse
-     * @param  mixed $userinfo
+     * @param object $data module form submitted data object.
+     */
+    public static function pulse_extend_postprocessing(&$data) {
+        // Inlcude component callback implementation.
+        $subplugins = self::get_addon_instances();
+        $method = 'data_postprocessing';
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $classpath::$method($data);
+            }
+        }
+    }
+
+    /**
+     * Extend form post process method from pro plugin.
+     *
+     * @param object $defaultvalues module form submitted data object.
+     * @param object $currentinstance module instance object.
+     * @param object $context context object.
+     *
      * @return void
      */
-    public static function pulse_extend_backup_steps($pulse, $userinfo) {
-        $callbacks = get_plugins_with_function('extend_pulse_backup_steps');
-        if (!empty($callbacks)) {
-            foreach ($callbacks as $type => $plugins) {
-                foreach ($plugins as $plugin => $pluginfunction) {
-                    return $pluginfunction($pulse, $userinfo);
+    public static function pulse_extend_preprocessing(&$defaultvalues, $currentinstance, $context) {
+        // Inlcude component callback implementation.
+        $subplugins = self::get_addon_instances();
+        foreach ($subplugins as $fullclassname => $classpath) {
+            $method = 'data_preprocessing';
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $classpath::$method($defaultvalues, $currentinstance, $context);
+            }
+        }
+    }
+
+    /**
+     * Extend the pulse instance with the addon data.
+     *
+     * @param string $method
+     * @param array $args
+     *
+     * @return mixed
+     */
+    public static function pulse_extend_general(string $method, $args = []) {
+
+        // Inlcude component callback implementation.
+        $subplugins = self::get_addon_instances();
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $results[$fullclassname] = $classpath::$method(...$args);
+            }
+        }
+
+        return $results ?? [];
+    }
+
+    /**
+     * Check the pulse addon extended the invitation method.
+     * if extended the invitation then the invitations are send using pulse pro plugin.
+     *
+     * @return bool|mixed
+     */
+    public static function pulse_extend_invitation() {
+
+        // Inlcude component callback implementation.
+        $method = 'invitation_cron_task';
+        $subplugins = self::get_addon_instances();
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $result = $classpath::$method();
+                // Once any plugin return true then confirm the invitation is extended. no need to send invitation from mod pulse.
+                if ($result) {
+                    $returnresult = true;
                 }
             }
         }
-        return $pulse;
+
+        return $returnresult ?? false;
+
     }
 
     /**
-     * List of extended plugins restore contents.
+     * Add columns to the report.
      *
-     * @param  mixed $contents
+     * @param array $headers
+     * @param array $columns
+     * @param array $callbacks
      * @return void
      */
-    public static function pulse_extend_restore_content(&$contents) {
-        $callbacks = get_plugins_with_function('extend_pulse_restore_content');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $contents = $pluginfunction($contents);
-            }
-        }
-    }
-
-    /**
-     * Extended plugins restore structures used in the acitivty restore.
-     *
-     * @param  mixed $paths
-     * @return void
-     */
-    public static function pulse_extend_restore_structure(&$paths) {
-        $callbacks = get_plugins_with_function('extend_pulse_restore_structure');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $paths = $pluginfunction($paths);
+    public static function report_add_columns(&$headers, &$columns, &$callbacks) {
+        // Include component callback implementation.
+        $method = 'report_add_columns';
+        $subplugins = self::get_addon_instances();
+        foreach ($subplugins as $fullclassname => $classpath) {
+            if (is_subclass_of($classpath, \mod_pulse\addon\base::class) && method_exists($classpath, $method)) {
+                $classpath::$method($headers, $columns, $callbacks);
             }
         }
     }
@@ -246,38 +222,4 @@ class extendpro {
         }
         return [];
     }
-
-    /**
-     * Extend the pro features of preset. Triggered during the import preset data clean.
-     *
-     * @param string $method Preset method to extend
-     * @param array $backupdata Preset template data.
-     * @return void
-     */
-    public static function pulse_extend_preset($method, &$backupdata) {
-        $callbacks = get_plugins_with_function('extend_preset_formatdata');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $backupdata = $pluginfunction($method, $backupdata);
-            }
-        }
-    }
-
-
-    /**
-     * Extend the pro features of preset. Convert the record data format into moodle form editor format.
-     *
-     * @param string $pulseid Preset method to extend
-     * @param array $configdata Custom config data.
-     * @return void
-     */
-    public static function pulse_preset_update($pulseid, $configdata) {
-        $callbacks = get_plugins_with_function('extend_preset_update');
-        foreach ($callbacks as $type => $plugins) {
-            foreach ($plugins as $plugin => $pluginfunction) {
-                $backupdata = $pluginfunction($pulseid, $configdata);
-            }
-        }
-    }
-
 }

@@ -121,79 +121,111 @@ class behat_pulse extends behat_base {
         \mod_pulse\preset::pulse_create_presets();
     }
 
-
     /**
-     * Open the automation templates listing page.
+     * Select the conditions are met option on the activity completion tracking .
      *
-     * @Given /^I navigate to automation templates$/
+     * @Given I set the activity completion tracking
      */
-    public function i_navigate_to_automation_templates() {
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ['Plugins > Activity modules > Pulse > Automation templates']);
+    public function i_set_the_activity_completion_tracking() {
+        global $CFG;
+
+        if ($CFG->branch >= "401") {
+            $this->execute('behat_forms::i_set_the_field_to', ['Add requirements', '1']);
+        } else {
+            $this->execute('behat_forms::i_set_the_field_to',
+            ['Completion tracking', 'Show activity as complete when conditions are met']);
+        }
     }
 
     /**
-     * Open the automation instance listing page for the course.
+     * Switches to a pulse new window.
      *
-     * @Given /^I navigate to course "(?P<coursename>(?:[^"]|\\")*)" automation instances$/
-     * @param string $coursename Coursename.
+     * @Given /^I switch to a pulse open window$/
+     * @throws DriverException If there aren't exactly 2 windows open.
      */
-    public function i_navigate_to_course_automation_instances($coursename) {
-        $this->execute('behat_navigation::i_am_on_course_homepage', [$coursename]);
-        $this->execute('behat_navigation::i_select_from_secondary_navigation', get_string('automation', 'pulse'));
+    public function switch_to_open_window() {
+        $names = $this->getSession()->getWindowNames();
+        $this->getSession()->switchToWindow(end($names));
     }
 
     /**
-     * Fills a automation template create form with field/value data.
+     * Switches to a pulse new window.
      *
-     * @Given /^I create automation template with the following fields to these values:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param TableNode $data
+     * @Given /^I click on pulse "([^"]*)" editor$/
+     *
+     * @param string $editor
+     * @throws DriverException If there aren't exactly 2 windows open.
      */
-    public function i_create_automation_template_with_the_following_fields_to_these_values(TableNode $data) {
+    public function i_click_on_pulse_editor($editor) {
+        global $CFG;
 
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on", ["Create new template", "button"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
+        if ($CFG->branch >= 402) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . '_ifr', 'css_element', '#fitem_'.$editor, 'css_element']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#'.$editor . 'editable', 'css_element', '#fitem_'.$editor, 'css_element']);
+        }
     }
 
-
     /**
-     * Fills a automation template condition form with field/value data.
+     * View assignment submission button.
      *
-     * @Given /^I create "([^"]*)" template with the set the condition:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param string $reference
-     * @param TableNode $data
+     * @Given /^I click on assignment submissions button$/
+     *
+     * @throws DriverException If there aren't exactly 2 windows open.
      */
-    public function i_create_autoation_template_condition_to_these_values($reference, TableNode $data) {
+    public function i_click_on_assignment_submissions_button() {
+        global $CFG;
 
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on_in_the", [".action-edit", "css_element", $reference, "table_row"]);
-        $this->execute("behat_general::click_link", ["Condition"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
+        if ($CFG->branch >= 405) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['Submissions', 'link', '.secondary-navigation', 'css_element']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['View all submissions', 'link', '.tertiary-navigation', 'css_element']);
+        }
     }
 
+    /**
+     * Click on user edit menu button on submissions page.
+     *
+     * @Given /^I click on "([^"]*)" edit menu on submissions page$/
+     *
+     * @param string $user
+     * @throws DriverException If there aren't exactly 2 windows open.
+     */
+    public function i_click_on_user_edit_menu_on_submissions_page($user) {
+        global $CFG;
+
+        if ($CFG->branch >= 405) {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['#action-menu-toggle-0', 'css_element', $user, 'table_row']);
+        } else {
+            $this->execute('behat_general::i_click_on_in_the',
+                ['Edit', 'link', $user, 'table_row']);
+        }
+    }
 
     /**
-     * Fills a automation template notification form with field/value data.
+     * Click on user edit menu button on submissions page.
      *
-     * @Given /^I create "([^"]*)" template with the set the notification:$/
-     * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param string $reference
-     * @param TableNode $data
+     * @Given /^I add pulse to course "([^"]*)" section "([^"]*)" with:$/
+     *
+     * @param string $coursename The course name.
+     * @param string $section The section number.
+     * @param TableNode $data The pulse data.
+     * @throws DriverException If there aren't exactly 2 windows open.
      */
-    public function i_create_automation_template_notification_to_these_values($reference, TableNode $data) {
+    public function i_add_pulse_to_course_section($coursename, $section, TableNode $data) {
+        global $CFG;
 
-        $this->execute('behat_navigation::i_navigate_to_in_site_administration',
-            ["Plugins > Activity modules > Pulse > Automation templates"]);
-        $this->execute("behat_general::i_click_on_in_the", [".action-edit", "css_element", $reference, "table_row"]);
-        $this->execute("behat_general::i_click_on", ["#automation-tabs .nav-item:nth-child(3) a", "css_element"]);
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', [$data]);
-        $this->execute("behat_general::i_click_on", ["Save changes", "button"]);
+        if ($CFG->branch >= 404) {
+            $this->execute('behat_course::i_add_to_course_section_and_i_fill_the_form_with',
+                ['pulse', $coursename, $section, $data]);
+        } else {
+            $this->execute('behat_general::i_add_to_section_and_i_fill_the_form_with',
+                ['pulse', $section, $data]);
+        }
     }
 }

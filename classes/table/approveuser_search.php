@@ -224,7 +224,6 @@ class approveuser_search extends \core_user\table\participants_search {
         ];
     }
 
-
     /**
      * Generate the SQL used to fetch filtered data for the participants table.
      *

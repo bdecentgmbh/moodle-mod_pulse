@@ -41,7 +41,7 @@ class approveuser extends \core_user\table\participants {
      *
      * @var mixed
      */
-    protected $completionusers = array();
+    protected $completionusers = [];
 
     /**
      * Course module instance.
@@ -95,7 +95,7 @@ class approveuser extends \core_user\table\participants {
     public function completionusers() {
 
         foreach ($this->completion as $completion) {
-            $this->completionusers[$completion->userid] = $completion->approvalstatus;
+            $this->completionusers[$completion->userid] = (int) $completion->approvalstatus;
         }
 
     }
@@ -128,6 +128,7 @@ class approveuser extends \core_user\table\participants {
         }
         $columns[] = 'approvalstatus';
         $headers[] = get_string('action');
+
         $this->no_sorting('approvalstatus');
 
         $this->define_columns($columns);
@@ -149,17 +150,19 @@ class approveuser extends \core_user\table\participants {
     public function col_approvalstatus($row) {
 
         $status = (in_array($row->id, array_keys($this->completionusers)) && $this->completionusers[$row->id] ) ? 1 : 0;
+
         if ($status == 1) {
             $str = html_writer::tag('span', get_string('approved', 'mod_pulse'), ['class' => 'badge badge-success']);
             $url = new moodle_url('/mod/pulse/approve.php', ['cmid' => $this->cm->id, 'userid' => $row->id, 'action' => 'decline']);
             $str .= ' '.html_writer::link($url, get_string('decline', 'mod_pulse'), ['class' => 'approvebtn btn btn-secondary']);
-
             return $str;
+
         } else {
             $str = html_writer::tag('span', get_string('declined', 'mod_pulse'), ['class' => 'badge badge-warning']);
             $url = new moodle_url('/mod/pulse/approve.php', ['cmid' => $this->cm->id, 'userid' => $row->id, 'action' => 'approve']);
             $str .= ' '.html_writer::link($url, get_string('approve', 'mod_pulse'), ['class' => 'approvebtn btn btn-primary']);
             return $str;
+
         }
     }
 
@@ -189,16 +192,17 @@ class approveuser extends \core_user\table\participants {
             }
         }
 
-        $total = $psearch->get_total_participants_count($twhere, $tparams);
-
-        $this->pagesize($pagesize, $total);
-
         $sort = $this->get_sql_sort();
-        if ($sort) {
+        if ($sort && !method_exists('moodle_database', 'get_counted_records_sql')) {
             $sort = 'ORDER BY ' . $sort;
+            $total = $psearch->get_total_participants_count($twhere, $tparams);
         }
 
+        $this->use_pages = true;
         $rawdata = $psearch->get_participants($twhere, $tparams, $sort, $this->get_page_start(), $this->get_page_size());
+        $total = $total ?? $rawdata->current()->fullcount;
+
+        $this->pagesize($pagesize, $total);
 
         $this->rawdata = [];
         foreach ($rawdata as $user) {

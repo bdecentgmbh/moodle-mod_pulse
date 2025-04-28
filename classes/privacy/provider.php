@@ -27,10 +27,10 @@ use stdClass;
 use context;
 
 use core_privacy\local\metadata\collection;
-use \core_privacy\local\request\contextlist;
-use \core_privacy\local\request\userlist;
-use \core_privacy\local\request\approved_userlist;
-use \core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\contextlist;
+use core_privacy\local\request\userlist;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
@@ -59,7 +59,7 @@ class provider implements
             'approvaltime' => 'privacy:metadata:completion:approvaltime',
             'selfcompletion' => 'privacy:metadata:completion:selfcompletion',
             'selfcompletiontime' => 'privacy:metadata:completion:selfcompletiontime',
-            'timemodified' => 'privacy:metadata:completion:timemodified'
+            'timemodified' => 'privacy:metadata:completion:timemodified',
         ];
         $collection->add_database_table('pulse_completion', $completionmetadata, 'privacy:metadata:pulsecompletion');
 
@@ -67,7 +67,7 @@ class provider implements
         $usersmetadata = [
             'userid' => 'privacy:metadata:users:userid',
             'status' => 'privacy:metadata:users:status',
-            'timecreated' => 'privacy:metadata:users:timecreated'
+            'timecreated' => 'privacy:metadata:users:timecreated',
         ];
         $collection->add_database_table('pulse_users', $usersmetadata, 'privacy:metadata:pulseusers');
 
@@ -83,7 +83,7 @@ class provider implements
      * @param  int         $userid    The user to search.
      * @return contextlist $contextlist The list of contexts used in this plugin.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new \core_privacy\local\request\contextlist();
         // User completions.
         $sql = "SELECT c.id
@@ -112,7 +112,7 @@ class provider implements
         $params = [
             'modname' => 'pulse',
             'contextlevel' => CONTEXT_MODULE,
-            'userid' => $userid
+            'userid' => $userid,
         ];
         $contextlist->add_from_sql($sql, $params);
 
@@ -270,7 +270,7 @@ class provider implements
             get_string('completionfor', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist) : bool {
+                function(stdClass $completion) use ($contextlist): bool {
                     return $completion->userid == $contextlist->get_user()->id;
                 }
             ),
@@ -281,7 +281,7 @@ class provider implements
             get_string('approvedby', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist) : bool {
+                function(stdClass $completion) use ($contextlist): bool {
                     return $completion->approvedby == $contextlist->get_user()->id;
                 }
             ),
@@ -325,7 +325,7 @@ class provider implements
                                 ? transform::datetime($completion->selfcompletiontime) : '-',
                             'approved' => (($completion->approved == 1) ? get_string('yes') : get_string('no')),
                             'approvaltime' => $completion->approvedtime ? transform::datetime($completion->approvedtime) : '-',
-                            'invitaion' => self::generate_invitationdata($completion->pid, $user->id)
+                            'invitaion' => self::generate_invitationdata($completion->pid, $user->id),
 
                         ];
                     }
@@ -364,7 +364,7 @@ class provider implements
             if (!empty($invitedata)) {
                 $current = [
                     'invited' => get_string('yes'),
-                    'invitedtime' => $invitedata[0]->timecreated ? transform::datetime($invitedata[0]->timecreated) : '-'
+                    'invitedtime' => $invitedata[0]->timecreated ? transform::datetime($invitedata[0]->timecreated) : '-',
                 ];
             }
             $previousinvitations = $invitations[1] ?? [];
@@ -382,7 +382,6 @@ class provider implements
         return [];
     }
 
-
     /**
      * Helper function to group an array of stdClasses by a common property.
      *
@@ -393,7 +392,7 @@ class provider implements
     private static function group_by_property(array $classes, string $property): array {
         return array_reduce(
             $classes,
-            function (array $classes, stdClass $class) use ($property) : array {
+            function (array $classes, stdClass $class) use ($property): array {
                 $classes[$class->{$property}][] = $class;
                 return $classes;
             },

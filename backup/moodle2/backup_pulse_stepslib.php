@@ -35,23 +35,38 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
         $userinfo = $this->get_setting_value('userinfo');
 
         // Define each element separated - table fields.
-        $pulse = new backup_nested_element('pulse', array('id'), array(
+        $pulse = new backup_nested_element('pulse', ['id'], [
             'course', 'name', 'intro', 'introformat', 'pulse_subject', 'pulse_content',
             'pulse_contentformat', 'pulse', 'diff_pulse', 'displaymode',
             'boxtype', 'boxicon', 'cssclass', 'resend_pulse',
             'completionavailable', 'completionself', 'completionapproval',
-            'completionapprovalroles', 'timemodified'));
+            'completionapprovalroles', 'completionbtnconfirmation',
+            'completionbtntext', 'completionbtn_content',
+            'completionbtn_contentformat', 'timemodified',
+        ]);
+
+        $this->add_subplugin_structure('pulseaddon', $pulse, true);
+
+        // Pulse options.
+        $pulseoptions = new backup_nested_element('pulseoptions');
+        $pulseoption = new backup_nested_element('pulse_options', ['id'], [
+            'pulseid', 'name', 'value',
+        ]);
 
         $notifiedusers = new backup_nested_element('notifiedusers');
-
-        $pulseusers = new backup_nested_element('pulse_users', array('id'), array(
-            'pulseid', 'userid', 'timecreated'));
+        $pulseusers = new backup_nested_element('pulse_users', ['id'], [
+            'pulseid', 'userid', 'timecreated',
+        ]);
 
         $usercompletion = new backup_nested_element('pulsecompletion');
 
-        $pulsecompletion = new backup_nested_element('pulse_completion', array('id'), array(
+        $pulsecompletion = new backup_nested_element('pulse_completion', ['id'], [
             'userid', 'pulseid', 'approvalstatus', 'approveduser', 'approvaltime',
-            'selfcompletion', 'selfcompletiontime', 'timemodified'));
+            'selfcompletion', 'selfcompletiontime', 'timemodified',
+        ]);
+
+        $pulse->add_child($pulseoptions);
+        $pulseoptions->add_child($pulseoption);
 
         // Build the tree.
         $pulse->add_child($notifiedusers);
@@ -63,21 +78,23 @@ class backup_pulse_activity_structure_step extends backup_activity_structure_ste
 
         // Define sources.
         // Define source to backup.
-        $pulse->set_source_table('pulse', array('id' => backup::VAR_ACTIVITYID));
+        $pulse->set_source_table('pulse', ['id' => backup::VAR_ACTIVITYID]);
+
+        // Pulse options.
+        $pulseoption->set_source_table('pulse_options', ['pulseid' => backup::VAR_PARENTID]);
 
         // All the rest of elements only happen if we are including user info.
         if ($userinfo) {
-            $pulseusers->set_source_table('pulse_users', array('pulseid' => backup::VAR_PARENTID));
+            $pulseusers->set_source_table('pulse_users', ['pulseid' => backup::VAR_PARENTID]);
 
-            $pulsecompletion->set_source_table('pulse_completion', array('pulseid' => backup::VAR_PARENTID));
+            $pulsecompletion->set_source_table('pulse_completion', ['pulseid' => backup::VAR_PARENTID]);
             $pulsecompletion->annotate_ids('user', 'userid');
         }
 
         // Define file annotations.
         $pulse->annotate_files('mod_pulse', 'intro', null);
         $pulse->annotate_files('mod_pulse', 'pulse_content', null);
-
-        $pulse = \mod_pulse\extendpro::pulse_extend_backup_steps($pulse, $userinfo);
+        $pulse->annotate_files('mod_pulse', 'completionbtn_content', null);
 
         // Return the root element (data), wrapped into standard activity structure.
         return $this->prepare_activity_structure($pulse);

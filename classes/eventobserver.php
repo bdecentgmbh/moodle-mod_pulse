@@ -31,7 +31,7 @@ class eventobserver {
 
     /**
      * course module deleted event observer.
-     * Remove the user and instance records for the deleted modules from pulsepro tables.
+     * Remove the user and instance records for the deleted modules from pulse addon tables.
      *
      * @param  mixed $event
      * @return void
@@ -39,6 +39,9 @@ class eventobserver {
     public static function course_module_deleted($event) {
         global $CFG, $DB;
         if ($event->other['modulename'] == 'pulse') {
+
+            extendpro::pulse_extend_general('event_course_module_deleted', ['event' => $event]);
+
             $pulseid = $event->other['instanceid'];
             $courseid = $event->courseid;
             // Remove pulse user completion records.
@@ -63,7 +66,12 @@ class eventobserver {
      */
     public static function user_enrolment_deleted($event) {
         global $CFG, $DB;
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
+
+        // Pulse extend enrolment deleted event.
+        extendpro::pulse_extend_general('event_user_enrolment_deleted', ['event' => $event]);
+
         $userid = $event->relateduserid; // Unenrolled user id.
         $courseid = $event->courseid;
         // Retrive list of pulse instance added in course.
@@ -78,8 +86,6 @@ class eventobserver {
             $DB->delete_records_select('pulse_users', $select, $inparams);
         }
 
-        self::trigger_action_event('user_enrolment_deleted', $event);
-
         return true;
     }
 
@@ -90,32 +96,9 @@ class eventobserver {
      * @return void
      */
     public static function user_enrolment_created($event) {
-        $userid = $event->relateduserid; // Unenrolled user id.
-        $courseid = $event->courseid;
 
-        $list = \mod_pulse\automation\helper::get_course_instances($courseid);
-        if (!empty($list)) {
-            foreach ($list as $instanceid => $instance) {
-                \mod_pulse\automation\instances::create($instanceid)->trigger_action($userid, null, true);
-            }
-        }
-    }
+        // Pulse extend enrolment created event.
+        extendpro::pulse_extend_general('event_user_enrolment_created', ['event' => $event]);
 
-    /**
-     * Trigger an action event for all instances in a course.
-     *
-     * @param string $method The method to trigger.
-     * @param stdClass $event The event object.
-     */
-    public static function trigger_action_event($method, $event) {
-
-        $courseid = $event->courseid;
-
-        $list = \mod_pulse\automation\helper::get_course_instances($courseid);
-        if (!empty($list)) {
-            foreach ($list as $instanceid => $instance) {
-                \mod_pulse\automation\instances::create($instanceid)->trigger_action_event($method, $event);
-            }
-        }
     }
 }

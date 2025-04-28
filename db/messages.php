@@ -24,6 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$messageproviders = array(
-    'mod_pulse' => array(),
-);
+$messageproviders = [
+    'mod_pulse' => [],
+];

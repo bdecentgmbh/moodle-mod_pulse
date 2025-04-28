@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 
-require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+require_once($CFG->dirroot.'/mod/pulse/lib.php');
 
 /**
  * Pulse module form.
@@ -53,13 +53,13 @@ class mod_pulse_mod_form extends moodleform_mod {
         if (!isset($this->current->instance) || $this->current->instance == '') {
             // Presets header.
             $mform->addElement('header', 'presets_header', get_string('presets', 'pulse'));
-            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', array('class' => 'spinner'));
+            $loader = $OUTPUT->pix_icon('i/loading', 'loading', 'moodle', ['class' => 'spinner']);
             $mform->addElement('html', '<div id="pulse-presets-data" data-listloaded="false">'.$loader.'</div>');
         }
         // General section.
         $mform->addElement('header', 'general', get_string('general') );
 
-        $mform->addElement('text', 'name', get_string('title', 'pulse'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('title', 'pulse'), ['size' => '64']);
         $mform->addRule('name', get_string('error'), 'required', '', 'client');
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
@@ -73,7 +73,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('introeditor', 'content', 'mod_pulse');
 
         // Extend the reaction sections.
-        \mod_pulse\extendpro::mod_pulse_extend_form($mform, $this, 'reaction');
+        \mod_pulse\extendpro::pulse_extend_form($mform, $this, 'fields_before_invitation');
 
         $mform->addElement('header', 'invitation', get_string('invitation', 'mod_pulse'));
 
@@ -93,7 +93,7 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('diff_pulse', 'diffnotification', 'mod_pulse');
 
         // First reminder subject.
-        $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), array('size' => '64'));
+        $elem = $mform->addElement('text', 'pulse_subject', get_string('invitationsubject', 'pulse'), ['size' => '64']);
         $mform->setType('pulse_subject', PARAM_RAW);
         $mform->addHelpButton('pulse_subject', 'invitationsubject', 'mod_pulse');
 
@@ -105,18 +105,20 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->addHelpButton('pulse_content_editor', 'remindercontent', 'mod_pulse');
 
         // Email tempalte placholders.
-        $PAGE->requires->js_call_amd('mod_pulse/module', 'init');
+        $PAGE->requires->js_call_amd('mod_pulse/module', 'init', [$CFG->branch]);
 
         // Presets - JS.
         $section = optional_param('section', 0, PARAM_INT);
         $PAGE->requires->js_call_amd('mod_pulse/preset', 'init', [$this->context->id, $PAGE->course->id, $section]);
 
-        $this->pulse_email_placeholders($mform);
+        $placeholders = pulse_email_placeholders('content', false);
+        $mform->addElement('html', $placeholders);
         // Show intro on course page always.
         $mform->addElement('hidden', 'showdescription', 1);
         $mform->setType('showdescription', PARAM_INT);
 
-        \mod_pulse\extendpro::mod_pulse_extend_form($mform, $this);
+        // Include the fields from sub plugins.
+        \mod_pulse\extendpro::pulse_extend_form($mform, $this, 'fields_before_appearance');
 
         $mform->addElement('header', 'appearance', get_string('appearance', 'core'));
 
@@ -149,27 +151,16 @@ class mod_pulse_mod_form extends moodleform_mod {
         $mform->setType('boxicon', PARAM_TEXT);
         $mform->hideIf('boxicon', 'displaymode', 'neq', 1);
 
+        // Mark as complete button options.
+        $this->definition_completionbuttonoption($mform);
+
         $this->standard_coursemodule_elements();
+
+        // Email placeholders.
+        $PAGE->requires->js_call_amd('mod_pulse/vars', 'init');
+
         // Form submit and cancek buttons.
         $this->add_action_buttons(true, false, null);
-    }
-
-    /**
-     * Add email placeholder fields in form fields.
-     *
-     * @param  mixed $mform
-     * @return void
-     */
-    public function pulse_email_placeholders(&$mform) {
-        $vars = \pulse_email_vars::vars();
-        $mform->addElement('html', "<div class='form-group row fitem'> <div class='col-md-3'></div>
-        <div class='col-md-9'><div class='emailvars'>");
-        $optioncount = 0;
-        foreach ($vars as $option) {
-            $mform->addElement('html', "<a href='#' data-text='$option' class='clickforword'><span>$option</span></a>");
-            $optioncount++;
-        }
-        $mform->addElement('html', "</div></div></div>");
     }
 
     /**
@@ -181,41 +172,45 @@ class mod_pulse_mod_form extends moodleform_mod {
 
         $mform = $this->_form;
 
-        $mform->addElement('checkbox', 'completionwhenavailable', get_string('completewhenavaialble', 'pulse') );
-        $mform->setDefault('completionwhenavailable', 0);
-        $mform->addHelpButton('completionwhenavailable', 'completewhenavaialble', 'mod_pulse');
+        $suffix = $this->get_suffix();
 
-        $mform->addElement('checkbox', 'completionself', get_string('completionself', 'pulse') );
-        $mform->setDefault('completionself', 0);
-        $mform->addHelpButton('completionself', 'completionself', 'mod_pulse');
+        $mform->addElement('checkbox', 'completionwhenavailable' . $suffix, get_string('completewhenavaialble', 'pulse') );
+        $mform->setDefault('completionwhenavailable'  . $suffix , 0);
+        $mform->addHelpButton('completionwhenavailable'  . $suffix, 'completewhenavaialble', 'mod_pulse');
 
-        $group = array();
-        $group[] = $mform->createElement('checkbox', 'completionapproval', '',
+        $mform->addElement('checkbox', 'completionself' . $suffix, get_string('completionself', 'pulse') );
+        $mform->setDefault('completionself' . $suffix, 0);
+        $mform->addHelpButton('completionself' . $suffix, 'completionself', 'mod_pulse');
+
+        $group = [];
+        $group[] = $mform->createElement('checkbox', 'completionapproval' . $suffix, '',
                     get_string('completionrequireapproval', 'pulse'));
         $roles = $this->course_roles();
-        $select = $mform->createElement('autocomplete', 'completionapprovalroles',
-        get_string('completionapproverules', 'pulse'), $roles);
+        $select = $mform->createElement('autocomplete', 'completionapprovalroles' . $suffix,
+            get_string('completionapproverules', 'pulse'), $roles);
         $select->setMultiple(true);
         $group[] = $select;
 
-        $mform->addGroup($group, 'completionrequireapproval', '', [''], false );
-        $mform->addHelpButton('completionrequireapproval', 'completionrequireapproval', 'mod_pulse');
+        $mform->addGroup($group, 'completionrequireapproval' . $suffix, '', [''], false );
+        $mform->addHelpButton('completionrequireapproval' . $suffix, 'completionrequireapproval', 'mod_pulse');
 
-        return ['completionwhenavailable', 'completionrequireapproval', 'completionself'];
+        return ['completionwhenavailable' . $suffix, 'completionrequireapproval' . $suffix, 'completionself' . $suffix];
     }
 
     /**
      * Get list of all course and user context roles.
      *
-     * @return void
+     * @return array $roles list of course roles.
      */
     public function course_roles() {
         global $DB;
 
         list($insql, $inparam) = $DB->get_in_or_equal([CONTEXT_COURSE, CONTEXT_USER]);
-        $sql = "SELECT lvl.id, lvl.roleid, rle.name, rle.shortname FROM {role_context_levels} lvl
-        JOIN {role} AS rle ON rle.id = lvl.roleid
-        WHERE contextlevel $insql ";
+        $sql = "SELECT lvl.id, lvl.roleid, rle.name, rle.shortname
+                FROM {role_context_levels} lvl
+                JOIN {role} AS rle ON rle.id = lvl.roleid
+                WHERE contextlevel $insql ";
+
         $result = $DB->get_records_sql($sql, $inparam);
         $result = role_fix_names($result);
         $roles = [];
@@ -233,8 +228,10 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return bool True if one or more rules is enabled, false if none are.
      */
     public function completion_rule_enabled($data) {
-        return (!empty($data['completionwhenavailable'])
-                || !empty($data['completionapproval']) || !empty($data['completionself']) );
+        $suffix = $this->get_suffix();
+
+        return (!empty($data['completionwhenavailable' . $suffix])
+                || !empty($data['completionapproval' . $suffix]) || !empty($data['completionself' . $suffix]) );
     }
 
     /**
@@ -245,17 +242,27 @@ class mod_pulse_mod_form extends moodleform_mod {
      */
     public function data_postprocessing($data) {
         parent::data_postprocessing($data);
+
         if (isset($data->pulse_content_editor)) {
             $data->pulse_contentformat = $data->pulse_content_editor['format'];
             $data->pulse_content = $data->pulse_content_editor['text'];
         }
-        $data->completionavailable = isset($data->completionwhenavailable) ? 1 : 0;
-        $data->completionself = (isset($data->completionself) && $data->completionself !== '0') ? 1 : 0;
-        $data->completionapproval = isset($data->completionapproval) ? 1 : 0;
+
+        $suffix = $this->get_suffix();
+        $data->completionavailable = isset($data->{'completionwhenavailable' . $suffix}) ? 1 : 0;
+        $data->completionself = (isset($data->{'completionself' . $suffix}) && $data->{'completionself' . $suffix} !== '0') ? 1 : 0;
+        $data->completionapproval = isset($data->{'completionapproval' . $suffix}) ? 1 : 0;
 
         if (isset($data->completionapprovalroles)) {
             $data->completionapprovalroles = json_encode($data->completionapprovalroles);
         }
+
+        $data->completionbtnconfirmation = isset($data->completionbtnconfirmation) ? 1 : 0;
+        if (isset($data->completionbtn_content_editor)) {
+            $data->completionbtn_contentformat = $data->completionbtn_content_editor['format'];
+            $data->completionbtn_content = $data->completionbtn_content_editor['text'];
+        }
+
         \mod_pulse\extendpro::pulse_extend_postprocessing($data);
     }
 
@@ -266,34 +273,63 @@ class mod_pulse_mod_form extends moodleform_mod {
      * @return void
      */
     public function data_preprocessing(&$defaultvalues) {
+
         $editoroptions = \mod_pulse\helper::get_editor_options();
+
         if ($this->current->instance) {
             // Prepare draft item id to store the files.
             $draftitemid = file_get_submitted_draft_itemid('pulse_content');
+            $pulsecontent = $defaultvalues['pulse_content'] ?? '';
+            $pulsecontentformat = $defaultvalues['pulse_contentformat'] ?? 0;
             $defaultvalues['pulse_content_editor']['text'] =
                                     file_prepare_draft_area($draftitemid, $this->context->id,
                                     'mod_pulse', 'pulse_content', false,
                                     $editoroptions,
-                                    $defaultvalues['pulse_content']);
+                                    $pulsecontent);
 
-            $defaultvalues['pulse_content_editor']['format'] = $defaultvalues['pulse_contentformat'];
+            $defaultvalues['pulse_content_editor']['format'] = $pulsecontentformat;
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
+
+            $contentdraftitemid = file_get_submitted_draft_itemid('completionbtn_content');
+            $content = $defaultvalues['completionbtn_content'] ?? '';
+            $contentformat = $defaultvalues['completionbtn_contentformat'] ?? 0;
+            $defaultvalues['completionbtn_content_editor']['text'] =
+                                    file_prepare_draft_area($contentdraftitemid, $this->context->id,
+                                    'mod_pulse', 'completionbtn_content', false,
+                                    $editoroptions,
+                                    $content);
+            $defaultvalues['completionbtn_content_editor']['format'] = $contentformat;
+            $defaultvalues['completionbtn_content_editor']['itemid'] = $contentdraftitemid;
+
         } else {
             $draftitemid = file_get_submitted_draft_itemid('pulse_content_editor');
             file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'pulse_content', false);
             $defaultvalues['pulse_content_editor']['format'] = editors_get_preferred_format();
             $defaultvalues['pulse_content_editor']['itemid'] = $draftitemid;
+
+            $draftitemid = file_get_submitted_draft_itemid('completionbtn_content_editor');
+            file_prepare_draft_area($draftitemid, null, 'mod_pulse', 'completionbtn_content', false);
+            $defaultvalues['completionbtn_content_editor']['format'] = editors_get_preferred_format();
+            $defaultvalues['completionbtn_content_editor']['itemid'] = $draftitemid;
+
         }
 
         // Set up the completion checkbox which is not part of standard data.
-        $defaultvalues['completionwhenavailable'] =
-            !empty($defaultvalues['completionavailable']) ? 1 : 0;
-
+        $suffix = $this->get_suffix();
+        $defaultvalues['completionwhenavailable' . $suffix] = !empty($defaultvalues['completionavailable']) ? 1 : 0;
         if (isset($defaultvalues['completionapprovalroles'])) {
-            $defaultvalues['completionapprovalroles'] = json_decode($defaultvalues['completionapprovalroles']);
+            $defaultvalues['completionapprovalroles' . $suffix] = is_array($defaultvalues['completionapprovalroles'])
+                ? $defaultvalues['completionapprovalroles'] : json_decode($defaultvalues['completionapprovalroles']);
+        }
+        if (isset($defaultvalues['completionself'])) {
+            $defaultvalues['completionself' . $suffix] = $defaultvalues['completionself'];
         }
 
         $defaultvalues['resend_pulse'] = get_string('resendnotification', 'pulse');
+
+        if (!empty($defaultvalues['id'])) {
+            $defaultvalues['options'] = mod_pulse\options::init($defaultvalues['id'])->get_options();
+        }
         // Pre pocessing extend.
         \mod_pulse\extendpro::pulse_extend_preprocessing($defaultvalues, $this->current->instance, $this->context);
     }
@@ -318,10 +354,57 @@ class mod_pulse_mod_form extends moodleform_mod {
             }
         }
 
-        $extenderrors = \mod_pulse\extendpro::mod_pulse_extend_formvalidation($data, $files);
+        $extenderrors = \mod_pulse\extendpro::pulse_extend_form($this->_form, $this, 'validation', [$data, $files]);
         if (is_array($extenderrors)) {
             $errors = array_merge($errors, $extenderrors);
         }
         return $errors;
+    }
+
+    /**
+     * Mark as completion option form fields.
+     *
+     * @param moodle_form $mform
+     * @return void
+     */
+    public function definition_completionbuttonoption(&$mform) {
+        // Head: Mark as complete options.
+        $mform->addElement('header', 'markcompleteoption', get_string('markcompleteoptionheader', 'pulse'));
+
+        // Global config values.
+        $context = \context_system::instance();
+        $completebtnconfirmation = get_config('mod_pulse', 'completionbtnconfirmation');
+        $completionbtntext = get_config('mod_pulse', 'completionbtntext');
+        $completionbtncontent = get_config('mod_pulse', 'completionbtn_content');
+
+        $btncontenthtml = file_rewrite_pluginfile_urls($completionbtncontent,
+            'pluginfile.php', $context->id, 'mod_pulse', 'completionbtn_content', 0);
+        $btncontenthtml = format_text($btncontenthtml, FORMAT_HTML, ['trusted' => true, 'noclean' => true]);
+
+        // Require confirmation.
+        $mform->addElement('checkbox', 'completionbtnconfirmation', get_string('requireconfirm', 'pulse'));
+        $mform->addHelpButton('completionbtnconfirmation', 'requireconfirm', 'mod_pulse');
+        $mform->setDefault('completionbtnconfirmation', $completebtnconfirmation ?: false);
+
+        // Marke as complete button text.
+        $btntexts = [
+            BUTTON_TEXT_DEFAULT => get_string('markcompletebtnstring_default', 'pulse'),
+            BUTTON_TEXT_ACKNOWLEDGE => get_string('markcompletebtnstring_custom1', 'pulse'),
+            BUTTON_TEXT_CONFIRM => get_string('markcompletebtnstring_custom2', 'pulse'),
+            BUTTON_TEXT_CHOOSE => get_string('markcompletebtnstring_custom3', 'pulse'),
+            BUTTON_TEXT_APPROVE => get_string('markcompletebtnstring_custom4', 'pulse'),
+        ];
+        $mform->addElement('select', 'completionbtntext', get_string('btntext', 'pulse'), $btntexts);
+        $mform->setType('completionbtntext', PARAM_TEXT);
+        $mform->addHelpButton('completionbtntext', 'btntext', 'mod_pulse');
+        $mform->setDefault('completionbtntext', $completionbtntext ?: BUTTON_TEXT_DEFAULT);
+
+        // Confirmation modal text.
+        $editoroptions = \mod_pulse\helper::get_editor_options();
+        $content = $mform->addElement('editor', 'completionbtn_content_editor', get_string('confirmtext', 'pulse'),
+            ['class' => 'fitem_id_templatevars_editor'], $editoroptions);
+        $mform->setType('completionbtn_content_editor', PARAM_RAW);
+        $mform->addHelpButton('completionbtn_content_editor', 'confirmtext', 'mod_pulse');
+        $content->setValue(['text' => $btncontenthtml ?? '', 'format' => 1]);
     }
 }

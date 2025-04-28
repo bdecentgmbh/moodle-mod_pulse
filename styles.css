@@ -16,6 +16,12 @@
     position: relative;
     font-size: smaller;
 }
+#page-mod-pulse-addons-preset-presets table tbody tr td a {
+    display: inline-block;
+}
+#page-mod-pulse-addons-preset-presets table tbody tr td a i.icon {
+    margin-right: 0;
+}
 
 @media (max-width: 767px) {
     .path-mod-pulse .fcontainer .emailvars,
@@ -100,7 +106,8 @@
     background-color: #fff;
 }
 
-#page-mod-pulse-mod .preset-config-params [data-fieldtype="submit"] {
+#page-mod-pulse-mod .preset-config-params [data-fieldtype="submit"],
+#page-mod-pulse-mod .preset-config-params #fitem_id_submitbutton {
     display: none;
 }
 
@@ -133,226 +140,106 @@
     font-size: 1.5rem;
 }
 
-.mod-pulse-automation-table .template-add-form .btn {
-    margin-left: 10px;
+/* Pulse 2.1 */
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+    width: 400px;
+    height: 25px;
+    overflow: hidden;
 }
 
-/* Auto templates styles */
-#pulse_automation_template thead {
-    display: none;
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders li {
+    margin-bottom: 10px;
 }
-.mod-pulse-automation-table .updatestatus-switch-form .custom-control-input {
-    width: 100%;
-    z-index: 1;
-}
-
-/* Automation templates table */
-.mod-pulse-automation-table .template-add-form .form-group {
-    margin: 0;
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-head .title,
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-head .help-text {
     display: inline-block;
-    vertical-align: top;
 }
-.mod-pulse-automation-table .template-add-form .form-group .col-md-3 {
-    width: 0;
-    max-width: none;
-    flex: 0;
-    padding: 0;
-    margin: 0;
-}
-.mod-pulse-automation-table .template-add-form .form-group .col-md-9 {
-    max-width: none;
-    padding: 0;
-    margin-top: 1rem;
-}
-/* .mod-pulse-automation-table .template-add-form {
-    display: flex;
-    align-items: center;
-} */
-.mod-pulse-automation-table .template-add-form > * {
-    display: inline-block;
-    vertical-align: top;
-}
-.mod-pulse-automation-table .template-add-form > a.btn {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-.mod-pulse-automation-table table.generaltable {
-    border-spacing: 0 10px;
-    border-collapse: separate;
-    padding: 0 10px;
-    margin-top: 20px;
-}
-.mod-pulse-automation-table table.generaltable thead {
-    display: none;
-}
-.mod-pulse-automation-table table.generaltable thead tr th {
-    border: 0;
-}
-.mod-pulse-automation-table table.generaltable tbody tr {
-    border: 1px solid #eee;
+.mod-pulse-emailvars-toggle .emailvars-body {
+    background-color: #f1f1f1;
     border-radius: 5px;
-    background: none;
-    box-shadow: 2px 5px 5px rgba(0, 0, 0, 0.1);
 }
-.mod-pulse-automation-table table.generaltable tbody tr:nth-of-type(odd) {
-    background: none;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head {
+    width: 100%;
+    text-decoration: none;
+    display: inline-block;
 }
-.mod-pulse-automation-table table.generaltable tbody td {
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    border-collapse: collapse;
-    vertical-align: middle;
-}
-.mod-pulse-automation-table div:not(.automation-instruction) > div > table.generaltable tbody td:not([colspan]):first-child {
-    border-left: 1px solid #eee;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    display: flex;
-    align-items: center;
-}
-.mod-pulse-automation-table table.generaltable tbody td:last-child {
-    border-right: 1px solid #eee;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-}
-.mod-pulse-automation-table table.generaltable tbody td:last-child .menu-item-actions {
-    display: flex;
-    justify-content: center;
-}
-.mod-pulse-automation-table table.generaltable tbody td p {
-    text-align: left;
-    margin: 10px;
-}
-.mod-pulse-automation-table table.generaltable tbody td .action-icon i {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    line-height: 40px;
-    border-radius: 50%;
-    color: #fff;
-}
-.mod-pulse-automation-table table.generaltable tbody td .action-icon.pulseaction_notification i,
-.mod-pulse-automation-table .badge.pulseaction_notification {
-    background-color: #7b61ff;
-}
-.mod-pulse-automation-table table.generaltable tbody td span.inplaceeditable {
-    font-size: 16px;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head a {
     font-weight: bold;
-}
-.mod-pulse-automation-table table.generaltable tbody td .template-reference {
-    color: #999;
-    font-style: italic;
-    font-weight: normal;
-    line-height: 30px;
-    text-align: right;
-    margin-bottom: 0;
-}
-.mod-pulse-automation-table table.generaltable tbody td .menu-item-actions.item-actions > * {
-    font-size: 16px;
     color: #000;
-    display: inline-block;
-    margin-right: 10px;
-}
-.mod-pulse-automation-table table.generaltable tbody td .menu-item-actions.item-actions .pulse-instance-status-switch .custom-control-label {
-    display: block;
-}
-.mod-pulse-automation-table .automation-instruction {
-    margin-top: 70px;
-}
-.path-admin-mod-pulse-automation-templates form.mform .tab-content .tab-pane .form-group .form-inline span.override-count-element {
-    font-size: 14px;
-    color: #000;
-    display: inline-block;
-    margin-left: 10px;
-    background-color: #ced4da;
-    cursor: pointer;
-}
-.mod-pulse-automation-table .table-responsive table.generaltable tbody tr {
-    border: 0;
+    padding: 20px;
+    text-decoration: none;
     box-shadow: none;
 }
-.mod-pulse-automation-table .table-responsive table.generaltable tbody td {
-    border: 0;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head .email-vars-button {
+    display: flex;
+    align-items: center;
 }
-.mod-pulse-automation-table .table-responsive table.generaltable tbody td:first-child {
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-head .email-vars-button i {
+    width: 100%;
     text-align: right;
 }
-.mod-pulse-automation-table .table-responsive table.generaltable tbody td:last-child {
-    text-align: left;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .card-body {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding-top: 0;
 }
-.mod-pulse-automation-table table.generaltable tbody td .badge.pulseaction_notification {
-    background-color: #7b61ff;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .pulse-email-placeholders {
+    padding: 0;
+    margin-bottom: 0;
 }
-.mod-pulse-automation-table .box.generalbox {
-    position: relative;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-head .title h6 {
+    font-size: 14px;
+    font-weight: normal;
 }
-.mod-pulse-automation-table .filter-form-container {
-    float: right;
-}
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filter i.icon {
-    margin-right: 0;
-}
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform {
-    background-color: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 0 0.1px;
-    padding: 15px;
-    position: absolute;
-    top: 80%;
-    right: 0;
-    z-index: 2;
-}
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform form .form-group {
-    margin-left: 0;
-}
-.mod-pulse-automation-table .filter-form-container #pulse-automation-filterform form .form-group .col-form-label {
-    padding-left: 0;
-}
-
-/* Templates Instance style */
-.path-mod-pulse-automation form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch {
-    width: auto;
-    padding-left: 0;
-    margin-top: 8px;
-    display: inline-block;
-    vertical-align: top;
-}
-.path-mod-pulse-automation form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch .form-check {
-    align-items: normal;
-}
-.path-mod-pulse-automation form.mform .tab-content .tab-pane .form-group .form-inline .custom-switch .checkboxgroupautomation {
-    width: 2.5rem;
-    margin: 0;
-    z-index: 1;
-}
-.reportbuilder-report table tbody td a.pulse-automation-info-block i {
-    width: 18px;
-    height: 18px;
-    font-size: 13px;
-    color: #fff;
-    line-height: 18px;
-    text-align: center;
-    margin-left: 5px;
-    background: #0f6cbf;
-    border-radius: 50%;
-}
-.mod-pulse-automation-table .generalbox .sort-autotemplates {
-    float: right;
-}
-.mod-pulse-automation-table .generalbox .sort-autotemplates i {
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .placeholders a {
+    font-size: 14px;
+    color: #000;
+    text-decoration: none;
+    border-radius: 5px;
+    background-color: #ffe99c;
+    padding: 1px 5px;
     margin-right: 5px;
-    vertical-align: middle;
+    margin-bottom: 10px;
+    display: inline-block;
 }
-.path-mod-pulse-automation #fitem_id_insreference #pulse-template-reference {
-    margin-right: 10px;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .showmore {
+    margin-bottom: 5px;
 }
-/* Warning message info */
-#page-mod-pulse-automation-instances-edit .pulse-warnings li span {
-    color: initial;
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholder-body .showmore a {
+    text-decoration: none;
+    box-shadow: none;
+}
+.mod-pulse-emailvars-toggle .emailvars-body .emailvars-content .placeholders-document h6 {
+    margin-bottom: 0;
+    font-weight: normal;
 }
 
-/* Behat issue fix for auto instance */
-body.behat-site .pulse-instance-status-switch input.custom-control-input {
-    position: relative;
-    z-index: -1;
+@media (min-width: 767px) and (max-width: 991px) {
+
+    .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+        width: auto;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 500px) {
+    .mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders .placeholder-body .placeholders.less {
+        width: auto;
+        max-width: 400px;
+    }
+}
+/* Increase the height for the training data fields */
+.mod-pulse-emailvars-toggle .emailvars-content .pulse-email-placeholders
+.placeholder-body .placeholders.less#firstcontent-Training_field-morebutton {
+    height: 60px;
+}
+
+/*Email placeholder expand tab*/
+.form-description .mod-pulse-emailvars-toggle .form-group > .col-md-3 {
+    display: none;
+}
+.form-description .mod-pulse-emailvars-toggle .form-group > .col-md-9 {
+    max-width: none;
+    flex: auto;
 }
