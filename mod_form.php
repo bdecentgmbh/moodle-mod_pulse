@@ -201,10 +201,10 @@ class mod_pulse_mod_form extends moodleform_mod {
      * Get suffix for completion rule form field names.
      * This method is required for proper completion rule handling.
      * Only needed for Moodle versions before 4.3 (branch 403).
-     * 
+     *
      * @return string The suffix to be appended to form field names
      */
-    public function get_suffix() {
+    public function get_suffix(): string {
         global $CFG;
         if ($CFG->branch >= 403) {
             // For Moodle 4.3+, check if parent has the method, otherwise return empty string
