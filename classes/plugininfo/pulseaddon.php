@@ -31,7 +31,6 @@ use admin_settingpage;
  * Class for pulse addon plugins.
  */
 class pulseaddon extends base {
-
     /**
      * List of enabled addons.
      *

@@ -26,7 +26,6 @@
  * Pulse module instance generator.
  */
 class pulseaddon_preset_generator extends testing_module_generator {
-
     /**
      * Module intro content.
      *
@@ -42,5 +41,4 @@ class pulseaddon_preset_generator extends testing_module_generator {
     public function create_presets(): void {
         \pulseaddon_preset\instance::create_presets();
     }
-
 }

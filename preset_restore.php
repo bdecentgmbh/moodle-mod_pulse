@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
+defined('MOODLE_INTERNAL') || die(' No direct access ');
 
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
  * Custom restore step to fetch the data from preset templates extracted XML files.
  */
 class preset_customize_restore extends restore_structure_step {
-
     /**
      * Data fetched from XML.
      *
@@ -72,5 +71,4 @@ class preset_customize_restore extends restore_structure_step {
     public function process_pulse($data) {
         $this->data = $data;
     }
-
 }

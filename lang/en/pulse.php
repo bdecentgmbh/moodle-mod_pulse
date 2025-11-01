@@ -423,4 +423,3 @@ $string['visibility_help'] = 'Choose whether you want this template to be visibl
 <b>Note:</b> If hidden, users won\'t be able to create new instances based on this template, but existing instances will still be available.';
 $string['warning'] = 'Warning';
 $string['withselect'] = 'With selection:';
-

@@ -31,7 +31,7 @@
 function xmldb_pulse_upgrade($oldversion) {
     global $CFG, $DB;
 
-    require_once($CFG->dirroot.'/mod/pulse/lib.php');
+    require_once($CFG->dirroot . '/mod/pulse/lib.php');
     if (method_exists('core_plugin_manager', 'reset_caches')) {
         core_plugin_manager::reset_caches();
     }
@@ -78,7 +78,6 @@ function xmldb_pulse_upgrade($oldversion) {
     }
 
     if ($oldversion < 2021100800) {
-
         $pulsetable = new xmldb_table('pulse');
         $displaymode = new xmldb_field('displaymode', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'diff_pulse');
         $boxtype = new xmldb_field('boxtype', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'displaymode');
@@ -116,16 +115,48 @@ function xmldb_pulse_upgrade($oldversion) {
         // Mark as complete options.
         $pulsetable = new xmldb_table('pulse');
         $completionbtnconfirmation = new xmldb_field(
-            'completionbtnconfirmation', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'completionapprovalroles');
+            'completionbtnconfirmation',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            '0',
+            'completionapprovalroles'
+        );
 
         $completionbtntext = new xmldb_field(
-            'completionbtntext', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'completionbtnconfirmation');
+            'completionbtntext',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            '0',
+            'completionbtnconfirmation'
+        );
 
         $completionbtncontent = new xmldb_field(
-            'completionbtn_content', XMLDB_TYPE_TEXT, null, null, null, null, null, 'completionbtntext');
+            'completionbtn_content',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'completionbtntext'
+        );
 
         $completionbtncontentformat = new xmldb_field(
-            'completionbtn_contentformat', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'completionbtn_content');
+            'completionbtn_contentformat',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            '0',
+            'completionbtn_content'
+        );
 
         // Completion button confiramtion option.
         if (!$dbman->field_exists($pulsetable, $completionbtnconfirmation)) {
@@ -147,7 +178,6 @@ function xmldb_pulse_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024122701) {
-
         // Define table pulse_options to be created.
         $table = new xmldb_table('pulse_options');
 

@@ -28,7 +28,6 @@ namespace pulseaddon_preset;
  * Pulse resource phpunit test cases defined.
  */
 final class preset_test extends \advanced_testcase {
-
     /**
      * Course instance data
      *

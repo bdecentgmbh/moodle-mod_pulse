@@ -29,13 +29,12 @@ defined('MOODLE_INTERNAL') || die();
 use html_writer;
 use moodle_url;
 
-require_once($CFG->dirroot. '/mod/pulse/lib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
 /**
  * Approve users table main class. Extends the core users partinicipant table class.
  */
 class approveuser extends \core_user\table\participants {
-
     /**
      * Approved users list.
      *
@@ -82,7 +81,7 @@ class approveuser extends \core_user\table\participants {
         } else {
             $this->cm = $PAGE->cm;
         }
-        $this->pulse = $DB->get_record('pulse', ['id' => $this->cm->instance] );
+        $this->pulse = $DB->get_record('pulse', ['id' => $this->cm->instance]);
         $this->completion = $DB->get_records('pulse_completion', ['pulseid' => $this->pulse->id]);
         $this->completionusers();
     }
@@ -97,7 +96,6 @@ class approveuser extends \core_user\table\participants {
         foreach ($this->completion as $completion) {
             $this->completionusers[$completion->userid] = (int) $completion->approvalstatus;
         }
-
     }
 
     /**
@@ -154,15 +152,13 @@ class approveuser extends \core_user\table\participants {
         if ($status == 1) {
             $str = html_writer::tag('span', get_string('approved', 'mod_pulse'), ['class' => 'badge badge-success']);
             $url = new moodle_url('/mod/pulse/approve.php', ['cmid' => $this->cm->id, 'userid' => $row->id, 'action' => 'decline']);
-            $str .= ' '.html_writer::link($url, get_string('decline', 'mod_pulse'), ['class' => 'approvebtn btn btn-secondary']);
+            $str .= ' ' . html_writer::link($url, get_string('decline', 'mod_pulse'), ['class' => 'approvebtn btn btn-secondary']);
             return $str;
-
         } else {
             $str = html_writer::tag('span', get_string('declined', 'mod_pulse'), ['class' => 'badge badge-warning']);
             $url = new moodle_url('/mod/pulse/approve.php', ['cmid' => $this->cm->id, 'userid' => $row->id, 'action' => 'approve']);
-            $str .= ' '.html_writer::link($url, get_string('approve', 'mod_pulse'), ['class' => 'approvebtn btn btn-primary']);
+            $str .= ' ' . html_writer::link($url, get_string('approve', 'mod_pulse'), ['class' => 'approvebtn btn btn-primary']);
             return $str;
-
         }
     }
 
@@ -180,13 +176,13 @@ class approveuser extends \core_user\table\participants {
      * @param bool $useinitialsbar do you want to use the initials bar.
      */
     public function query_db($pagesize, $useinitialsbar = true) {
-        list($twhere, $tparams) = $this->get_sql_where();
+        [$twhere, $tparams] = $this->get_sql_where();
         $psearch = new approveuser_search($this->course, $this->context, $this->filterset);
         // Add filter for user context assigned users.
         if (!\mod_pulse\helper::pulse_has_approvalrole($this->pulse->completionapprovalroles, $this->cm->id, false)) {
-            if ($mentesusers = \mod_pulse\helper::pulse_user_getmentessuser() ) {
+            if ($mentesusers = \mod_pulse\helper::pulse_user_getmentessuser()) {
                 global $DB;
-                list($userinsql, $userinparams) = $DB->get_in_or_equal($mentesusers, SQL_PARAMS_NAMED, 'mentees', true);
+                [$userinsql, $userinparams] = $DB->get_in_or_equal($mentesusers, SQL_PARAMS_NAMED, 'mentees', true);
                 $twhere .= ($twhere != '') ? " AND udistinct.id $userinsql" : " udistinct.id $userinsql ";
                 $tparams = array_merge($tparams, $userinparams);
             }
@@ -211,8 +207,12 @@ class approveuser extends \core_user\table\participants {
         $rawdata->close();
 
         if ($this->rawdata) {
-            $this->allroleassignments = get_users_roles($this->context, array_keys($this->rawdata),
-                    true, 'c.contextlevel DESC, r.sortorder ASC');
+            $this->allroleassignments = get_users_roles(
+                $this->context,
+                array_keys($this->rawdata),
+                true,
+                'c.contextlevel DESC, r.sortorder ASC'
+            );
         } else {
             $this->allroleassignments = [];
         }

@@ -29,22 +29,22 @@ use core_plugin_manager;
 use moodle_exception;
 use stdclass;
 
-defined( 'MOODLE_INTERNAL') || die(' No direct access ');
+defined('MOODLE_INTERNAL') || die(' No direct access ');
 
-require_once($CFG->libdir.'/formslib.php');
+require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/course/modlib.php');
-require_once($CFG->dirroot.'/mod/pulse/mod_form.php');
+require_once($CFG->dirroot . '/mod/pulse/mod_form.php');
 
 /**
  * Create pulse using the backup file of mod pulse. Defined preset form to extract the template file data.
  */
 class preset extends \moodleform {
-
     /**
      * Preset form to replace the module form during the apply and customize method.
      *
      * @var stdclass
      */
+    // phpcs:ignore
     public $_form;
 
     /**
@@ -148,7 +148,7 @@ class preset extends \moodleform {
      * @param mixed $coursecontext Course context.
      * @param int $section Section number.
      */
-    public function __construct(int $presetid, int $courseid, $coursecontext=null, int $section=0) {
+    public function __construct(int $presetid, int $courseid, $coursecontext = null, int $section = 0) {
         global $COURSE;
         $this->courseid = $courseid;
         $this->presetid = $presetid;
@@ -175,9 +175,9 @@ class preset extends \moodleform {
      * @param int $section Section number.
      * @return mod_pulse_mod_form mod_pulse form instance.
      */
-    public static function pulseform_instance(int $courseid, int $section=1) {
+    public static function pulseform_instance(int $courseid, int $section = 1) {
         $course = get_course($courseid);
-        list($module, $context, $cw, $cm, $data) = \prepare_new_moduleinfo_data($course, 'pulse', $section);
+        [$module, $context, $cw, $cm, $data] = \prepare_new_moduleinfo_data($course, 'pulse', $section);
         $pulseform = new \mod_pulse_mod_form($data, $section, $cm, $course);
         return $pulseform;
     }
@@ -205,12 +205,20 @@ class preset extends \moodleform {
         $this->preset = $DB->get_record('pulse_presets', ['id' => $this->presetid, 'status' => 1]);
         if (!empty($this->preset)) {
             $description = file_rewrite_pluginfile_urls(
-                $this->preset->description, 'pluginfile.php', \context_system::instance()->id,
-                'mod_pulse', 'description', $this->preset->id
+                $this->preset->description,
+                'pluginfile.php',
+                \context_system::instance()->id,
+                'mod_pulse',
+                'description',
+                $this->preset->id
             );
             $instruction = file_rewrite_pluginfile_urls(
-                $this->preset->instruction, 'pluginfile.php', \context_system::instance()->id,
-                'mod_pulse', 'instruction', $this->preset->id
+                $this->preset->instruction,
+                'pluginfile.php',
+                \context_system::instance()->id,
+                'mod_pulse',
+                'instruction',
+                $this->preset->id
             );
 
             $this->preset->title = format_text($this->preset->title);
@@ -239,7 +247,6 @@ class preset extends \moodleform {
             $configlist = self::get_pulse_config_list($this->courseid);
             // List of available elements in module pulse form.
             foreach ($this->pulseform->_form->_elements as $key => $element) {
-
                 $hide = ['hidden', 'html', 'submit', 'static'];
                 if (in_array($element->_type, $hide)) {
                     continue;
@@ -250,11 +257,11 @@ class preset extends \moodleform {
                     $elem->_label = isset($configlist[$element->_name])
                         ? $configlist[$element->_name] : $elem->_label;
                     $this->_form->addElement($elem);
-                    $this->_form->addElement('hidden', $elem->_name.'_changed', false);
+                    $this->_form->addElement('hidden', $elem->_name . '_changed', false);
                     if (isset($elem->_elements) && !empty($elem->_elements)) {
                         foreach ($elem->_elements as $key => $subelem) {
                             $subname = $subelem->_attributes['name'];
-                            $this->_form->addElement('hidden', $subname.'_changed', false);
+                            $this->_form->addElement('hidden', $subname . '_changed', false);
                         }
                     }
                 } else if (isset($element->_attributes['name']) && in_array($element->_attributes['name'], $configparams, true)) {
@@ -264,15 +271,14 @@ class preset extends \moodleform {
                     if ($elem->_type == 'editor' || $elem->_type == 'autocomplete') {
                         // Prevent the confilict with module form editors.
                         // Using same names in editor elements in same page, not load the text editors in second elements.
-                        $elem->_attributes['name'] = 'preseteditor_'.$elem->_attributes['name'];
+                        $elem->_attributes['name'] = 'preseteditor_' . $elem->_attributes['name'];
                     }
                     $elem->_label = isset($configlist[$attributename])
                         ? $configlist[$attributename] : $elem->_label;
                     $this->_form->addElement($elem);
-                    $this->_form->addElement('hidden', $attributename.'_changed', false);
+                    $this->_form->addElement('hidden', $attributename . '_changed', false);
                 }
             }
-
         }
 
          // Availability loading indicator.
@@ -296,7 +302,7 @@ class preset extends \moodleform {
      * @param bool $method if true start the collection otherwise end the collection.
      * @return void
      */
-    public static function js_collection_requirement(bool $method=false): void {
+    public static function js_collection_requirement(bool $method = false): void {
         global $PAGE;
 
         if ($method == true) {
@@ -329,10 +335,15 @@ class preset extends \moodleform {
 
             foreach ($records as $presetid => $record) {
                 $description = file_rewrite_pluginfile_urls(
-                    $record->description, 'pluginfile.php', \context_system::instance()->id, 'mod_pulse', 'description', $record->id
+                    $record->description,
+                    'pluginfile.php',
+                    \context_system::instance()->id,
+                    'mod_pulse',
+                    'description',
+                    $record->id
                 );
 
-                $configparams = array_map(function($value) use ($configlist) {
+                $configparams = array_map(function ($value) use ($configlist) {
                     return isset($configlist[$value]) ? $configlist[$value] : '';
                 }, json_decode($record->configparams, true));
 
@@ -349,7 +360,7 @@ class preset extends \moodleform {
                     $icon = explode(':', $record->icon);
                     $icon1 = isset($icon[1]) ? $icon[1] : 'core';
                     $icon0 = isset($icon[0]) ? $icon[0] : '';
-                    $item['icon'] = $OUTPUT->pix_icon( $icon1, $icon0 );
+                    $item['icon'] = $OUTPUT->pix_icon($icon1, $icon0);
                 }
                 $presets[] = $item;
             }
@@ -387,10 +398,10 @@ class preset extends \moodleform {
                     $label = get_string('schedule:fixeddate', 'pulse');
                 }
 
-                $fields[$element->_name] = $header .' > '. $label;
+                $fields[$element->_name] = $header . ' > ' . $label;
             } else {
                 $label = (($element->_label) ? $element->_label : $element->_text);
-                $fields[$element->_attributes['name']] = $header.' > '.$label;
+                $fields[$element->_attributes['name']] = $header . ' > ' . $label;
             }
         }
         self::js_collection_requirement(true);
@@ -444,7 +455,7 @@ class preset extends \moodleform {
         $backuptempdir = make_backup_temp_directory('preset' . $this->preset->id);
         $files[0]->extract_to_pathname($fp, $backuptempdir);
 
-        return $this->import_presets('preset'.$this->preset->id, $configdata);
+        return $this->import_presets('preset' . $this->preset->id, $configdata);
     }
 
     /**
@@ -456,7 +467,6 @@ class preset extends \moodleform {
     public function clear_empty_data(array $config): array {
 
         foreach ($config as $key => $value) {
-
             $value = $value != null ? $value : '';
             if ($key == 'completionapprovalroles') {
                 $value = (is_array($config['completionapprovalroles']))
@@ -497,7 +507,7 @@ class preset extends \moodleform {
         if (isset($data[$name])) {
             $data[$editor] = [
                 'text' => $data[$name],
-                'format' => $data[$name.'format'],
+                'format' => $data[$name . 'format'],
             ];
         }
     }
@@ -531,7 +541,7 @@ class preset extends \moodleform {
      * @param array $fields Record fields.
      * @return bool True if contains, otherwise false.
      */
-    public static function hasupdatefields(array $configdata, $fields=null): bool {
+    public static function hasupdatefields(array $configdata, $fields = null): bool {
         $fields = ($fields) ? $fields : self::pulsefields();
         if (array_intersect(array_keys($configdata), $fields)) {
             return true;
@@ -573,9 +583,9 @@ class preset extends \moodleform {
 
         // No need to clear basic data and pro schedules.
         $nochanged = ['courseid', 'presetid', 'section', 'importmethod', 'sesskey', 'second_schedule', 'first_schedule'];
-        $configdata = array_filter($configdata, function($value, $key) use ($nochanged, $configdata) {
+        $configdata = array_filter($configdata, function ($value, $key) use ($nochanged, $configdata) {
             if (!in_array($key, $nochanged) && strpos($key, 'recipients') == false && strpos($key, 'editor') == false) {
-                $value = (isset($configdata[$key.'_changed']) && empty($configdata[$key.'_changed'])) ? '' : $value;
+                $value = (isset($configdata[$key . '_changed']) && empty($configdata[$key . '_changed'])) ? '' : $value;
             }
             return ($value !== null && $value !== "") ? true : false;
         }, ARRAY_FILTER_USE_BOTH);
@@ -585,8 +595,14 @@ class preset extends \moodleform {
 
         $method = \backup::TARGET_CURRENT_ADDING;
         // Restore controller.
-        $this->controller = new \restore_controller($backuptempdir, $this->courseid, \backup::INTERACTIVE_NO,
-        \backup::MODE_IMPORT, $USER->id, $method);
+        $this->controller = new \restore_controller(
+            $backuptempdir,
+            $this->courseid,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_IMPORT,
+            $USER->id,
+            $method
+        );
 
         if ($configdata['importmethod'] == 'save') {
             $this->controller->execute_precheck();
@@ -600,16 +616,26 @@ class preset extends \moodleform {
                         $introeditor = $configdata['introeditor'];
                         $configdata['introformat'] = $introeditor['format'];
                         $configdata['intro'] = file_save_draft_area_files(
-                            $introeditor['itemid'], $contextid, 'mod_pulse', 'intro', 0,
-                            ['subdirs' => true], $introeditor['text']
+                            $introeditor['itemid'],
+                            $contextid,
+                            'mod_pulse',
+                            'intro',
+                            0,
+                            ['subdirs' => true],
+                            $introeditor['text']
                         );
                     }
                     if (isset($configdata['pulse_contenteditor']) && !empty($configdata['pulse_contenteditor']['text'])) {
                         $pulseeditor = $configdata['pulse_contenteditor'];
                         $configdata['pulse_contentformat'] = $pulseeditor['format'];
                         $configdata['pulse_content'] = file_save_draft_area_files(
-                            $pulseeditor['itemid'], $contextid, 'mod_pulse', 'pulse_content', 0,
-                            ['subdirs' => true], $pulseeditor['text']
+                            $pulseeditor['itemid'],
+                            $contextid,
+                            'mod_pulse',
+                            'pulse_content',
+                            0,
+                            ['subdirs' => true],
+                            $pulseeditor['text']
                         );
                     }
                     unset($configdata['pulse_contenteditor']);
@@ -653,7 +679,6 @@ class preset extends \moodleform {
             $this->controller->destroy();
             $courseurl = new \moodle_url('/course/view.php', ['id' => $this->courseid ]);
             return json_encode(['url' => $courseurl->out(), 'pulseid' => (isset($pulseid) ? $pulseid : '') ]);
-
         } else if ($configdata['importmethod'] == 'customize') {
             // Fetch values from backup file.
             $backupdata = $this->fetch_pulse_data_fromxml();
@@ -681,7 +706,7 @@ class preset extends \moodleform {
 
             // Replace the config data.
             $formdata['course'] = $this->courseid;
-            $formdata = array_filter($formdata, function($value) {
+            $formdata = array_filter($formdata, function ($value) {
                 if (!is_array($value)) {
                     $value = $value != '' ? trim($value) : $value;
                     return ($value !== '') ? true : false;
@@ -731,7 +756,6 @@ class preset extends \moodleform {
                             $DB->set_field('course_modules', 'section', $newsection->id, ['id' => $configdata['id']]);
                         }
                     }
-
                 }
             }
             $transaction->allow_commit();
@@ -754,10 +778,10 @@ class preset extends \moodleform {
     public function prepare_modform($data) {
         global $CFG, $PAGE, $COURSE;
         require_once($CFG->dirroot . '/course/modlib.php');
-        require_once($CFG->dirroot.'/mod/pulse/mod_form.php');
+        require_once($CFG->dirroot . '/mod/pulse/mod_form.php');
         $this->modformdata = array_replace_recursive($this->modformdata, $data);
         // Replace the config data.
-        $this->modformdata = array_map(function($value) {
+        $this->modformdata = array_map(function ($value) {
             return (!is_array($value) && $value != null) ? trim($value) : $value;
         }, $this->modformdata);
 
@@ -790,21 +814,21 @@ class preset extends \moodleform {
                 $te = new \preset_customize_restore('module_info', 'module.xml', $task);
                 $te->execute();
                 $excluedfields = ['id', 'version', 'modulename', 'sectionid', 'sectionnumber', 'idnumber', 'added'];
-                $record += array_filter($te->data, function($key) use ($excluedfields) {
+                $record += array_filter($te->data, function ($key) use ($excluedfields) {
                     return (!in_array($key, $excluedfields));
                 }, ARRAY_FILTER_USE_KEY);
 
                 $te = new \preset_customize_restore('module_info', 'pulse.xml', $task);
                 $te->execute();
                 $excluedfields = ['id', 'course', 'pulseid'];
-                $record += array_filter($te->data, function($key) use ($excluedfields) {
+                $record += array_filter($te->data, function ($key) use ($excluedfields) {
                     return (!in_array($key, $excluedfields));
                 }, ARRAY_FILTER_USE_KEY);
 
                 $te = new \preset_customize_restore('pulsepro', 'pulse.xml', $task);
                 $te->execute();
                 $excluedfields = ['id', 'course', 'pulseid'];
-                $record += array_filter($te->data, function($key) use ($excluedfields) {
+                $record += array_filter($te->data, function ($key) use ($excluedfields) {
                     return (!in_array($key, $excluedfields));
                 }, ARRAY_FILTER_USE_KEY);
 
@@ -813,7 +837,7 @@ class preset extends \moodleform {
                     $te = new \preset_customize_restore('pulseaddon', 'pulseaddons.xml', $task);
                     $te->execute();
                     $excluedfields = ['id', 'course', 'pulseid'];
-                    $record += array_filter($te->data, function($key) use ($excluedfields) {
+                    $record += array_filter($te->data, function ($key) use ($excluedfields) {
                         return (!in_array($key, $excluedfields));
                     }, ARRAY_FILTER_USE_KEY);
                 }
@@ -832,7 +856,7 @@ class preset extends \moodleform {
      * @param boolean $pro Create template for pro version.
      * @return array List of created presets id.
      */
-    public static function pulse_create_presets($presets=[], $pro=false) {
+    public static function pulse_create_presets($presets = [], $pro = false) {
         global $DB, $CFG;
         if (!isloggedin() || isguestuser()) {
             return [];
@@ -842,7 +866,7 @@ class preset extends \moodleform {
             $presets = self::pulse_free_presets();
         }
         foreach ($presets as $key => $preset) {
-            $sql = "SELECT id FROM {pulse_presets} WHERE ".$DB->sql_like('title', ':title');
+            $sql = "SELECT id FROM {pulse_presets} WHERE " . $DB->sql_like('title', ':title');
             if ($DB->record_exists_sql($sql, ['title' => $preset['title']])) {
                 continue;
             }
@@ -858,8 +882,16 @@ class preset extends \moodleform {
             $filerecord->itemid = $presetid;
             $filerecord->filename = $file;
 
-            if (!$fs->file_exists($filerecord->contextid, $filerecord->component, $filerecord->filearea,
-            $filerecord->itemid, $filerecord->filepath, $filerecord->filename)) {
+            if (
+                !$fs->file_exists(
+                    $filerecord->contextid,
+                    $filerecord->component,
+                    $filerecord->filearea,
+                    $filerecord->itemid,
+                    $filerecord->filepath,
+                    $filerecord->filename
+                )
+            ) {
                 if ($pro) {
                     $backuppath = $CFG->dirroot . "/mod/pulse/addons/preset/assets/$file";
                 } else {
@@ -879,8 +911,8 @@ class preset extends \moodleform {
      */
     public static function pulse_free_presets(): array {
         global $CFG;
-        if (file_exists($CFG->dirroot.'/mod/pulse/assets/presets.xml')) {
-            $presetsxml = simplexml_load_file($CFG->dirroot.'/mod/pulse/assets/presets.xml');
+        if (file_exists($CFG->dirroot . '/mod/pulse/assets/presets.xml')) {
+            $presetsxml = simplexml_load_file($CFG->dirroot . '/mod/pulse/assets/presets.xml');
             $result = json_decode(json_encode($presetsxml), true);
             return $result;
         }

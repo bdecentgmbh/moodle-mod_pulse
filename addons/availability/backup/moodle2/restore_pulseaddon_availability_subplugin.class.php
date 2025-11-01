@@ -28,7 +28,6 @@
  * Provides the necessary information needed to restore chapter element subplugin.
  */
 class restore_pulseaddon_availability_subplugin extends restore_subplugin {
-
     /**
      * Returns the paths to be handled by the subplugin.
      *
@@ -61,7 +60,5 @@ class restore_pulseaddon_availability_subplugin extends restore_subplugin {
         $data->userid = $this->get_mappingid('user', $data->userid);
 
         $DB->insert_record('pulseaddon_availability', $data);
-
     }
-
 }

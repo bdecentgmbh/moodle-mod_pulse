@@ -40,7 +40,6 @@ require_once($CFG->dirroot . '/user/lib.php');
  * Approve users table - sort and filters definitions.
  */
 class approveuser_search extends \core_user\table\participants_search {
-
     /**
      * @var filterset $filterset The filterset describing which participants to include in the search.
      */
@@ -279,7 +278,7 @@ class approveuser_search extends \core_user\table\participants_search {
                 $params = array_merge($params, $userfieldsparams);
             }
         } else {
-            $userfieldssql = ', '.user_picture::fields('u', $this->userfields);
+            $userfieldssql = ', ' . user_picture::fields('u', $this->userfields);
         }
 
         // Include any compulsory enrolment SQL (eg capability related filtering that must be applied).
@@ -396,7 +395,7 @@ class approveuser_search extends \core_user\table\participants_search {
                     // Some of the $where conditions may begin with `NOT` which results in `AND NOT NOT ...`.
                     // To prevent this from breaking on Oracle the inner WHERE clause is wrapped in brackets, making it
                     // `AND NOT (NOT ...)` which is valid in all DBs.
-                    $wheres = array_map(function($where) {
+                    $wheres = array_map(function ($where) {
                         return "({$where})";
                     }, $wheres);
 

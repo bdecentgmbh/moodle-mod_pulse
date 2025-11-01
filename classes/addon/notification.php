@@ -29,13 +29,12 @@ defined('MOODLE_INTERNAL') || die('No direct access !');
 use mod_pulse\helper;
 use stdclass;
 
-require_once($CFG->dirroot.'/mod/pulse/lib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
 /**
  * Send reminder notification to users filter by the users availability.
  */
 class notification {
-
     /**
      * Fetched complete record for all instances.
      *
@@ -72,7 +71,7 @@ class notification {
      * @param  array $additionalparams Parameters for additional where clause.
      * @return array
      */
-    public function get_instances($additionalwhere='', $additionalparams=[]) {
+    public function get_instances($additionalwhere = '', $additionalparams = []) {
         global $DB;
 
         $select[] = 'pl.id AS id'; // Set the schdule id as unique column.
@@ -90,8 +89,8 @@ class notification {
         foreach ($tables as $prefix => $table) {
             $columns = array_keys($table);
             // Columns.
-            array_walk($columns, function(&$value, $key, $prefix) {
-                $value = "$prefix.$value AS ".$prefix."_$value";
+            array_walk($columns, function (&$value, $key, $prefix) {
+                $value = "$prefix.$value AS " . $prefix . "_$value";
             }, $prefix);
 
             $select = array_merge($select, $columns);
@@ -112,7 +111,7 @@ class notification {
                 WHERE md.name = 'pulse' AND cm.visible = 1 AND c.visible = 1
                 AND c.startdate <= :startdate AND (c.enddate = 0 OR c.enddate >= :enddate)";
 
-        $sql .= $additionalwhere ? ' AND '.$additionalwhere : '';
+        $sql .= $additionalwhere ? ' AND ' . $additionalwhere : '';
 
         $params = [
             'contextlevel' => CONTEXT_MODULE,
@@ -123,13 +122,12 @@ class notification {
         $this->records = $DB->get_records_sql($sql, $params);
 
         if (empty($this->records)) {
-            pulse_mtrace('No pulse instance are added yet'."\n");
+            pulse_mtrace('No pulse instance are added yet' . "\n");
             return false;
         }
         pulse_mtrace('Fetched available pulse modules');
 
         foreach ($this->records as $record) {
-
             $instance = new stdclass();
             $instance->pulse = (object) helper::filter_record_byprefix($record, 'pl');
             $instance->course = (object) helper::filter_record_byprefix($record, 'c');
@@ -151,7 +149,6 @@ class notification {
 
                 $this->instances[$instance->pulse->id] = $instance;
             }
-
         }
 
         return $this->instances;
@@ -169,19 +166,16 @@ class notification {
         $instances = $this->get_instances("pl.pulse=:enabled", ['enabled' => 1]);
 
         if (!empty($instances) && (is_array($instances) || is_object($instances))) {
-
             foreach ($instances as $pulseid => $instance) {
-
                 // Selected roles for the reminder recipents.
                 if (!$instance->pulse) {
                     continue;
                 }
 
-                pulse_mtrace('Start sending invitation for instance - '. $instance->pulse->name);
+                pulse_mtrace('Start sending invitation for instance - ' . $instance->pulse->name);
 
                 pulse_mtrace('Sending invitation to students');
                 self::set_invitation_adhoctask($instance);
-
             }
         }
     }
@@ -230,10 +224,10 @@ class notification {
                 WHERE rc.capability = :capability ";
         $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:notifyuser']);
         $roles = array_column($roles, 'roleid');
-        list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'roleins');
+        [$roleinsql, $roleinparams] = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED, 'roleins');
 
         $contextlevel = explode('/', $this->instance->context->path);
-        list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel), SQL_PARAMS_NAMED, 'ins');
+        [$insql, $inparams] = $DB->get_in_or_equal(array_filter($contextlevel), SQL_PARAMS_NAMED, 'ins');
 
         $additionalwhere[] = "u.id IN (
             SELECT ra.userid
@@ -250,8 +244,19 @@ class notification {
         $joinparams = ['pulseidavail2' => $this->instance->pulse->id];
 
         $users = \mod_pulse\addon\util::get_enrolled_users_sql(
-            $context, $cap, null, 'u.*, pla.availabletime, pla.status as isavailable', 'u.lastname, u.firstname',
-            0, $limit, true, $additionalwhere, $additionalparams, $joins, $joinparams);
+            $context,
+            $cap,
+            null,
+            'u.*, pla.availabletime, pla.status as isavailable',
+            'u.lastname, u.firstname',
+            0,
+            $limit,
+            true,
+            $additionalwhere,
+            $additionalparams,
+            $joins,
+            $joinparams
+        );
 
         return $users;
     }
@@ -274,5 +279,4 @@ class notification {
             \core\task\manager::queue_adhoc_task($task, true);
         }
     }
-
 }

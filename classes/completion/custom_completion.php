@@ -35,7 +35,6 @@ use core_completion\activity_custom_completion;
  * and fetching a pulse instance's completion statuses for a user.
  **/
 class custom_completion extends activity_custom_completion {
-
     /**
      * Fetches the completion state for a given completion rule.
      *
@@ -133,14 +132,14 @@ class custom_completion extends activity_custom_completion {
         $approvalstring = get_string('completion:approval', 'pulse');
 
         if (\mod_pulse\helper::pulse_user_isstudent($this->cm->id)) {
-            if ( $this->is_available('completionwhenavailable') ) {
+            if ($this->is_available('completionwhenavailable')) {
                 $state = $this->get_state('completionwhenavailable');
                 if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
                     $availablestring = get_string('restrictionmet', 'pulse');
                 }
             }
             // Self completion descriptions.
-            if ($this->is_available('completionself') ) {
+            if ($this->is_available('completionself')) {
                 $state = $this->get_state('completionself');
                 if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
                     $pulse = $this->get_pulse();
@@ -149,7 +148,7 @@ class custom_completion extends activity_custom_completion {
                 }
             }
             // Approval completion description.
-            if ($this->is_available('completionapproval') ) {
+            if ($this->is_available('completionapproval')) {
                 $state = $this->get_state('completionapproval');
                 if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
                     $message = \mod_pulse\helper::pulse_user_approved($this->cm->instance, $this->userid);

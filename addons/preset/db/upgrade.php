@@ -36,7 +36,6 @@ function xmldb_pulseaddon_preset_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2024122604) {
-
         // Migrate credits fields from configurable params to options[credits].
         $table = new xmldb_table('pulse_presets');
         if ($dbman->table_exists($table)) {

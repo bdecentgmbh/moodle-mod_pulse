@@ -22,34 +22,15 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die('No direct access');
-
 /**
  * Course context class to create a context_course instance from record.
  */
 class mod_pulse_context_course extends \context_course {
-
     /**
      * Convert the record of context into course_context object.
      *
      * @param stdclass $data
      * @return void
-     */
-    public static function create_instance_fromrecord($data) {
-        return \context::create_instance_from_record($data);
-    }
-}
-
-/**
- * Module context class to create a context_course instance from record.
- */
-class mod_pulse_context_module extends \context_module {
-
-    /**
-     * Convert the record of context into course_context object.
-     *
-     * @param stdclass $data
-     * @return \context
      */
     public static function create_instance_fromrecord($data) {
         return \context::create_instance_from_record($data);

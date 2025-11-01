@@ -28,7 +28,6 @@ namespace mod_pulse;
  * Pulse resource preset create and customize settings phpunit test cases defined.
  */
 final class preset_test extends \advanced_testcase {
-
     /**
      * Preset instance data
      *

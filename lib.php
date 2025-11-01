@@ -37,9 +37,9 @@ define('BUTTON_TEXT_APPROVE', 5); // Approve.
 
 global $PAGE;
 
-require_once($CFG->libdir."/completionlib.php");
-require_once($CFG->dirroot.'/lib/filelib.php');
-require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
+require_once($CFG->libdir . "/completionlib.php");
+require_once($CFG->dirroot . '/lib/filelib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib/vars.php');
 
 /**
  * Add pulse instance.
@@ -55,9 +55,15 @@ function pulse_add_instance($pulse) {
     $pulse->timemodified = time();
 
     if (isset($pulse->pulse_content_editor)) {
-        $pulse->pulse_content = file_save_draft_area_files($pulse->pulse_content_editor['itemid'],
-                                                    $context->id, 'mod_pulse', 'pulse_content', 0,
-                                                    ['subdirs' => true], $pulse->pulse_content_editor['text']);
+        $pulse->pulse_content = file_save_draft_area_files(
+            $pulse->pulse_content_editor['itemid'],
+            $context->id,
+            'mod_pulse',
+            'pulse_content',
+            0,
+            ['subdirs' => true],
+            $pulse->pulse_content_editor['text']
+        );
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
     }
@@ -95,9 +101,15 @@ function pulse_update_instance($pulse) {
     $pulse->timemodified = time();
     if (isset($pulse->pulse_content_editor)) {
         // Save pulse content areafiles.
-        $pulse->pulse_content = file_save_draft_area_files($pulse->pulse_content_editor['itemid'],
-                                                    $context->id, 'mod_pulse', 'pulse_content', 0,
-                                                    ['subdirs' => true], $pulse->pulse_content_editor['text']);
+        $pulse->pulse_content = file_save_draft_area_files(
+            $pulse->pulse_content_editor['itemid'],
+            $context->id,
+            'mod_pulse',
+            'pulse_content',
+            0,
+            ['subdirs' => true],
+            $pulse->pulse_content_editor['text']
+        );
         $pulse->pulse_contentformat = $pulse->pulse_content_editor['format'];
         unset($pulse->pulse_content_editor);
     }
@@ -167,7 +179,7 @@ function pulse_supports($feature) {
     if (defined('FEATURE_MOD_PURPOSE') && $feature == FEATURE_MOD_PURPOSE) {
         return MOD_PURPOSE_ADMINISTRATION;
     }
-    switch($feature) {
+    switch ($feature) {
         case FEATURE_IDNUMBER:
             return true;
         case FEATURE_GROUPS:
@@ -220,7 +232,7 @@ function mod_pulse_cm_info_dynamic(cm_info &$cm) {
  * @param array $options additional options affecting the file serving
  * @return bool false if the file not found, just send the file otherwise and do not return anything
  */
-function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=[]) {
+function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
     if ($context->contextlevel != CONTEXT_MODULE && $context->contextlevel != CONTEXT_SYSTEM) {
         return false;
@@ -250,7 +262,7 @@ function mod_pulse_pluginfile($course, $cm, $context, $filearea, $args, $forcedo
     if (!$args) {
         $filepath = '/'; // ...$args is empty => the path is '/'
     } else {
-        $filepath = '/'.implode('/', $args).'/'; // ...$args contains elements of the filepath
+        $filepath = '/' . implode('/', $args) . '/'; // ...$args contains elements of the filepath
     }
 
     // Retrieve the file from the Files API.
@@ -301,9 +313,8 @@ function pulse_get_coursemodule_info($coursemodule) {
     }
 
     // Populate some other values that can be used in calendar or on dashboard.
-    if ($pulse->completionapprovalroles ) {
+    if ($pulse->completionapprovalroles) {
         $result->customdata['completionapprovalroles'] = $pulse->completionapprovalroles;
-
     }
     return $result;
 }
@@ -316,8 +327,10 @@ function pulse_get_coursemodule_info($coursemodule) {
  */
 function mod_pulse_get_completion_active_rule_descriptions($cm) {
     // Values will be present in cm_info, and we assume these are up to date.
-    if (empty($cm->customdata['customcompletionrules'])
-        || $cm->completion != COMPLETION_TRACKING_AUTOMATIC) {
+    if (
+        empty($cm->customdata['customcompletionrules'])
+        || $cm->completion != COMPLETION_TRACKING_AUTOMATIC
+    ) {
         return [];
     }
 
@@ -353,7 +366,7 @@ function mod_pulse_get_completion_active_rule_descriptions($cm) {
  * @param  mixed $modinfo Module info class object.
  * @return bool True if completed, false if not, $type if conditions not set.
  */
-function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $completion=null, $modinfo=null) {
+function pulse_get_completion_state($course, $cm, $userid, $type, $pulse = null, $completion = null, $modinfo = null) {
     global $CFG, $DB;
 
     if ($pulse == null) {
@@ -417,9 +430,11 @@ function pulse_get_completion_state($course, $cm, $userid, $type, $pulse=null, $
  * @param int $userid User id to use for all capability checks, etc. Set to 0 for current user (default).
  * @return \core_calendar\local\event\entities\action_interface|null
  */
-function mod_pulse_core_calendar_provide_event_action(calendar_event $event,
-                                                     \core_calendar\action_factory $factory,
-                                                     int $userid = 0) {
+function mod_pulse_core_calendar_provide_event_action(
+    calendar_event $event,
+    \core_calendar\action_factory $factory,
+    int $userid = 0
+) {
     global $USER;
 
     if (empty($userid)) {
@@ -466,8 +481,16 @@ function mod_pulse_cm_info_view(cm_info $cm) {
     $senderdata = \mod_pulse\task\sendinvitation::get_sender($course->id, $cm->context->id);
     $sender = \mod_pulse\task\sendinvitation::find_user_sender($senderdata, $USER->id);
     $user = clone $USER; // Prevent the cache issues.
-    list($subject, $content) = \mod_pulse\helper::update_emailvars($content, '', $course,
-                            $user, $pulse, $sender, [], 'content');
+    [$subject, $content] = \mod_pulse\helper::update_emailvars(
+        $content,
+        '',
+        $course,
+        $user,
+        $pulse,
+        $sender,
+        [],
+        'content'
+    );
     $cm->set_content($content);
     if (isset($pulse->cssclass) && $pulse->cssclass) {
         $cm->set_extra_classes($pulse->cssclass);
@@ -496,7 +519,7 @@ function mod_pulse_cm_info_view(cm_info $cm) {
  * @param bool $detail Need to display this in log even detailedlog config disable state.
  * @return void
  */
-function pulse_mtrace($message, $detail=false) {
+function pulse_mtrace($message, $detail = false) {
     $showdetail = get_config('mod_pulse', 'detailedlog');
     if (($showdetail || $detail) && !AJAX_SCRIPT) {
         mtrace($message);
@@ -571,7 +594,7 @@ function mod_pulse_output_fragment_completionbuttons($args) {
     global $CFG, $DB, $USER;
 
     $modules = json_decode($args['modules']);
-    list($insql, $inparams) = $DB->get_in_or_equal($modules);
+    [$insql, $inparams] = $DB->get_in_or_equal($modules);
     $sql = "SELECT cm.*, nf.completionapproval, nf.completionapprovalroles, nf.completionself FROM {course_modules} cm
     JOIN {modules} md ON md.id = cm.module
     JOIN {pulse} nf ON nf.id = cm.instance WHERE cm.id $insql AND md.name = 'pulse'";
@@ -589,32 +612,47 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                 $roles = $data->completionapprovalroles;
                 if (\mod_pulse\helper::pulse_has_approvalrole($roles, $moduleid)) {
                     $approvelink = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid]);
-                    $html[$moduleid] .= html_writer::tag('div',
-                        html_writer::link($approvelink, get_string('approveuserbtn', 'pulse'),
-                        ['class' => 'btn btn-primary pulse-approve-users']),
+                    $html[$moduleid] .= html_writer::tag(
+                        'div',
+                        html_writer::link(
+                            $approvelink,
+                            get_string('approveuserbtn', 'pulse'),
+                            ['class' => 'btn btn-primary pulse-approve-users']
+                        ),
                         ['class' => 'approve-user-wrapper']
                     );
                 } else if (\mod_pulse\helper::pulse_user_isstudent($moduleid)) {
-                    if (!class_exists('core_completion\activity_custom_completion')
-                        && $message = \mod_pulse\helper::pulse_user_approved($records[$moduleid]->instance, $USER->id) ) {
-                        $html[$moduleid] .= $message.'<br>';
+                    if (
+                        !class_exists('core_completion\activity_custom_completion')
+                        && $message = \mod_pulse\helper::pulse_user_approved($records[$moduleid]->instance, $USER->id)
+                    ) {
+                        $html[$moduleid] .= $message . '<br>';
                     }
                 }
             }
 
             // Generate self mark completion buttons for students.
             if (\mod_pulse\helper::pulse_is_uservisible($moduleid, $USER->id, $data->course)) {
-                if ($data->completionself == 1 && \mod_pulse\helper::pulse_user_isstudent($moduleid)
-                    && !\mod_pulse\helper::pulse_isusercontext($data->completionapprovalroles, $moduleid)) {
+                if (
+                    $data->completionself == 1 && \mod_pulse\helper::pulse_user_isstudent($moduleid)
+                    && !\mod_pulse\helper::pulse_isusercontext($data->completionapprovalroles, $moduleid)
+                ) {
                     // Add self mark completed informations.
-                    if (!class_exists('core_completion\activity_custom_completion')
-                        && $date = \mod_pulse\helper::pulse_already_selfcomplete($records[$moduleid]->instance, $USER->id)) {
-                        $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]).'<br>';
-                        $html[$moduleid] .= html_writer::tag('div', $selfmarked,
-                        ['class' => 'pulse-self-marked badge badge-success']);
+                    if (
+                        !class_exists('core_completion\activity_custom_completion')
+                        && $date = \mod_pulse\helper::pulse_already_selfcomplete($records[$moduleid]->instance, $USER->id)
+                    ) {
+                        $selfmarked = get_string('selfmarked', 'pulse', ['date' => $date]) . '<br>';
+                        $html[$moduleid] .= html_writer::tag(
+                            'div',
+                            $selfmarked,
+                            ['class' => 'pulse-self-marked badge badge-success']
+                        );
                     } else {
                         $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
-                        $selfmarklink = html_writer::link($selfcomplete, get_string('markcomplete', 'pulse'),
+                        $selfmarklink = html_writer::link(
+                            $selfcomplete,
+                            get_string('markcomplete', 'pulse'),
                             ['class' => 'btn btn-primary pulse-approve-users']
                         );
                         $html[$moduleid] .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-approve-users']);
@@ -661,7 +699,7 @@ function mod_pulse_extend_navigation_course(navigation_node $navigation, stdClas
  * @param bool $automation
  * @return void
  */
-function pulse_email_placeholders($editor, $automation=true) {
+function pulse_email_placeholders($editor, $automation = true) {
     global $OUTPUT, $PAGE;
 
     $vars = \pulse_email_vars::vars($automation);
@@ -670,11 +708,11 @@ function pulse_email_placeholders($editor, $automation=true) {
     $output = $PAGE->get_renderer('core');
 
     foreach ($vars as $key => $var) {
-        $label = str_replace($key.'_', '', $var);
+        $label = str_replace($key . '_', '', $var);
         // Help text added.
         $alt = get_string('description');
         $data = [
-            'text' => get_string($key.'_vars_help', 'mod_pulse'),
+            'text' => get_string($key . '_vars_help', 'mod_pulse'),
             'alt' => $alt,
             'icon' => (new \pix_icon('help', $alt, 'core', ['class' => 'iconhelp']))->export_for_template($output),
             'ltr' => !right_to_left(),
@@ -682,13 +720,13 @@ function pulse_email_placeholders($editor, $automation=true) {
         $helptext = $OUTPUT->render_from_template('core/help_icon', $data);
 
         $list[] = [
-            'key' => $key.'_',
-            'name' => get_string($key.'_vars', 'mod_pulse'),
+            'key' => $key . '_',
+            'name' => get_string($key . '_vars', 'mod_pulse'),
             'helptext' => $helptext,
             'vars' => $label,
             'showmore' => (count($label) > 6) ? true : false,
             'active' => $i,
-            'pretext' => ($key == "Mod_Metadata" || $key == 'others' || $key == 'Reaction') ? '' : $key."_",
+            'pretext' => ($key == "Mod_Metadata" || $key == 'others' || $key == 'Reaction') ? '' : $key . "_",
         ];
         $i++;
     }
@@ -712,8 +750,14 @@ function mod_pulse_output_fragment_get_confirmation_content(array $params) {
     $modulecontext = context_module::instance($cm->id);
     $content = !empty($pulse->completionbtn_content) ? $pulse->completionbtn_content :
         get_string('completionconfirmation', 'pulse');
-    $contenthtml = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $modulecontext->id,
-        'mod_pulse', 'completionbtn_content', 0);
+    $contenthtml = file_rewrite_pluginfile_urls(
+        $content,
+        'pluginfile.php',
+        $modulecontext->id,
+        'mod_pulse',
+        'completionbtn_content',
+        0
+    );
     $contenthtml = format_text($contenthtml, $pulse->completionbtn_contentformat, ['trusted' => true, 'noclean' => true]);
     return $contenthtml;
 }

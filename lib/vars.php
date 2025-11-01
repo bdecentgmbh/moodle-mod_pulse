@@ -162,7 +162,7 @@ class pulse_email_vars {
      * @param mixed $type Type of the email notification.
      * @return void
      */
-    public function __construct($user, $course, $sender, $pulse, $condition=null, $type='notification') {
+    public function __construct($user, $course, $sender, $pulse, $condition = null, $type = 'notification') {
         global $CFG, $USER;
 
         $newuser = !empty($user->id) ? $user : $USER;
@@ -189,10 +189,10 @@ class pulse_email_vars {
         $this->coursecontext = \context_course::instance($this->course->id);
 
         if (!empty($course->id)) {
-            $this->course->url = new moodle_url($wwwroot .'/course/view.php', ['id' => $this->course->id]);
+            $this->course->url = new moodle_url($wwwroot . '/course/view.php', ['id' => $this->course->id]);
         }
         if (!empty($user->id)) {
-            $this->url = new moodle_url($wwwroot .'/user/profile.php', ['id' => $this->user->id]);
+            $this->url = new moodle_url($wwwroot . '/user/profile.php', ['id' => $this->user->id]);
         }
         $this->site = $this->get_sitedata();
 
@@ -224,12 +224,14 @@ class pulse_email_vars {
             return;
         }
         // Update the timestamp to user readable time.
-        array_walk($var, function(&$value, $key) {
+        array_walk($var, function (&$value, $key) {
 
-            if (is_numeric($value) && in_array(strtolower($key), [
+            if (
+                is_numeric($value) && in_array(strtolower($key), [
                     'timecreated', 'timemodified', 'startdate', 'enddate', 'firstaccess',
                     'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime',
-                ])) {
+                ])
+            ) {
                 $value = $value ? userdate($value) : '';
             }
             // Update the status to user readable strings.
@@ -279,7 +281,7 @@ class pulse_email_vars {
         ];
 
         $extendvars = \mod_pulse\extendpro::pulse_extend_general('get_email_placeholders');
-        array_map(function($value) use (&$result) {
+        array_map(function ($value) use (&$result) {
             $result += $value;
         }, $extendvars);
 
@@ -296,7 +298,6 @@ class pulse_email_vars {
      */
     public function __get($name) {
         if (isset($name)) {
-
             if (property_exists($this, $name)) {
                 return $this->$name;
             }
@@ -341,7 +342,7 @@ class pulse_email_vars {
     public function get_extend_vars_list($name) {
         $list = extendpro::pulse_extend_general('get_email_placeholders');
         $newlist = [];
-        array_map(function($v) use (&$newlist) {
+        array_map(function ($v) use (&$newlist) {
             $newlist += call_user_func_array('array_merge', array_values($v));
         }, $list);
 
@@ -361,7 +362,7 @@ class pulse_email_vars {
     public function get_extend_vars_data($name) {
         $list = extendpro::pulse_extend_general('get_email_placeholders');
         foreach ($list as $component => $vars) {
-            if (in_array($name,  call_user_func_array('array_merge', array_values($vars)))) {
+            if (in_array($name, call_user_func_array('array_merge', array_values($vars)))) {
                 $component = strtolower($component);
                 $result = $component . '\instance::get_emailvars_definition_' . $name;
                 return $result($this);
@@ -449,7 +450,7 @@ class pulse_email_vars {
         if (empty($this->course) || empty($this->user)) {
             return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
         }
-        require_once($CFG->dirroot.'/enrol/locallib.php');
+        require_once($CFG->dirroot . '/enrol/locallib.php');
 
         $enrolmanager = new course_enrolment_manager($PAGE, $this->orgcourse);
         $enrolments = $enrolmanager->get_user_enrolments($this->user->id);
@@ -460,10 +461,15 @@ class pulse_email_vars {
             $progress = !empty($percentage) ? $percentage : 0;
 
             $courseduedate = helper::timetable_details(
-                'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
+                'coursedue',
+                $this->orgcourse,
+                $this->user->id,
+                $this->coursecontext,
+                $this->pulse
+            );
 
             return (object) [
-                'progress' => round($progress) .'%',
+                'progress' => round($progress) . '%',
                 'courseduedate' => $courseduedate,
                 'status' => ($firstinstance->status == 1) ? get_string('suspended', 'mod_pulse') : get_string('active'),
                 'startdate' => $firstinstance->timestart
@@ -483,7 +489,7 @@ class pulse_email_vars {
     public static function user_profile_fields() {
         global $DB, $CFG;
 
-        require_once($CFG->dirroot.'/lib/authlib.php');
+        require_once($CFG->dirroot . '/lib/authlib.php');
 
         static $fields;
 
@@ -498,15 +504,15 @@ class pulse_email_vars {
 
             $userdbfields = $DB->get_columns('user');
 
-            $profilefields = array_map(function($value) {
+            $profilefields = array_map(function ($value) {
                 return str_replace('profile_field', 'profilefield', $value);
-            }, (new auth_plugin_base)->get_custom_user_profile_fields());
+            }, (new auth_plugin_base())->get_custom_user_profile_fields());
 
             $fields = array_merge($userfields, array_keys($userdbfields), array_values($profilefields));
             $fields = array_unique($fields);
 
-            array_walk($fields, function(&$value) {
-                $value = 'User_'.ucwords($value);
+            array_walk($fields, function (&$value) {
+                $value = 'User_' . ucwords($value);
             });
 
             $fields = array_values($fields);
@@ -548,14 +554,14 @@ class pulse_email_vars {
             WHERE cc.component = :component";
             $records = $DB->get_records_sql($sql, ['component' => 'core_course']);
 
-            $customfields = array_map(function($value) {
-                return 'customfield_'.$value;
+            $customfields = array_map(function ($value) {
+                return 'customfield_' . $value;
             }, array_keys($records));
 
             $fields = array_merge($coursefields, array_values($customfields));
 
-            array_walk($fields, function(&$value) {
-                $value = 'Course_'.ucwords($value);
+            array_walk($fields, function (&$value) {
+                $value = 'Course_' . ucwords($value);
             });
 
             $fields = array_values($fields);
@@ -586,8 +592,8 @@ class pulse_email_vars {
             if (!empty($records)) {
                 $fields = array_keys($records);
 
-                array_walk($fields, function(&$value) {
-                    $value = "Mod_metadata".$value;
+                array_walk($fields, function (&$value) {
+                    $value = "Mod_metadata" . $value;
                 });
             }
 
@@ -660,27 +666,9 @@ class pulse_email_vars {
             'siteurl' => self::siteurl(),
         ];
     }
-
 }
 
 // If the version is not iomad, set empty emailvars class for provide previous pro versions compatibility.
-if (!file_exists($CFG->dirroot.'/local/iomad/version.php')) {
-
-    /**
-     * EMAIL vars for support previous version pulse addon.
-     */
-    class EmailVars extends pulse_email_vars {
-
-        /**
-         * Set up all the methods that can be called and used for substitution var in email templates.
-         * There is not use for this function, FIX for CI.
-         *
-         * @param bool $automation
-         * @return array
-         **/
-        public static function vars($automation=false) {
-            $test = ''; // FIX for Moodle CI codechecker.
-            return parent::vars();
-        }
-    }
+if (!file_exists($CFG->dirroot . '/local/iomad/version.php')) {
+    include_once($CFG->dirroot . '/mod/pulse/lib/vars_iomad.php');
 }

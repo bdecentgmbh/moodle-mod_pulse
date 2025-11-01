@@ -28,7 +28,6 @@ namespace mod_pulse;
  * Pulse resource phpunit test cases defined.
  */
 final class lib_test extends \advanced_testcase {
-
     /**
      * Course instance data
      *
@@ -167,8 +166,13 @@ final class lib_test extends \advanced_testcase {
         ]);
         $templatetext = "Mail to {User_Email} - mail from {Sender_Email} content";
         $subject = '';
-        list($subject, $template) = \mod_pulse\helper::update_emailvars(
-            $templatetext, $subject, $this->course, $user, $this->cm, $sender
+        [$subject, $template] = \mod_pulse\helper::update_emailvars(
+            $templatetext,
+            $subject,
+            $this->course,
+            $user,
+            $this->cm,
+            $sender
         );
         $actualcontent = "Mail to testuser1@test.com - mail from sender1@test.com content";
         $this->assertEquals($actualcontent, $template);

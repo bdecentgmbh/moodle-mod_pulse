@@ -15,27 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module install steps.
+ * Pulse context class to create a context_course instance from record.
  *
  * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @copyright 2025, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Pulse module install steps.
- *
- * @return bool
+ * Module context class to create a context_course instance from record.
  */
-function xmldb_pulse_install() {
-    global $CFG;
-    require_once($CFG->dirroot . '/mod/pulse/lib.php');
-    if (method_exists('core_plugin_manager', 'reset_caches')) {
-        core_plugin_manager::reset_caches();
+class mod_pulse_context_module extends \context_module {
+    /**
+     * Convert the record of context into course_context object.
+     *
+     * @param stdclass $data
+     * @return \context
+     */
+    public static function create_instance_fromrecord($data) {
+        return \context::create_instance_from_record($data);
     }
-    // Inital plugin release - v1.0.
-
-    // Plugin release - v1.1.
-    \mod_pulse\preset::pulse_create_presets();
-    return true;
 }

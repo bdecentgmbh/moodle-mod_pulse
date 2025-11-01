@@ -28,7 +28,6 @@ namespace mod_pulse;
  * Observer class for the course module deleted and user enrolment deleted events. It will remove the user data from pulse.
  */
 class eventobserver {
-
     /**
      * course module deleted event observer.
      * Remove the user and instance records for the deleted modules from pulse addon tables.
@@ -39,7 +38,6 @@ class eventobserver {
     public static function course_module_deleted($event) {
         global $CFG, $DB;
         if ($event->other['modulename'] == 'pulse') {
-
             extendpro::pulse_extend_general('event_course_module_deleted', ['event' => $event]);
 
             $pulseid = $event->other['instanceid'];
@@ -78,7 +76,7 @@ class eventobserver {
         $list = \mod_pulse\helper::course_instancelist($courseid);
         if (!empty($list)) {
             $pulselist = array_column($list, 'instance');
-            list($insql, $inparams) = $DB->get_in_or_equal($pulselist);
+            [$insql, $inparams] = $DB->get_in_or_equal($pulselist);
             $inparams[] = $userid;
             $select = " pulseid $insql AND userid = ? ";
             // Remove the user completion records.
@@ -99,6 +97,5 @@ class eventobserver {
 
         // Pulse extend enrolment created event.
         extendpro::pulse_extend_general('event_user_enrolment_created', ['event' => $event]);
-
     }
 }

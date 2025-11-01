@@ -1,4 +1,7 @@
 {
+    "subplugintypes": {
+        "pulseaddon": "addons"
+    },
     "plugintypes": {
         "pulseaddon": "mod\/pulse\/addons"
     }

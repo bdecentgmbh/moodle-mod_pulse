@@ -26,13 +26,12 @@ namespace mod_pulse\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/pulse/lib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
 /**
  * Update user completion status for pulse. triggered from scheduled task.
  */
 class update_completion extends \core\task\scheduled_task {
-
     /**
      * Return the task's name as shown in admin screens.
      *
@@ -72,7 +71,7 @@ class update_completion extends \core\task\scheduled_task {
         $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:notifyuser']);
         $roles = array_column($roles, 'roleid');
 
-        list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
+        [$roleinsql, $roleinparams] = $DB->get_in_or_equal($roles);
 
         $sql = "SELECT nt.id as nid, nt.*, '' as pulseend, cm.id as cmid, cm.*, md.id as mid,
         ctx.id as contextid, ctx.*, cu.id as courseid, cu.*
@@ -89,12 +88,11 @@ class update_completion extends \core\task\scheduled_task {
         $records = $DB->get_records_sql($sql, ['startdate' => time(), 'enddate' => time()]);
 
         if (empty($records)) {
-            pulse_mtrace('No pulse instance are added yet'."\n");
+            pulse_mtrace('No pulse instance are added yet' . "\n");
             return true;
         }
         $modinfo = [];
         foreach ($records as $key => $record) {
-
             $params = [];
             $record = (array) $record;
             $keys = array_keys($record);
@@ -103,12 +101,12 @@ class update_completion extends \core\task\scheduled_task {
             $pulse = array_slice($record, 0, $pulseendpos);
             $pulse['id'] = $pulse['nid'];
 
-            pulse_mtrace("Check the user module completion - Pulse name: ".$pulse['name']);
+            pulse_mtrace("Check the user module completion - Pulse name: " . $pulse['name']);
             // Precess results.
-            list($course, $context, $cm) = \mod_pulse\helper::process_recorddata($keys, $record);
+            [$course, $context, $cm] = \mod_pulse\helper::process_recorddata($keys, $record);
             // Get enrolled users with capability.
             $contextlevel = explode('/', $context['path']);
-            list($insql, $inparams) = $DB->get_in_or_equal(array_filter($contextlevel));
+            [$insql, $inparams] = $DB->get_in_or_equal(array_filter($contextlevel));
 
             // Enrolled  users list.
             $usersql = "SELECT u.*, je.*
