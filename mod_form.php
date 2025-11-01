@@ -228,7 +228,7 @@ class mod_pulse_mod_form extends moodleform_mod {
     public function get_suffix(): string {
         global $CFG;
         if ($CFG->branch >= 403) {
-            // For Moodle 4.3+, check if parent has the method, otherwise return empty string
+            // For Moodle 4.3+, check if parent has the method, otherwise return empty string.
             if (method_exists(get_parent_class($this), 'get_suffix')) {
                 return parent::get_suffix();
             }
