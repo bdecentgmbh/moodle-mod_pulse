@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die('No direct access');
 
 use mod_pulse\extendpro;
-use mod_pulse\helper as pulsehelper;
+use mod_pulse\helper;
 /**
  * Filter for notification content placeholders.
  */
@@ -459,8 +459,12 @@ class pulse_email_vars {
             $percentage = \core_completion\progress::get_course_progress_percentage($this->orgcourse, $this->user->id);
             $progress = !empty($percentage) ? $percentage : 0;
 
+            $courseduedate = helper::timetable_details(
+                'coursedue', $this->orgcourse, $this->user->id, $this->coursecontext, $this->pulse);
+
             return (object) [
                 'progress' => round($progress) .'%',
+                'courseduedate' => $courseduedate,
                 'status' => ($firstinstance->status == 1) ? get_string('suspended', 'mod_pulse') : get_string('active'),
                 'startdate' => $firstinstance->timestart
                     ? userdate($firstinstance->timestart, get_string('strftimedatetimeshort', 'langconfig')) : $emptystartdate,
@@ -488,7 +492,7 @@ class pulse_email_vars {
 
             $userfields = [
                 'firstname', 'lastname', 'fullname', 'email', 'username',
-                'description', 'department', 'phone', 'address', 'city', 'country',
+                'description', 'department', 'address', 'city', 'country',
                 'institution',
             ];
 

@@ -214,7 +214,6 @@ $string['like'] = 'Like';
 $string['logintocourse'] = 'Login and Go to course';
 $string['logintoreact'] = 'Login before apply reaction';
 $string['manageinstance'] = 'Manage Instance';
-$string['managepresets'] = 'Manage Presets';
 $string['managepulseaddonplugins'] = 'Manage Pulse addons';
 $string['managetemplate'] = 'Manage templates';
 $string['markcomplete'] = 'Mark complete';

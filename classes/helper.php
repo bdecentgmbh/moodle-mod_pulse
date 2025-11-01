@@ -114,6 +114,11 @@ class helper {
                         }
                     }
 
+                    if (is_array($val)) {
+                        $text = $val['text'] ?? '';
+                        $val = format_text($text, $val['format'] ?? FORMAT_HTML, ['trusted' => true, 'noclean' => true]);
+                    }
+
                     // Placeholder found on the text, then replace with data.
                     $templatetext = str_ireplace($replacement, $val, $templatetext);
                 }
@@ -706,4 +711,63 @@ class helper {
         return $final;
     }
 
+     /**
+     * Find the timetable tool installed.
+     *
+     * @return bool result of the timetable plugin availability.
+     */
+    public static function timetable_installed() {
+        global $CFG;
+        static $result;
+
+        if ($result == null) {
+            if (array_key_exists('timetable', \core_component::get_plugin_list('tool'))) {
+                require_once($CFG->dirroot.'/admin/tool/timetable/classes/time_management.php');
+                $result = true;
+            } else {
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get tool timetable details user current course progress and due modules course.
+     *
+     * @param string $var
+     * @param \stdClass $course
+     * @param int $userid
+     * @param \context $context
+     * @param \stdClass $mod
+     * @return string
+     */
+    public static function timetable_details(string $var, \stdClass $course, int $userid, $context=null, $mod=null): string {
+        global $CFG, $DB, $PAGE;
+
+        require_once($CFG->dirroot.'/enrol/locallib.php');
+
+        // Other than eventdates all are need tools timetable installed.
+        if (!self::timetable_installed()) {
+            return '';
+        }
+
+        $context = $context ?? context_course::instance($course->id);
+
+        // Find the course due date. only if the tool timetable installed.
+        if ($var == 'coursedue' && ($timecourse = $DB->get_record('tool_timetable_course', ['course' => $course->id]))) {
+            if ($timecourse) {
+                $timemanagement = new \tool_timetable\time_management($timecourse->course);
+                // Get user enrolment info in course.
+                $usercourseenrollinfo = $timemanagement->get_course_user_enrollment($userid);
+                $startdate = $usercourseenrollinfo[0]['timestart'] ?? 0;
+                $enddate = $usercourseenrollinfo[0]['timeend'] ?? 0;
+                $coursduedate = $timemanagement->calculate_course_duedate($startdate, $enddate, $userid);
+                return $coursduedate ? userdate($coursduedate) : '';
+            }
+            return '';
+        }
+
+        return '';
+    }
 }
