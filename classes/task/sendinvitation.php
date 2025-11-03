@@ -31,7 +31,6 @@ use mod_pulse\helper as pulsehelper;
  * Defined the invitation send method and filter methods.
  */
 class sendinvitation extends \core\task\adhoc_task {
-
     /**
      * List of notified users, Used to update the notified users status after reminders are send to all users.
      *
@@ -54,7 +53,7 @@ class sendinvitation extends \core\task\adhoc_task {
     public function execute() {
         global $CFG, $DB;
 
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
         $customdata = $this->get_custom_data();
 
@@ -109,7 +108,6 @@ class sendinvitation extends \core\task\adhoc_task {
         // For this reason, here updated the protected _course property using reflection.
         // Only if filtercodes fitler plugin installed and enabled.
         if (\mod_pulse\helper::change_pagevalue()) {
-
             $coursereflection = new \ReflectionProperty(get_class($PAGE), '_course');
             $coursereflection->setAccessible(true);
             $coursereflection->setValue($PAGE, $instance->course);
@@ -135,7 +133,7 @@ class sendinvitation extends \core\task\adhoc_task {
                     $condition = ['userid' => $user->id, 'pulseid' => $instance->pulse->id, 'status' => 1];
                     if (!$DB->record_exists('pulse_users', $condition)) {
                         pulse_mtrace(
-                            'Prepare invitation eventdata for the user - '. $user->id. ' for the pulse '.
+                            'Prepare invitation eventdata for the user - ' . $user->id . ' for the pulse ' .
                             $instance->pulse->name
                         );
                         $this->send_notification($user, $instance);
@@ -173,7 +171,7 @@ class sendinvitation extends \core\task\adhoc_task {
     protected function send_notification($user, $instance) {
         global $DB, $CFG, $USER, $PAGE;
 
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
         // Store current user for update the user after filter.
         $currentuser = $USER;
 
@@ -183,7 +181,6 @@ class sendinvitation extends \core\task\adhoc_task {
         $filearea = 'invitation_content';
 
         if (!empty($pulse) && !empty($user)) {
-
             // Use intro content as message text, if different pulse disabled.
             $subject = ($instance->pulse->diff_pulse) ? $instance->pulse->pulse_subject : $pulse->name;
             $template = ($instance->pulse->diff_pulse) ? $instance->pulse->pulse_content : $pulse->intro;
@@ -197,7 +194,7 @@ class sendinvitation extends \core\task\adhoc_task {
                 $pulse->url = new moodle_url("/mod/pulse/view.php", ['id' => $pulse->id]);
                 $pulse->type = 'pulse';
             }
-            list($subject, $messagehtml) = pulsehelper::update_emailvars($template, $subject, $course, $user, $pulse, $sender);
+            [$subject, $messagehtml] = pulsehelper::update_emailvars($template, $subject, $course, $user, $pulse, $sender);
 
             // Rewrite the plugin file placeholders in the email text.
             $messagehtml = file_rewrite_pluginfile_urls($messagehtml, 'pluginfile.php', $context->id, 'mod_pulse', $filearea, 0);
@@ -217,13 +214,18 @@ class sendinvitation extends \core\task\adhoc_task {
             }
 
             // Send message to user.
-            pulse_mtrace("Sending pulse to the user ". fullname($user) ."\n" );
+            pulse_mtrace("Sending pulse to the user " . fullname($user) . "\n");
 
             try {
                 $transaction = $DB->start_delegated_transaction();
                 if (\mod_pulse\helper::update_notified_user($user->id, $pulse)) {
                     $messagesend = \mod_pulse\helper::messagetouser(
-                        $user, $subject, $messageplain, $messagehtml, $pulse, $sender
+                        $user,
+                        $subject,
+                        $messageplain,
+                        $messagehtml,
+                        $pulse,
+                        $sender
                     );
                     if ($messagesend) {
                         $notifiedusers[] = $user->id;
@@ -284,7 +286,7 @@ class sendinvitation extends \core\task\adhoc_task {
         $roles = $DB->get_records_sql($rolesql, ['capability' => 'mod/pulse:sender']);
         $roles = array_column($roles, 'roleid');
 
-        list($roleinsql, $roleinparams) = $DB->get_in_or_equal($roles);
+        [$roleinsql, $roleinparams] = $DB->get_in_or_equal($roles);
         $contextid = \context_course::instance($courseid)->id;
         $usersql = "SELECT eu1_u.*, ra.*
         FROM {user} eu1_u
@@ -320,7 +322,7 @@ class sendinvitation extends \core\task\adhoc_task {
         if (!empty($groups)) {
             $sql = "SELECT gm.*
             FROM {groups_members}  gm
-            WHERE gm.groupid IN (".implode(',', $groups).")
+            WHERE gm.groupid IN (" . implode(',', $groups) . ")
             ORDER BY gm.timeadded ASC";
 
             $groupmembers = $DB->get_records_sql($sql, []);
@@ -348,6 +350,4 @@ class sendinvitation extends \core\task\adhoc_task {
 
         return (object) ['coursecontact' => $coursecontact, 'groupcontact' => $groups];
     }
-
-
 }

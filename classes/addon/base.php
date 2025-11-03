@@ -30,7 +30,6 @@ use stdClass;
  * Base class that all pulse addons should extend.
  */
 abstract class base {
-
     /**
      * The pulse id
      *

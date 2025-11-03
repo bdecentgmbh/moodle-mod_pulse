@@ -15,18 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Pulse module version and name defined.
+ * Pulse context class to create a context_course instance from record.
  *
  * @package   mod_pulse
- * @copyright 2021, bdecent gmbh bdecent.de
+ * @copyright 2025, bdecent gmbh bdecent.de
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_pulse';
-$plugin->version = 2025110100;
-$plugin->requires = 2022112800; // Requires Moodle 4.1.
-$plugin->release = 'v2.3';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [401, 500];
+/**
+ * Module context class to create a context_course instance from record.
+ */
+class mod_pulse_context_module extends \context_module {
+    /**
+     * Convert the record of context into course_context object.
+     *
+     * @param stdclass $data
+     * @return \context
+     */
+    public static function create_instance_fromrecord($data) {
+        return \context::create_instance_from_record($data);
+    }
+}

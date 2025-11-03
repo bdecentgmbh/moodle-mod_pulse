@@ -25,7 +25,6 @@ namespace mod_pulse\privacy;
 
 use stdClass;
 use context;
-
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\userlist;
@@ -34,15 +33,14 @@ use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
+use core_privacy\local\request\core_userlist_provider;
+use core_privacy\local\metadata\provider as core_privacy_provider;
+use core_privacy\local\request\plugin\provider as core_plugin_provider;
 
 /**
  * The pulse module stores user completion and invitation notified details.
  */
-class provider implements
-    \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\core_userlist_provider,
-    \core_privacy\local\request\plugin\provider {
-
+class provider implements core_plugin_provider, core_privacy_provider, core_userlist_provider {
     /**
      * List of used data fields summary meta key.
      *
@@ -161,7 +159,6 @@ class provider implements
         JOIN {pulse_users} d ON d.pulseid = f.id
         WHERE cm.id = :instanceid";
         $userlist->add_from_sql('userid', $sql, $params);
-
     }
 
     /**
@@ -176,7 +173,7 @@ class provider implements
         $cm = $DB->get_record('course_modules', ['id' => $context->instanceid]);
         $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
 
-        list($userinsql, $userinparams) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
+        [$userinsql, $userinparams] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
         $params = array_merge(['pulseid' => $pulse->id], $userinparams);
         $sql = "pulseid = :pulseid AND userid {$userinsql}";
         $DB->delete_records_select('pulse_completion', $sql, $params);
@@ -245,7 +242,7 @@ class provider implements
         }
         // Context user.
         $user = $contextlist->get_user();
-        list($contextsql, $contextparams) = $DB->get_in_or_equal($contextlist->get_contextids(), SQL_PARAMS_NAMED);
+        [$contextsql, $contextparams] = $DB->get_in_or_equal($contextlist->get_contextids(), SQL_PARAMS_NAMED);
         $sql = "SELECT pc.id AS completionid, cm.id AS cmid, c.id AS contextid,
                 p.id AS pid, p.course AS pcourse,
                 pc.userid AS userid, pc.selfcompletion AS selfcompletion, pc.selfcompletiontime AS selfcompletiontime,
@@ -270,7 +267,7 @@ class provider implements
             get_string('completionfor', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist): bool {
+                function (stdClass $completion) use ($contextlist): bool {
                     return $completion->userid == $contextlist->get_user()->id;
                 }
             ),
@@ -281,13 +278,12 @@ class provider implements
             get_string('approvedby', 'mod_pulse'),
             array_filter(
                 $completions,
-                function(stdClass $completion) use ($contextlist): bool {
+                function (stdClass $completion) use ($contextlist): bool {
                     return $completion->approvedby == $contextlist->get_user()->id;
                 }
             ),
             $user
         );
-
     }
 
     /**
@@ -310,14 +306,12 @@ class provider implements
             $completionsbyid = self::group_by_property($completion, 'completionid');
 
             foreach ($completionsbyid as $completionid => $completions) {
-
-                $completiondata = array_map(function($completion) use ($user) {
+                $completiondata = array_map(function ($completion) use ($user) {
                     if ($user->id == $completion->approvedby) {
                         return [
                             'approvedfor' => fullname(\core_user::get_user($completion->userid)),
                             'approvedtime' => $completion->approvedtime ? transform::datetime($completion->approvedtime) : '-',
                         ];
-
                     } else {
                         return [
                             'selfcomplete' => (($completion->selfcompletion == 1) ? get_string('yes') : get_string('no')),
@@ -337,7 +331,7 @@ class provider implements
                     $contextdata = helper::get_context_data($context, $user);
                     $contextdata = (object)array_merge((array)$contextdata, $completiondata);
                     writer::with_context($context)->export_data(
-                        [get_string('privacy:completion', 'pulse').' '.$completionid, $path],
+                        [get_string('privacy:completion', 'pulse') . ' ' . $completionid, $path],
                         $contextdata
                     );
                 }
@@ -370,7 +364,7 @@ class provider implements
             $previousinvitations = $invitations[1] ?? [];
 
             if (!empty($previousinvitations)) {
-                $previousinvitedata['previousinvitations'] = array_map(function($prev) {
+                $previousinvitedata['previousinvitations'] = array_map(function ($prev) {
                     return [
                         'invitedtime' => $prev->timecreated ? transform::datetime($prev->timecreated) : '-',
                     ];
@@ -399,5 +393,4 @@ class provider implements
             []
         );
     }
-
 }

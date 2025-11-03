@@ -30,7 +30,6 @@ use mod_pulse\plugininfo\pulseaddon;
  * Extend the pro feature to pulse instances.
  */
 class extendpro {
-
     /**
      * Get addon instances.
      *
@@ -39,7 +38,7 @@ class extendpro {
     protected static function get_addon_instances(): array {
         $subplugins = \core_component::get_plugin_list_with_class('pulseaddon', 'instance');
         $enabledaddons = \mod_pulse\plugininfo\pulseaddon::get_enabled_addons();
-        $subplugins = array_filter($subplugins, function($fullclassname) use ($enabledaddons) {
+        $subplugins = array_filter($subplugins, function ($fullclassname) use ($enabledaddons) {
             return in_array($fullclassname, array_values($enabledaddons));
         }, ARRAY_FILTER_USE_KEY);
 
@@ -94,7 +93,7 @@ class extendpro {
      * @param array $args additional arguments to pass to the method
      * @return void
      */
-    public static function pulse_extend_form(\MoodleQuickForm $mform, \mod_pulse_mod_form $instance, string $method, $args=[]) {
+    public static function pulse_extend_form(\MoodleQuickForm $mform, \mod_pulse_mod_form $instance, string $method, $args = []) {
 
         // Inlcude component callback implementation.
         $subplugins = self::get_addon_instances();
@@ -185,7 +184,6 @@ class extendpro {
         }
 
         return $returnresult ?? false;
-
     }
 
     /**

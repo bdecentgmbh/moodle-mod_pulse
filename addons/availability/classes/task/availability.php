@@ -27,6 +27,7 @@ namespace pulseaddon_availability\task;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/pulse/lib/locallib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib/mod_pulse_context_module.php');
 
 use mod_pulse\addon\notification;
 use mod_pulse\addon\util;
@@ -36,7 +37,6 @@ use stdclass;
  * Update the user instance availability with time for all pulse instance.
  */
 class availability extends \core\task\adhoc_task {
-
     /**
      * Execution part of the adhoc task.
      *
@@ -46,7 +46,7 @@ class availability extends \core\task\adhoc_task {
      */
     public function execute() {
         global $CFG;
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
         $this->get_instance_data();
 
@@ -99,7 +99,17 @@ class availability extends \core\task\adhoc_task {
                                     WHERE pulseid = :pulseid AND pa.availabletime > p.timemodified AND pa.status = 1
                                 )';
         $students = util::get_enrolled_users_sql(
-            $modulecontext, $cap, 0, 'u.*', null, 0, $limit, true, $alreadyenabled, ['pulseid' => $instance->pulse->id]);
+            $modulecontext,
+            $cap,
+            0,
+            'u.*',
+            null,
+            0,
+            $limit,
+            true,
+            $alreadyenabled,
+            ['pulseid' => $instance->pulse->id]
+        );
 
         $instance->students = $students;
     }
@@ -113,9 +123,11 @@ class availability extends \core\task\adhoc_task {
     public function update_availability($instance) {
         global $DB;
 
-        if (!$pulse = $DB->get_record('pulse', ['id' => $instance->pulse->id])
-            || !$DB->get_record('course', ['id' => $instance->course->id]) ) {
-            pulse_mtrace('Not found Course:'.$instance->course->id.' or Pulse:'.$instance->pulse->id);
+        if (
+            !$pulse = $DB->get_record('pulse', ['id' => $instance->pulse->id])
+            || !$DB->get_record('course', ['id' => $instance->course->id])
+        ) {
+            pulse_mtrace('Not found Course:' . $instance->course->id . ' or Pulse:' . $instance->pulse->id);
             return true;
         }
 
@@ -127,8 +139,7 @@ class availability extends \core\task\adhoc_task {
             $availabilityrecords = $this->fetch_availability_records($pulseid, $students);
 
             if (isset($instance->cmdata->id)) {
-
-                pulse_mtrace('Update availability init for the instance - '. $instance->cmdata->id);
+                pulse_mtrace('Update availability init for the instance - ' . $instance->cmdata->id);
 
                 $modinfo = new \mod_pulse\pulse_course_modinfo((object) $instance->course, 0);
                 $cm = $modinfo->get_cm($instance->cmdata->id);
@@ -138,8 +149,7 @@ class availability extends \core\task\adhoc_task {
                 $sectioninfo = new \core_availability\info_section($section);
 
                 foreach ($instance->students as $userid => $user) {
-
-                    pulse_mtrace('Updating user status in pulse availability - '.$userid);
+                    pulse_mtrace('Updating user status in pulse availability - ' . $userid);
 
                     $modinfo->set_userid($userid);
                     $status = ($this->find_user_visible($cm, $userid, $modinfo, $sectioninfo, $info)) ? 1 : 0;
@@ -187,8 +197,10 @@ class availability extends \core\task\adhoc_task {
         }
 
         $str = '';
-        if ($sectioninfo->is_available($str, false, $userid, $modinfo)
-            && $info->is_available($str, false, $userid, $modinfo )) {
+        if (
+            $sectioninfo->is_available($str, false, $userid, $modinfo)
+            && $info->is_available($str, false, $userid, $modinfo)
+        ) {
             return true;
         }
         return false;
@@ -204,7 +216,7 @@ class availability extends \core\task\adhoc_task {
     public function fetch_availability_records($pulseid, $students) {
         global $DB;
 
-        list($insql, $inparams) = $DB->get_in_or_equal($students, SQL_PARAMS_NAMED, 'userid');
+        [$insql, $inparams] = $DB->get_in_or_equal($students, SQL_PARAMS_NAMED, 'userid');
         $inparams['pulseid'] = $pulseid;
 
         $sql = 'SELECT * FROM {pulseaddon_availability} WHERE pulseid=:pulseid AND userid ' . $insql;
@@ -274,7 +286,6 @@ class availability extends \core\task\adhoc_task {
                 $record->availabletime = time();
                 $DB->update_record('pulseaddon_availability', $record);
             }
-
         } else {
             $record = new stdclass();
             $record->status = $status;

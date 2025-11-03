@@ -30,7 +30,6 @@ use context;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class util {
-
     /**
      * Counts list of users enrolled into course (as per above function)
      *
@@ -42,11 +41,22 @@ class util {
      * @param array $additionalparams
      * @return int number of users enrolled into course
      */
-    public static function count_enrolled_users_sql(context $context, $withcapability = '', $groupids = 0,
-        $onlyactive = false, $additionalconditions = [], $additionalparams = []) {
+    public static function count_enrolled_users_sql(
+        context $context,
+        $withcapability = '',
+        $groupids = 0,
+        $onlyactive = false,
+        $additionalconditions = [],
+        $additionalparams = []
+    ) {
 
         $capjoin = get_enrolled_with_capabilities_join(
-                $context, '', $withcapability, $groupids, $onlyactive);
+            $context,
+            '',
+            $withcapability,
+            $groupids,
+            $onlyactive
+        );
 
         $sql = "SELECT COUNT(DISTINCT u.id)
                 FROM {user} u
@@ -78,15 +88,26 @@ class util {
      *
      * @return array of user records
      */
-    public static function get_enrolled_users_sql(context $context, $withcapability = '', $groupids = 0, $userfields = 'u.*',
-        $orderby = null, $limitfrom = 0, $limitnum = 0, $onlyactive = false, $additionalconditions = [],
-        $additionalparams = [], $joins = [], $joinparams = []) {
+    public static function get_enrolled_users_sql(
+        context $context,
+        $withcapability = '',
+        $groupids = 0,
+        $userfields = 'u.*',
+        $orderby = null,
+        $limitfrom = 0,
+        $limitnum = 0,
+        $onlyactive = false,
+        $additionalconditions = [],
+        $additionalparams = [],
+        $joins = [],
+        $joinparams = []
+    ) {
 
         global $DB;
 
         $additionaljoins = implode(' ', $joins);
 
-        list($esql, $params) = get_enrolled_sql($context, $withcapability, $groupids, $onlyactive);
+        [$esql, $params] = get_enrolled_sql($context, $withcapability, $groupids, $onlyactive);
         $sql = "SELECT $userfields
                 FROM {user} u
                 JOIN ($esql) je ON je.id = u.id
@@ -100,7 +121,7 @@ class util {
         if ($orderby) {
             $sql = "$sql ORDER BY $orderby";
         } else {
-            list($sort, $sortparams) = users_order_by_sql('u');
+            [$sort, $sortparams] = users_order_by_sql('u');
             $sql = "$sql ORDER BY $sort";
             $params = array_merge($params, $sortparams);
         }

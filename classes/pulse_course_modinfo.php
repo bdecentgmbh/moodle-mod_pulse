@@ -26,13 +26,12 @@ namespace mod_pulse;
 
 defined('MOODLE_INTERNAL') || die('No direct access');
 
-require_once($CFG->dirroot.'/lib/modinfolib.php');
+require_once($CFG->dirroot . '/lib/modinfolib.php');
 
 /**
  * Course modinfo wrapper.
  */
 class pulse_course_modinfo extends \course_modinfo {
-
     /**
      * Userid to check the group availability.
      *
@@ -87,5 +86,4 @@ class pulse_course_modinfo extends \course_modinfo {
         }
         return $allgroups[$groupingid];
     }
-
 }

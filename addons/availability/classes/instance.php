@@ -24,7 +24,6 @@ namespace pulseaddon_availability;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class instance extends \mod_pulse\addon\base {
-
     /**
      * Get the name of the addon.
      *
@@ -64,7 +63,7 @@ class instance extends \mod_pulse\addon\base {
 
         if (!empty($list)) {
             $pulselist = array_column($list, 'instance');
-            list($insql, $inparams) = $DB->get_in_or_equal($pulselist);
+            [$insql, $inparams] = $DB->get_in_or_equal($pulselist);
             $inparams[] = $userid;
             $select = " pulseid $insql AND userid = ? ";
             // Remove the user availability records.
@@ -84,7 +83,6 @@ class instance extends \mod_pulse\addon\base {
         global $CFG, $DB;
 
         if ($event->other['modulename'] == 'pulse') {
-
             $pulseid = $event->other['instanceid'];
 
             // Remove pulse user credits records.

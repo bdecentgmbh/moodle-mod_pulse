@@ -30,7 +30,6 @@
  * Structure step to restore pulse activity.
  */
 class restore_pulse_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Restore steps structure definition.
      */

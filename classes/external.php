@@ -26,14 +26,13 @@ namespace mod_pulse;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir.'/externallib.php');
-require_once($CFG->libdir.'/completionlib.php');
+require_once($CFG->libdir . '/externallib.php');
+require_once($CFG->libdir . '/completionlib.php');
 
 /**
  * Pulse preset external definitions.
  */
 class external extends \external_api {
-
     /**
      * Create module using selected preset template with the preset configdata.
      *
@@ -152,5 +151,4 @@ class external extends \external_api {
             ]
         );
     }
-
 }

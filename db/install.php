@@ -29,7 +29,7 @@
  */
 function xmldb_pulse_install() {
     global $CFG;
-    require_once($CFG->dirroot.'/mod/pulse/lib.php');
+    require_once($CFG->dirroot . '/mod/pulse/lib.php');
     if (method_exists('core_plugin_manager', 'reset_caches')) {
         core_plugin_manager::reset_caches();
     }

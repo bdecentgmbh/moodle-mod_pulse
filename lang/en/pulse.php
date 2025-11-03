@@ -214,7 +214,6 @@ $string['like'] = 'Like';
 $string['logintocourse'] = 'Login and Go to course';
 $string['logintoreact'] = 'Login before apply reaction';
 $string['manageinstance'] = 'Manage Instance';
-$string['managepresets'] = 'Manage Presets';
 $string['managepulseaddonplugins'] = 'Manage Pulse addons';
 $string['managetemplate'] = 'Manage templates';
 $string['markcomplete'] = 'Mark complete';
@@ -424,4 +423,3 @@ $string['visibility_help'] = 'Choose whether you want this template to be visibl
 <b>Note:</b> If hidden, users won\'t be able to create new instances based on this template, but existing instances will still be available.';
 $string['warning'] = 'Warning';
 $string['withselect'] = 'With selection:';
-

@@ -51,20 +51,28 @@ class helper {
      * @param string $type Email type.
      * @return array Updated subject and message body content.
      */
-    public static function update_emailvars($templatetext, $subject, $course, $user, $mod, $sender,
-        $conditionvars=[], $type='notification') {
+    public static function update_emailvars(
+        $templatetext,
+        $subject,
+        $course,
+        $user,
+        $mod,
+        $sender,
+        $conditionvars = [],
+        $type = 'notification'
+    ) {
 
         global $DB, $CFG, $USER;
 
         // Include placholders handler and user profile library.
-        require_once($CFG->dirroot.'/mod/pulse/lib/vars.php');
-        require_once($CFG->dirroot.'/user/profile/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib/vars.php');
+        require_once($CFG->dirroot . '/user/profile/lib.php');
 
         // Load user profile field data.
         $newuser = (object) ['id' => !empty($user->id) ? $user->id : $USER->id];
         profile_load_data($newuser);
         // Make the profile custom field data to separate element of the user object.
-        $newuserkeys = array_map(function($value) {
+        $newuserkeys = array_map(function ($value) {
             return str_replace('profile_field_', '', $value);
         }, array_keys((array) $newuser));
 
@@ -77,7 +85,7 @@ class helper {
 
         // Load the course url.
         if (!empty($course->id)) {
-            $url = new moodle_url($CFG->wwwroot .'/course/view.php', ['id' => $course->id]);
+            $url = new moodle_url($CFG->wwwroot . '/course/view.php', ['id' => $course->id]);
         }
         if (empty($CFG->allowthemechangeonurl)) {
             $courseurl = $url;
@@ -107,11 +115,18 @@ class helper {
 
                     if ($val instanceof moodle_url) {
                         // Remove any URL scheme (http or https) from the text if it is followed by a placeholder.
-                        if (stripos($templatetext, 'http://'.$replacement) !== false
-                            || stripos($templatetext, 'https://'.$replacement) !== false) {
-                            $templatetext = str_ireplace('http://'.$replacement, $replacement, $templatetext);
-                            $templatetext = str_ireplace('https://'.$replacement, $replacement, $templatetext);
+                        if (
+                            stripos($templatetext, 'http://' . $replacement) !== false
+                            || stripos($templatetext, 'https://' . $replacement) !== false
+                        ) {
+                            $templatetext = str_ireplace('http://' . $replacement, $replacement, $templatetext);
+                            $templatetext = str_ireplace('https://' . $replacement, $replacement, $templatetext);
                         }
+                    }
+
+                    if (is_array($val)) {
+                        $text = $val['text'] ?? '';
+                        $val = format_text($text, $val['format'] ?? FORMAT_HTML, ['trusted' => true, 'noclean' => true]);
                     }
 
                     // Placeholder found on the text, then replace with data.
@@ -157,7 +172,7 @@ class helper {
      * @param  mixed $userid
      * @return void
      */
-    public static function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext=true, $userid=null) {
+    public static function pulse_has_approvalrole($completionapprovalroles, $cmid, $usercontext = true, $userid = null) {
         global $USER, $DB;
         if ($userid == null) {
             $userid = $USER->id;
@@ -225,14 +240,15 @@ class helper {
     public static function pulse_user_getmentessuser() {
         global $DB, $USER;
 
-        if ($usercontexts = $DB->get_records_sql("SELECT c.instanceid, c.instanceid
+        if (
+            $usercontexts = $DB->get_records_sql("SELECT c.instanceid, c.instanceid
                                                 FROM {role_assignments} ra, {context} c, {user} u
                                                 WHERE ra.userid = ?
                                                         AND ra.contextid = c.id
                                                         AND c.instanceid = u.id
                                                         AND u.deleted = 0 AND u.suspended = 0
-                                                        AND c.contextlevel = ".CONTEXT_USER, [$USER->id])) {
-
+                                                        AND c.contextlevel = " . CONTEXT_USER, [$USER->id])
+        ) {
             $users = [];
             foreach ($usercontexts as $usercontext) {
                 $users[] = $usercontext->instanceid;
@@ -315,7 +331,7 @@ class helper {
     public static function pulse_render_content(string $content, string $boxicon, string $boxtype = 'primary'): string {
         global $OUTPUT;
         $html = html_writer::start_tag('div', ['class' => 'pulse-box']);
-        $html .= html_writer::start_tag('div', ['class' => 'alert alert-'.$boxtype]);
+        $html .= html_writer::start_tag('div', ['class' => 'alert alert-' . $boxtype]);
         if (!empty($boxicon)) {
             $icon = explode(':', $boxicon);
             $icon1 = isset($icon[1]) ? $icon[1] : 'core';
@@ -346,38 +362,54 @@ class helper {
             $roles = $pulse->completionapprovalroles;
             if (self::pulse_has_approvalrole($roles, $cm->id)) {
                 $approvelink = new moodle_url('/mod/pulse/approve.php', ['cmid' => $cm->id]);
-                $html .= html_writer::tag('div',
-                    html_writer::link($approvelink, get_string('approveuserbtn', 'pulse'),
-                    ['class' => 'btn btn-primary pulse-approve-users']),
+                $html .= html_writer::tag(
+                    'div',
+                    html_writer::link(
+                        $approvelink,
+                        get_string('approveuserbtn', 'pulse'),
+                        ['class' => 'btn btn-primary pulse-approve-users']
+                    ),
                     ['class' => 'approve-user-wrapper']
                 );
             } else if (self::pulse_user_isstudent($cm->id)) {
-                if (!class_exists('core_completion\activity_custom_completion')
-                    && $message = self::pulse_user_approved($cm->instance, $USER->id)) {
-                    $html .= $message.'<br>';
+                if (
+                    !class_exists('core_completion\activity_custom_completion')
+                    && $message = self::pulse_user_approved($cm->instance, $USER->id)
+                ) {
+                    $html .= $message . '<br>';
                 }
             }
         }
 
         // Generate self mark completion buttons for students.
         if (self::pulse_is_uservisible($moduleid, $USER->id, $cm->course)) {
-            if ($pulse->completionself == 1 && self::pulse_user_isstudent($moduleid)
-                && !self::pulse_isusercontext($pulse->completionapprovalroles, $moduleid)) {
+            if (
+                $pulse->completionself == 1 && self::pulse_user_isstudent($moduleid)
+                && !self::pulse_isusercontext($pulse->completionapprovalroles, $moduleid)
+            ) {
                 // Add self mark completed informations.
-                if (!class_exists('core_completion\activity_custom_completion')
-                    && $date = self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
-                    $selfmarked = self::get_complete_state_button_text($pulse->completionbtntext, $date).'<br>';
-                    $html .= html_writer::tag('div', $selfmarked,
-                    ['class' => 'pulse-self-marked badge badge-success']);
+                if (
+                    !class_exists('core_completion\activity_custom_completion')
+                    && $date = self::pulse_already_selfcomplete($cm->instance, $USER->id)
+                ) {
+                    $selfmarked = self::get_complete_state_button_text($pulse->completionbtntext, $date) . '<br>';
+                    $html .= html_writer::tag(
+                        'div',
+                        $selfmarked,
+                        ['class' => 'pulse-self-marked badge badge-success']
+                    );
                 } else if (!self::pulse_already_selfcomplete($cm->instance, $USER->id)) {
-                    $additionalclass = $pulse->completionbtnconfirmation ? 'confirmation-'. $moduleid : '';
+                    $additionalclass = $pulse->completionbtnconfirmation ? 'confirmation-' . $moduleid : '';
 
                     $buttontext = self::get_not_complete_state_button_text($pulse->completionbtntext);
                     $selfcomplete = !$pulse->completionbtnconfirmation ?
                         new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']) :
                         'javascript:void(0);';
-                    $selfmarklink = html_writer::link($selfcomplete, $buttontext,
-                        [   'class' => 'btn btn-primary pulse-user-manualcompletion-btn '. $additionalclass]);
+                    $selfmarklink = html_writer::link(
+                        $selfcomplete,
+                        $buttontext,
+                        [   'class' => 'btn btn-primary pulse-user-manualcompletion-btn ' . $additionalclass]
+                    );
                     $html .= html_writer::tag('div', $selfmarklink, ['class' => 'pulse-user-manualcompletion']);
                 }
             }
@@ -415,8 +447,10 @@ class helper {
         }
 
         $str = '';
-        if ($sectioninfo->is_available($str, false, $userid, $modinfo)
-            && $info->is_available($str, false, $userid, $modinfo )) {
+        if (
+            $sectioninfo->is_available($str, false, $userid, $modinfo)
+            && $info->is_available($str, false, $userid, $modinfo)
+        ) {
             return true;
         }
         return false;
@@ -435,13 +469,13 @@ class helper {
         // Context.
         $ctxpos = array_search('contextid', $keys);
         $ctxendpos = array_search('locked', $keys);
-        $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1 );
+        $context = array_slice($record, $ctxpos, ($ctxendpos - $ctxpos) + 1);
         $context['id'] = $context['contextid'];
         unset($context['contextid']);
         // Course module.
         $cmpos = array_search('cmid', $keys);
         $cmendpos = array_search('deletioninprogress', $keys);
-        $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1 );
+        $cm = array_slice($record, $cmpos, ($cmendpos - $cmpos) + 1);
         $cm['id'] = $cm['cmid'];
         unset($cm['cmid']);
         // Course records.
@@ -458,10 +492,10 @@ class helper {
      * @param mixed $context Context
      * @return array
      */
-    public static function get_editor_options($context=null) {
+    public static function get_editor_options($context = null) {
         global $PAGE, $CFG;
 
-        require_once($CFG->libdir.'/formslib.php');
+        require_once($CFG->libdir . '/formslib.php');
         return [
             'trusttext' => true,
             'subdirs' => true,
@@ -481,7 +515,6 @@ class helper {
         global $DB;
 
         if (!empty($userid)) {
-
             $record = new stdclass();
             $record->userid = $userid;
             $record->pulseid = $pulse->id;
@@ -540,10 +573,10 @@ class helper {
      * @param  mixed $sender
      * @return void
      */
-    public static function messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender=true) {
+    public static function messagetouser($userto, $subject, $messageplain, $messagehtml, $pulse, $sender = true) {
         global $CFG;
 
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
         $eventdata = new \core\message\message();
         $eventdata->name = 'mod_pulse';
@@ -558,10 +591,10 @@ class helper {
         $eventdata->fullmessagehtml = $messagehtml;
         $eventdata->smallmessage = $subject;
         if (message_send($eventdata)) {
-            pulse_mtrace( "Pulse send to the user.");
+            pulse_mtrace("Pulse send to the user.");
             return true;
         } else {
-            pulse_mtrace( "Failed - Pulse send to the user. -".fullname($userto), true);
+            pulse_mtrace("Failed - Pulse send to the user. -" . fullname($userto), true);
             return false;
         }
     }
@@ -591,7 +624,7 @@ class helper {
         static $result;
 
         if (!isset($result)) {
-            require_once($CFG->dirroot.'/lib/filterlib.php');
+            require_once($CFG->dirroot . '/lib/filterlib.php');
             $list = filter_get_all_installed();
 
             if (array_key_exists('filtercodes', $list)) {
@@ -608,9 +641,9 @@ class helper {
      */
     public static function get_not_complete_state_button_text($value) {
         global $CFG;
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
-        switch ($value){
+        switch ($value) {
             case BUTTON_TEXT_ACKNOWLEDGE:
                 $buttontext = get_string('markcompletebtnstring_custom1', 'pulse');
                 break;
@@ -638,8 +671,8 @@ class helper {
      */
     public static function get_complete_state_button_text($value, $date) {
         global $CFG;
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
-        switch ($value){
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
+        switch ($value) {
             case BUTTON_TEXT_ACKNOWLEDGE:
                 $buttontext = get_string('markedcompletebtnstring_custom1', 'pulse', ['date' => $date]);
                 break;
@@ -672,8 +705,15 @@ class helper {
         $upd->id = $pulse->id;
         foreach ($editors as $editor) {
             $editorformat = $editor . "format";
-            $pulse = file_postupdate_standard_editor($pulse, $editor, self::get_editor_options($context),
-                $context, 'mod_pulse', $editor, 0);
+            $pulse = file_postupdate_standard_editor(
+                $pulse,
+                $editor,
+                self::get_editor_options($context),
+                $context,
+                'mod_pulse',
+                $editor,
+                0
+            );
             $upd->{$editor}       = $pulse->{$editor};
             $upd->{$editorformat} = $pulse->{$editorformat};
         }
@@ -691,13 +731,13 @@ class helper {
     public static function filter_record_byprefix($record, $prefix) {
 
         // Filter the data based on the shortname.
-        $filtered = array_filter((array) $record, function($key) use ($prefix) {
-            return strpos($key, $prefix.'_') === 0;
+        $filtered = array_filter((array) $record, function ($key) use ($prefix) {
+            return strpos($key, $prefix . '_') === 0;
         }, ARRAY_FILTER_USE_KEY);
 
         // Remove the prefix from the keys.
-        $removedprefix = array_map(function($key) use ($prefix) {
-            return str_replace($prefix."_", '', $key);
+        $removedprefix = array_map(function ($key) use ($prefix) {
+            return str_replace($prefix . "_", '', $key);
         }, array_keys($filtered));
 
         // Combine the filtered values with prefix removed keys.
@@ -706,4 +746,63 @@ class helper {
         return $final;
     }
 
+     /**
+      * Find the timetable tool installed.
+      *
+      * @return bool result of the timetable plugin availability.
+      */
+    public static function timetable_installed() {
+        global $CFG;
+        static $result;
+
+        if ($result == null) {
+            if (array_key_exists('timetable', \core_component::get_plugin_list('tool'))) {
+                require_once($CFG->dirroot . '/admin/tool/timetable/classes/time_management.php');
+                $result = true;
+            } else {
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get tool timetable details user current course progress and due modules course.
+     *
+     * @param string $var
+     * @param \stdClass $course
+     * @param int $userid
+     * @param \context $context
+     * @param \stdClass $mod
+     * @return string
+     */
+    public static function timetable_details(string $var, \stdClass $course, int $userid, $context = null, $mod = null): string {
+        global $CFG, $DB, $PAGE;
+
+        require_once($CFG->dirroot . '/enrol/locallib.php');
+
+        // Other than eventdates all are need tools timetable installed.
+        if (!self::timetable_installed()) {
+            return '';
+        }
+
+        $context = $context ?? context_course::instance($course->id);
+
+        // Find the course due date. only if the tool timetable installed.
+        if ($var == 'coursedue' && ($timecourse = $DB->get_record('tool_timetable_course', ['course' => $course->id]))) {
+            if ($timecourse) {
+                $timemanagement = new \tool_timetable\time_management($timecourse->course);
+                // Get user enrolment info in course.
+                $usercourseenrollinfo = $timemanagement->get_course_user_enrollment($userid);
+                $startdate = $usercourseenrollinfo[0]['timestart'] ?? 0;
+                $enddate = $usercourseenrollinfo[0]['timeend'] ?? 0;
+                $coursduedate = $timemanagement->calculate_course_duedate($startdate, $enddate, $userid);
+                return $coursduedate ? userdate($coursduedate) : '';
+            }
+            return '';
+        }
+
+        return '';
+    }
 }

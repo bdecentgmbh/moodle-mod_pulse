@@ -26,7 +26,6 @@
  * Define the complete pulse structure for backup, with file and id annotations.
  */
 class backup_pulse_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Define backup steps structure.
      */

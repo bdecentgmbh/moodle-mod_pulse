@@ -24,7 +24,6 @@ namespace pulseaddon_preset;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class instance extends \mod_pulse\addon\base {
-
     /**
      * Get the name of the addon.
      *
@@ -94,8 +93,8 @@ class instance extends \mod_pulse\addon\base {
         global $CFG;
 
         $presets = [];
-        if (file_exists($CFG->dirroot.'/mod/pulse/addons/preset/assets/presets.xml')) {
-            $presetsxml = simplexml_load_file($CFG->dirroot.'/mod/pulse/addons/preset/assets/presets.xml');
+        if (file_exists($CFG->dirroot . '/mod/pulse/addons/preset/assets/presets.xml')) {
+            $presetsxml = simplexml_load_file($CFG->dirroot . '/mod/pulse/addons/preset/assets/presets.xml');
             $result = json_decode(json_encode($presetsxml), true);
             $presets = (!empty($result)) ? $result : [];
         }
@@ -106,5 +105,4 @@ class instance extends \mod_pulse\addon\base {
 
         return [];
     }
-
 }

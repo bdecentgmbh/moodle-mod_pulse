@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/mod/pulse/backup/moodle2/backup_pulse_stepslib.ph
  * Step to perform instance database backup.
  */
 class backup_pulse_activity_task extends backup_activity_task {
-
     /**
      * No specific settings for this activity
      */
@@ -46,7 +45,6 @@ class backup_pulse_activity_task extends backup_activity_task {
         $this->add_step(new backup_pulse_activity_structure_step('pulse_structure', 'pulse.xml'));
 
         $this->add_step(new backup_pulse_activity_structure_step('pulse_addons', 'pulseaddons.xml'));
-
     }
 
     /**

@@ -26,13 +26,12 @@ namespace mod_pulse\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/pulse/lib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
 /**
  * Send notification to users - scheduled task execution observer.
  */
 class notify_users extends \core\task\scheduled_task {
-
     /**
      * Return the task's name as shown in admin screens.
      *
@@ -62,10 +61,10 @@ class notify_users extends \core\task\scheduled_task {
      * @param  mixed $extend Extend the pro invitation method.
      * @return void
      */
-    public static function pulse_cron_task($extend=true) {
+    public static function pulse_cron_task($extend = true) {
         global $DB;
 
-        pulse_mtrace( 'Fetching notificaion instance list - MOD-Pulse INIT ');
+        pulse_mtrace('Fetching notificaion instance list - MOD-Pulse INIT ');
 
         if ($extend && \mod_pulse\extendpro::pulse_extend_invitation()) {
             return true;

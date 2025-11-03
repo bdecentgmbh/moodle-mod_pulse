@@ -23,13 +23,13 @@
  */
 
 require_once('../../config.php');
-require_once($CFG->dirroot. '/lib/tablelib.php');
+require_once($CFG->dirroot . '/lib/tablelib.php');
 // Params.
 $cmid = required_param('cmid', PARAM_INT);
 $action = optional_param('action', '', PARAM_TEXT);
 $userid = optional_param('userid', null, PARAM_INT);
 
-$PAGE->set_url( new moodle_url('/mod/pulse/approve.php', ['cmid' => $cmid]) );
+$PAGE->set_url(new moodle_url('/mod/pulse/approve.php', ['cmid' => $cmid]));
 $modulecontext = context_module::instance($cmid);
 
 $cm = get_coursemodule_from_id('pulse', $cmid);
@@ -117,9 +117,7 @@ if ($action == 'approve' && $userid) {
     }
 
     redirect($PAGE->url, get_string('approvedeclined', 'mod_pulse'));
-
 } else if ($action == 'selfcomplete') {
-
     if ($record = $DB->get_record('pulse_completion', ['userid' => $USER->id, 'pulseid' => $cm->instance])) {
         $record->selfcompletion = 1;
         $record->selfcompletiontime = time();
@@ -145,13 +143,13 @@ if ($action == 'approve' && $userid) {
 }
 
 // Participants table filterset.
-$filterset = new \core_user\table\participants_filterset;
+$filterset = new \core_user\table\participants_filterset();
 $filterset->add_filter(
     new \core_table\local\filter\integer_filter('courseid', \core_table\local\filter\filter::JOINTYPE_DEFAULT, [(int) $course->id])
 );
 // Approver user table - pariticipants table wrapper.
 $participanttable = new \mod_pulse\table\approveuser("user-index-participants-{$cm->id}");
-$participanttable->define_baseurl($CFG->wwwroot.'/mod/pulse/approve.php');
+$participanttable->define_baseurl($CFG->wwwroot . '/mod/pulse/approve.php');
 $participanttable->set_filterset($filterset);
 // Page header output.
 echo $OUTPUT->header();

@@ -26,7 +26,6 @@
  * Pulse module instance generator.
  */
 class mod_pulse_generator extends testing_module_generator {
-
     /**
      * Create pulse module instance.
      *

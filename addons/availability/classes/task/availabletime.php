@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 use mod_pulse\addon\util;
 
 require_once($CFG->dirroot . '/mod/pulse/lib/locallib.php');
+require_once($CFG->dirroot . '/mod/pulse/lib/mod_pulse_context_module.php');
 use mod_pulse_context_module;
 
 /**
  * Scheduled task to update the users pulse availability time.
  */
 class availabletime extends \core\task\scheduled_task {
-
     /**
      * Task name defined.
      *
@@ -53,7 +53,7 @@ class availabletime extends \core\task\scheduled_task {
     public function execute() {
         global $CFG;
 
-        require_once($CFG->dirroot.'/mod/pulse/lib.php');
+        require_once($CFG->dirroot . '/mod/pulse/lib.php');
 
         $availabletime = new \mod_pulse\addon\notification();
         $instances = $availabletime->get_instances();
@@ -78,7 +78,6 @@ class availabletime extends \core\task\scheduled_task {
         $availability = new \pulseaddon_availability\task\availability();
 
         foreach ($instances as $pulseid => $instance) {
-
             $task = new \pulseaddon_availability\task\availability();
             $modulecontext = mod_pulse_context_module::create_instance_fromrecord($instance->context);
             $cap = 'mod/pulse:notifyuser';
@@ -88,14 +87,23 @@ class availabletime extends \core\task\scheduled_task {
 
             $studentscount = self::get_students_count($instance, $instance->pulse->id);
             if ($studentscount <= $limit && $previousstudentscount + $studentscount < $limit) {
-
                 $alreadyenabled[] = ' u.id NOT IN (
                                 SELECT pa.userid FROM {pulseaddon_availability} pa
                                 JOIN {pulse} p ON pa.pulseid = p.id
                                 WHERE pulseid = :pulseid AND pa.availabletime > p.timemodified
                             )';
                 $students = util::get_enrolled_users_sql(
-                    $modulecontext, $cap, 0, 'u.*', null, 0, $limit, true, $alreadyenabled, ['pulseid' => $pulseid]);
+                    $modulecontext,
+                    $cap,
+                    0,
+                    'u.*',
+                    null,
+                    0,
+                    $limit,
+                    true,
+                    $alreadyenabled,
+                    ['pulseid' => $pulseid]
+                );
                 $instance->students = $students;
                 // Update the available time.
                 $availability->update_availability($instance);
@@ -106,7 +114,6 @@ class availabletime extends \core\task\scheduled_task {
 
             $task->set_custom_data((object) ['pulseid' => $pulseid]);
             \core\task\manager::queue_adhoc_task($task, true);
-
         }
     }
 
