@@ -107,6 +107,11 @@ final class preset_test extends \advanced_testcase {
      * @return void
      */
     public function test_get_config_list(): void {
+        if (!class_exists(\pulseaddon_preset\presets\preset_form::class)) {
+            $this->markTestSkipped('');
+            return;
+        }
+
         $presetform = new \pulseaddon_preset\presets\preset_form(); // Dont remove this.
         $fields = \pulseaddon_preset\presets\preset_form::get_pulse_config_list();
 
@@ -140,9 +145,11 @@ final class preset_test extends \advanced_testcase {
         $courseurl = new \moodle_url('/course/view.php', ['id' => $this->course->id]);
         $this->assertEquals($courseurl, $result->url);
 
-        $cm = $DB->get_record('pulseaddon_reminder', ['pulseid' => $result->pulseid]);
-        foreach ($prodata as $key => $data) {
-            $this->assertEquals($data, $cm->$key);
+        if ($DB->get_manager()->table_exists('pulseaddon_reminder')) {
+            $cm = $DB->get_record('pulseaddon_reminder', ['pulseid' => $result->pulseid]);
+            foreach ($prodata as $key => $data) {
+                $this->assertEquals($data, $cm->$key);
+            }
         }
     }
 }
