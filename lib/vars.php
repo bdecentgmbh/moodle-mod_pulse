@@ -518,12 +518,12 @@ class pulse_email_vars {
             $fields = array_values($fields);
 
             $removefields = [
-                'User_confirmed', 'User_policyagreed', 'User_deleted', 'User_suspended', 'User_mnethostid', 'User_password',
-                'User_emailstop', 'User_descriptionformat', 'User_mailformat', 'User_maildigest', 'User_maildisplay',
-                'User_autosubscribe', 'User_trackforums', 'User_timemodified', 'User_trustbitmask', 'User_imagealt',
-                'User_moodlenetprofile',
+                'user_confirmed', 'user_policyagreed', 'user_deleted', 'user_suspended', 'user_mnethostid', 'user_password',
+                'user_emailstop', 'user_descriptionformat', 'user_mailformat', 'user_maildigest', 'user_maildisplay',
+                'user_autosubscribe', 'user_trackforums', 'user_timemodified', 'user_trustbitmask', 'user_imagealt',
+                'user_moodlenetprofile', 'user_secret',
             ];
-            $fields = array_filter($fields, fn($field) => !in_array($field, $removefields));
+            $fields = array_values(array_filter($fields, fn($field) => !in_array(strtolower($field), $removefields)));
         }
 
         return $fields;
