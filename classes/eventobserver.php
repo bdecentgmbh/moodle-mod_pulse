@@ -98,4 +98,29 @@ class eventobserver {
         // Pulse extend enrolment created event.
         extendpro::pulse_extend_general('event_user_enrolment_created', ['event' => $event]);
     }
+
+    /**
+     * Course deleted event observer.
+     *
+     * @param  mixed $event
+     * @return void
+     */
+    public static function course_deleted($event) {
+        global $CFG, $DB;
+
+        $courseid = $event->courseid;
+        extendpro::pulse_extend_general('event_course_deleted', ['event' => $event]);
+
+        $pulseids = $DB->get_fieldset_select('pulse', 'id', 'course = :course', ['course' => $courseid]);
+        if (!empty($pulseids)) {
+            require_once($CFG->dirroot . '/mod/pulse/lib.php');
+            [$insql, $inparams] = $DB->get_in_or_equal($pulseids);
+            $DB->delete_records_select('pulse_completion', "pulseid $insql", $inparams);
+            $DB->delete_records_select('pulse_users', "pulseid $insql", $inparams);
+            $DB->delete_records_select('pulse_options', "pulseid $insql", $inparams);
+            foreach ($pulseids as $pulseid) {
+                pulse_delete_instance($pulseid);
+            }
+        }
+    }
 }

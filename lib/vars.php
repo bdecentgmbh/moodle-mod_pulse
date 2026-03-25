@@ -183,7 +183,7 @@ class pulse_email_vars {
         self::convert_varstime_format($course);
         $this->course = $course;
         // Remove all the html tags from course summary.
-        $this->course->summaryplain = strip_tags($course->summary);
+        $this->course->summaryplain = strip_tags($course->summary ?? '');
 
         // Course context.
         $this->coursecontext = \context_course::instance($this->course->id);

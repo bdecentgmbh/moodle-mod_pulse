@@ -40,4 +40,10 @@ $observers = [
         'callback' => '\mod_pulse\eventobserver::user_enrolment_created',
     ],
 
+    // Remove all pulse records when a course is deleted.
+    [
+        'eventname' => 'core\event\course_deleted',
+        'callback' => '\mod_pulse\eventobserver::course_deleted',
+    ],
+
 ];
