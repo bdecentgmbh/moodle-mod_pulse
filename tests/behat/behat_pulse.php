@@ -255,4 +255,33 @@ class behat_pulse extends behat_base {
             );
         }
     }
+
+    /**
+     * Selects an activity from the activity chooser and clicks "Add selected activity".
+     *
+     * @Given /^I add "(?P<activity_name_string>(?:[^"]|\\")*)" activity from the activity chooser$/
+     * @param string $activityname
+     */
+    public function i_add_activity_from_the_activity_chooser($activityname) {
+        global $CFG;
+        // Open activity chooser.
+        $this->execute('behat_course::i_open_the_activity_chooser');
+
+        if ($CFG->branch <= "405") {
+            $this->execute('behat_general::i_click_on', [$activityname, "link"]);
+        } else {
+            $this->execute('behat_general::i_click_on', [
+               "Add a new {$activityname}",
+                'link',
+                "Add an activity or resource",
+                'dialogue',
+            ]);
+            $this->execute('behat_general::i_click_on_in_the', [
+                get_string('addselectedactivity', 'course'),
+                'button',
+                get_string('addresourceoractivity', 'moodle'),
+                'dialogue',
+            ]);
+        }
+    }
 }

@@ -153,7 +153,10 @@ function pulse_delete_instance($pulseid) {
         $cm = get_coursemodule_from_instance('pulse', $pulseid);
 
         if ($DB->delete_records('pulse', ['id' => $pulseid])) {
-            // Trigger deletion of pulse addons.
+            // Delete all related user and instance records.
+            $DB->delete_records('pulse_completion', ['pulseid' => $pulseid]);
+            $DB->delete_records('pulse_users', ['pulseid' => $pulseid]);
+            $DB->delete_records('pulse_options', ['pulseid' => $pulseid]);
             \mod_pulse\extendpro::pulse_extend_instance($pulseid, null, 'delete');
             return true;
         }

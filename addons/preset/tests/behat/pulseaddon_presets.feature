@@ -25,8 +25,7 @@ Feature: Preset create pulse with custom params.
   Scenario: Presets list should shown on create pulse module form.
     Given I log in as "teacher"
     And I am on "Test" course homepage with editing mode on
-    And I open the activity chooser
-    And I click on "Pulse" "link"
+    And I add "Pulse" activity from the activity chooser
     Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
     And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
@@ -37,8 +36,7 @@ Feature: Preset create pulse with custom params.
   Scenario: Preset apply and save with custom config params.
     Given I log in as "teacher"
     And I am on "Test" course homepage with editing mode on
-    And I open the activity chooser
-    And I click on "Pulse" "link"
+    And I add "Pulse" activity from the activity chooser
     Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
     And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"
@@ -50,8 +48,7 @@ Feature: Preset create pulse with custom params.
   Scenario: Preset apply and customize with custom config params.
     Given I log in as "teacher"
     And I am on "Test" course homepage with editing mode on
-    And I open the activity chooser
-    And I click on "Pulse" "link"
+    And I add "Pulse" activity from the activity chooser
     Then I should see "Welcome Message" in the ".preset-title" "css_element"
     When I click on ".pulse-usepreset" "css_element"
     And I should see "Welcome Message" in the ".modal-header .modal-title" "css_element"

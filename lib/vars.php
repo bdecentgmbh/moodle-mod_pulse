@@ -183,7 +183,7 @@ class pulse_email_vars {
         self::convert_varstime_format($course);
         $this->course = $course;
         // Remove all the html tags from course summary.
-        $this->course->summaryplain = strip_tags($course->summary);
+        $this->course->summaryplain = strip_tags($course->summary ?? '');
 
         // Course context.
         $this->coursecontext = \context_course::instance($this->course->id);
@@ -316,6 +316,11 @@ class pulse_email_vars {
                     return $this->blank;
                 }
 
+                $methodname = $object . '_' . $property;
+                if (method_exists($this, $methodname)) {
+                    return $this->$methodname();
+                }
+
                 if (isset($this->$object->$property)) {
                     return $this->$object->$property;
                 } else if (method_exists($this->$object, '__get')) {
@@ -331,6 +336,55 @@ class pulse_email_vars {
                 return $this->$name();
             }
         }
+    }
+
+    /**
+     * Build an HTML course link from the given plain text label.
+     *
+     * @param string $text Plain-text label to use as the link anchor.
+     * @return string Rendered HTML anchor element.
+     */
+    private function make_course_link(string $text): string {
+        $url = $this->courseurl();
+        $a = new stdClass();
+        $a->url  = s($url->out(false));
+        $a->aria = get_string('opencourseinnewtab', 'mod_pulse');
+        $a->text = s($text);
+        return get_string('courselink_template', 'mod_pulse', $a);
+    }
+
+    /**
+     * Provide the Course fullname linked placeholder for templates.
+     *
+     * @return string
+     */
+    public function course_fullname_linked(): string {
+        if (empty($this->course->id)) {
+            return $this->blank;
+        }
+
+        if (empty($this->course->fullname)) {
+            $this->course = get_course($this->course->id);
+        }
+
+        return $this->make_course_link($this->course->fullname ?? '');
+    }
+
+    /**
+     * Provide the Course shortname linked placeholder for templates.
+     *
+     * @return string
+     */
+    public function course_shortname_linked(): string {
+        if (empty($this->course->id)) {
+            return $this->blank;
+        }
+
+        if (empty($this->course->shortname)) {
+            $this->course = get_course($this->course->id);
+        }
+
+        return $this->make_course_link($this->course->shortname ?? '');
     }
 
     /**
@@ -518,12 +572,12 @@ class pulse_email_vars {
             $fields = array_values($fields);
 
             $removefields = [
-                'User_confirmed', 'User_policyagreed', 'User_deleted', 'User_suspended', 'User_mnethostid', 'User_password',
-                'User_emailstop', 'User_descriptionformat', 'User_mailformat', 'User_maildigest', 'User_maildisplay',
-                'User_autosubscribe', 'User_trackforums', 'User_timemodified', 'User_trustbitmask', 'User_imagealt',
-                'User_moodlenetprofile',
+                'user_confirmed', 'user_policyagreed', 'user_deleted', 'user_suspended', 'user_mnethostid', 'user_password',
+                'user_emailstop', 'user_descriptionformat', 'user_mailformat', 'user_maildigest', 'user_maildisplay',
+                'user_autosubscribe', 'user_trackforums', 'user_timemodified', 'user_trustbitmask', 'user_imagealt',
+                'user_moodlenetprofile', 'user_secret',
             ];
-            $fields = array_filter($fields, fn($field) => !in_array($field, $removefields));
+            $fields = array_values(array_filter($fields, fn($field) => !in_array(strtolower($field), $removefields)));
         }
 
         return $fields;
@@ -543,7 +597,8 @@ class pulse_email_vars {
             $fields = [];
 
             $coursefields = [
-                'fullname', 'shortname', 'summary', 'summaryplain', 'courseurl', 'startdate',
+                'fullname', 'shortname', 'summary', 'summaryplain', 'courseurl',
+                'fullname_linked', 'shortname_linked', 'startdate',
                 'enddate', 'id', 'category', 'idnumber', 'format', 'visible',
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
                 'timemodified', 'enablecompletion',
