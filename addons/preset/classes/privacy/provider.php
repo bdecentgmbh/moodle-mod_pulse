@@ -14,15 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace pulseaddon_preset\privacy;
+
 /**
- * Language file for Pulse Presets
+ * Privacy implementation for preset submodule.
  *
- * @package    pulseaddon_preset
- * @copyright  2024 bdecent GmbH <https://bdecent.de>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   pulseaddon_preset
+ * @copyright 2026 Tomo Tsuyuki <tomotsuyuki@catalyst-au.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
- defined('MOODLE_INTERNAL') || die();
-
-$string['pluginname'] = 'Pulse Presets';
-$string['privacy:metadata'] = 'The pulseaddon_preset plugin does not store any personal data.';
+class provider implements \core_privacy\local\metadata\null_provider {
+    /**
+     * Get the language string identifier with the component's language
+     * file to explain why this plugin stores no data.
+     *
+     * @return  string
+     */
+    public static function get_reason(): string {
+        return 'privacy:metadata';
+    }
+}
