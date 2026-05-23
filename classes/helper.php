@@ -97,9 +97,10 @@ class helper {
         $sender = $sender ? $sender : core_user::get_support_user(); // Support user.
         $amethods = pulse_email_vars::vars('all'); // List of available placeholders.
         // Get formatted name of the category.
-        $course->category = is_number($course->category)
-            ? core_course_category::get($course->category)->get_formatted_name() : $course->category;
-
+        if (is_number($course->category)) {
+            $category = core_course_category::get($course->category, IGNORE_MISSING);
+            $course->category = $category ? $category->get_formatted_name() : '';
+        }
         $vars = new pulse_email_vars($user, $course, $sender, $mod, $conditionvars, $type);
 
         foreach ($amethods as $varscat => $placeholders) {
