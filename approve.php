@@ -44,26 +44,22 @@ $PAGE->set_cm($cm);
 $PAGE->set_context($modulecontext);
 $PAGE->set_heading(get_string('approveuser', 'pulse', ['course' => $course->fullname]));
 
-// List of approval roles selected in pulse module.
-$approvalroles = json_decode($pulse->completionapprovalroles);
-$roles = get_user_roles($modulecontext, $USER->id);
+require_login();
 
-$hasrole = false;
-foreach ($roles as $key => $role) {
-    if (in_array($role->roleid, $approvalroles)) {
-        $hasrole = true;
-    }
-}
+// List of approval roles selected in pulse module.
 $approvalroles = $pulse->completionapprovalroles;
 $hasrole = \mod_pulse\helper::pulse_has_approvalrole($approvalroles, $cmid);
-
-require_login();
 
 // Prevent student to view the script expect the self completion by student.
 if ($action != 'selfcomplete') {
     if (!$hasrole) {
         throw new moodle_exception('missingrequiredrole');
     }
+}
+
+// Validate session key before processing any state-changing action.
+if (in_array($action, ['approve', 'decline', 'selfcomplete'])) {
+    require_sesskey();
 }
 
 // Approval by selected roles.

@@ -652,7 +652,12 @@ function mod_pulse_output_fragment_completionbuttons($args) {
                             ['class' => 'pulse-self-marked badge badge-success']
                         );
                     } else {
-                        $selfcomplete = new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']);
+                        $selfcomplete = new moodle_url('/mod/pulse/approve.php',
+                            [
+                                'cmid' => $moduleid,
+                                'action' => 'selfcomplete',
+                                'sesskey' => sesskey(),
+                            ]);
                         $selfmarklink = html_writer::link(
                             $selfcomplete,
                             get_string('markcomplete', 'pulse'),
@@ -761,6 +766,6 @@ function mod_pulse_output_fragment_get_confirmation_content(array $params) {
         'completionbtn_content',
         0
     );
-    $contenthtml = format_text($contenthtml, $pulse->completionbtn_contentformat, ['trusted' => true, 'noclean' => true]);
+    $contenthtml = format_text($contenthtml, $pulse->completionbtn_contentformat, ['context' => $modulecontext]);
     return $contenthtml;
 }

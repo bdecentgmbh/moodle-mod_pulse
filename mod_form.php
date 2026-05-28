@@ -432,7 +432,7 @@ class mod_pulse_mod_form extends moodleform_mod {
             'completionbtn_content',
             0
         );
-        $btncontenthtml = format_text($btncontenthtml, FORMAT_HTML, ['trusted' => true, 'noclean' => true]);
+        $btncontenthtml = format_text($btncontenthtml, FORMAT_HTML, ['context' => $context]);
 
         // Require confirmation.
         $mform->addElement('checkbox', 'completionbtnconfirmation', get_string('requireconfirm', 'pulse'));

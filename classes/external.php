@@ -58,7 +58,19 @@ class external extends \external_api {
      */
     public static function apply_presets(int $contextid, string $formdata, $pageparams = null) {
         global $PAGE;
-        parse_str($formdata, $data);
+
+        $params = self::validate_parameters(self::apply_presets_parameters(), [
+            'contextid' => $contextid,
+            'formdata' => $formdata,
+        ]);
+
+        $context = \context::instance_by_id($params['contextid']);
+        self::validate_context($context);
+        require_capability('mod/pulse:addinstance', $context);
+
+        $PAGE->set_context($context);
+
+        parse_str($params['formdata'], $data);
         foreach ($data as $key => $value) {
             if (strpos($key, 'preseteditor_') !== false) {
                 $newkey = str_replace('preseteditor_', '', $key);
@@ -66,12 +78,11 @@ class external extends \external_api {
                 unset($data[$key]);
             }
         }
-        $context = \context::instance_by_id($contextid);
-        $PAGE->set_context($context);
+
         $preset = new \mod_pulse\preset($data['presetid'], $data['courseid'], $context);
         if ($pageparams !== null) {
-            parse_str($pageparams, $params);
-            $preset->set_modformdata($params);
+            parse_str($pageparams, $modparams);
+            $preset->set_modformdata($modparams);
         }
         $result = $preset->apply_presets($data);
         return $result;
@@ -110,6 +121,12 @@ class external extends \external_api {
         global $DB, $USER;
         $params = self::validate_parameters(self::manual_completion_parameters(), ['id' => $id]);
         $cm = get_coursemodule_from_id('pulse', $params['id']);
+        if (!$cm) {
+            throw new \moodle_exception('invalidcoursemodule');
+        }
+        $context = \context_module::instance($cm->id);
+        self::validate_context($context);
+        require_capability('mod/pulse:view', $context);
         $pulse = $DB->get_record('pulse', ['id' => $cm->instance]);
         $course = get_course($cm->course);
         $message = '';
