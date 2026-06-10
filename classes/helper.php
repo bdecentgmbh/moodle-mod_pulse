@@ -403,8 +403,14 @@ class helper {
 
                     $buttontext = self::get_not_complete_state_button_text($pulse->completionbtntext);
                     $selfcomplete = !$pulse->completionbtnconfirmation ?
-                        new moodle_url('/mod/pulse/approve.php', ['cmid' => $moduleid, 'action' => 'selfcomplete']) :
-                        'javascript:void(0);';
+                        new moodle_url(
+                            '/mod/pulse/approve.php',
+                            [
+                                'cmid' => $moduleid,
+                                'action' => 'selfcomplete',
+                                'sesskey' => sesskey(),
+                            ]
+                        ) : 'javascript:void(0);';
                     $selfmarklink = html_writer::link(
                         $selfcomplete,
                         $buttontext,

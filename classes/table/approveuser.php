@@ -151,24 +151,28 @@ class approveuser extends \core_user\table\participants {
 
         if ($status == 1) {
             $str = html_writer::tag('span', get_string('approved', 'mod_pulse'), ['class' => 'badge badge-success']);
-            $url = new moodle_url('/mod/pulse/approve.php',
+            $url = new moodle_url(
+                '/mod/pulse/approve.php',
                 [
                     'cmid' => $this->cm->id,
                     'userid' => $row->id,
                     'action' => 'decline',
                     'sesskey' => sesskey(),
-                ]);
+                ]
+            );
             $str .= ' ' . html_writer::link($url, get_string('decline', 'mod_pulse'), ['class' => 'approvebtn btn btn-secondary']);
             return $str;
         } else {
             $str = html_writer::tag('span', get_string('declined', 'mod_pulse'), ['class' => 'badge badge-warning']);
-            $url = new moodle_url('/mod/pulse/approve.php',
+            $url = new moodle_url(
+                '/mod/pulse/approve.php',
                 [
                     'cmid' => $this->cm->id,
                     'userid' => $row->id,
                     'action' => 'approve',
                     'sesskey' => sesskey(),
-                ]);
+                ]
+            );
             $str .= ' ' . html_writer::link($url, get_string('approve', 'mod_pulse'), ['class' => 'approvebtn btn btn-primary']);
             return $str;
         }

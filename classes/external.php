@@ -65,9 +65,7 @@ class external extends \external_api {
         ]);
 
         $context = \context::instance_by_id($params['contextid']);
-        self::validate_context($context);
         require_capability('mod/pulse:addinstance', $context);
-
         $PAGE->set_context($context);
 
         parse_str($params['formdata'], $data);
