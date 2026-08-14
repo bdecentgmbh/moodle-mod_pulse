@@ -234,19 +234,14 @@ $string['messageprovider:mod_pulse'] = 'Send notifcation';
 $string['mixed'] = 'Mixed';
 $string['modalconfirm'] = 'Completion Confirmation';
 $string['modulename'] = 'Pulse';
-$string['modulename_help'] = 'Pulse is the teacher\'s Swiss army knife to improve student engagement and compliance in moodle courses:
-    <ul><li><strong>Notifications</strong><br>
-    Each Pulse activity can be configured to send a notification once it becomes available to the student. There are a number of placeholders that can be used to personalize the message, like the first name of the student or the name of the course. The notification can be sent to the student, the teacher, the non-editing teacher or the manager. Other course context or user context roles are supported as well, e.g. parent or staff manager.</li>
-    <li><strong>Completion workflows</strong><br>
-    Pulse supports activity completion in three ways (in addition to moodle core ones): upon availability, when marked complete by student and when approved by other role.</li></ul>
-    <p>As with all things automation, it is essential to put enough thought into what you actually want. Ideally, write down what should happen in which case. This also helps us to support you! If it does not work as you expect, here are the most common issues:</p>
-    <ul>
-    <li>The course has not <b>started</b>. Pulse only works in a course which is currently running —> Check if the start date is in the past.</li>
-    <li>The course has <b>ended</b>. Pulse only works in a course which is currently running —> Check if the end date is set, and if it is, make sure it is in the future.</li>
-    <li>The course has <b>enrolled students</b>. Pulse (free) only works for students —> Check if the course actually has an enrolled user with an active enrolment status.</li>
-    <li>The Pulse activity is <b>available</b>. Pulse only works if the activity is available to the student. That is the "trigger" or "condition" we use to determine if we shall actually do something (e.g. award credits). —> Check if the Pulse activity is hidden or has a restriction which is not met by the student in both cases, it is "disabled" and will not work. If you are not sure, just login as the student and check if the student sees the Pulse activity — if the student sees it, it is enabled if the student does not see it, it is disabled.</li>
-    <li>The <b>cron job</b> is not running or has not run yet — awarding credits is done through a scheduled task. It is therefor required that the cron job is running regularly. Moodle recommends every minute, and we can only encourage you to follow that recommendation!</li>
-    </ul>';
+$string['modulename_help'] = '<p>The Pulse activity helps teachers boost student engagement and streamline course workflows with automated communications and custom completion tracking.</p>
+<p>Key features include:</p>
+<ul>
+    <li>Flexible completion workflows: Support for student self-marking, manager or teacher approvals, and automatic completion upon activity availability.</li>
+    <li>Automated notifications: Send personalized messages to students, teachers, or custom roles. For greater flexibility, better scalability, and cleaner course pages, using the integrated Automation Engine is recommended.</li>
+    <li>Engagement & compliance tracking: Guide learners through courses with timely triggers and automated progress milestones.</li>
+</ul>
+<p>For detailed setup instructions and feature guides, please visit the <a href="https://intercom.help/bdecent/en/collections/12188415-pulse" target="_blank" rel="noopener">Pulse documentation</a>. We are constantly improving the plugin, so please let us know if you have any <a href="mailto:support@bdecent.de">feedback for us</a>!</p>';
 $string['modulename_link'] = 'Pulse';
 $string['modulenameplural'] = 'Pulses';
 $string['months'] = 'months';
