@@ -23,16 +23,10 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout Moodle Core
-        uses: actions/checkout@v4
-        with:
-          repository: moodle/moodle
-          ref: MOODLE_401_STABLE
-
       - name: Checkout Plugin
         uses: actions/checkout@v4
         with:
-          path: mod/pulse
+          path: plugin
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -40,28 +34,20 @@ jobs:
           php-version: '8.1'
           extensions: mbstring, pgsql, intl, xml, gd, zip
 
-      - name: Install Dependencies
-        run: composer install --prefer-dist --no-progress
-
-      - name: Configure Moodle PHPUnit
+      - name: Setup Locales
         run: |
-          mkdir -p /tmp/moodledata
-          mkdir -p /tmp/phpunitdata
-          chmod -R 777 /tmp/moodledata
-          chmod -R 777 /tmp/phpunitdata
-          cp config-dist.php config.php
-          sed -i "s/\$CFG->dbtype    = 'pgsql';/\$CFG->dbtype    = 'pgsql';/" config.php
-          sed -i "s/\$CFG->dbname    = 'moodle';/\$CFG->dbname    = 'moodle';/" config.php
-          sed -i "s/\$CFG->dbuser    = 'username';/\$CFG->dbuser    = 'moodle';/" config.php
-          sed -i "s/\$CFG->dbpass    = 'password';/\$CFG->dbpass    = 'moodlepassword';/" config.php
-          sed -i "s/\$CFG->dbhost    = 'localhost';/\$CFG->dbhost    = '127.0.0.1';/" config.php
-          sed -i "s|\$CFG->wwwroot   = 'http://example.com/moodle';|\$CFG->wwwroot   = 'http://localhost';|" config.php
-          sed -i "s|\$CFG->dataroot  = '/home/example/moodledata';|\$CFG->dataroot  = '/tmp/moodledata';|" config.php
-          echo "\$CFG->phpunit_prefix = 'phpu_';" >> config.php
-          echo "\$CFG->phpunit_dataroot = '/tmp/phpunitdata';" >> config.php
+          sudo locale-gen en_AU.UTF-8
+          sudo update-locale
 
-      - name: Initialize PHPUnit
-        run: php admin/tool/phpunit/cli/init.php
+      - name: Install moodle-plugin-ci
+        run: |
+          composer global require moodlehq/moodle-plugin-ci
+          echo "$HOME/.composer/vendor/bin" >> $GITHUB_PATH
 
-      - name: Run Specific Test File
-        run: vendor/bin/phpunit mod/pulse/tests/convert_varstime_format_test.php
+      - name: Install Moodle and Plugin
+        run: |
+          moodle-plugin-ci install --plugin ./plugin --db-type pgsql --db-host 127.0.0.1 --db-user moodle --db-pass moodlepassword --moodle MOODLE_401_STABLE
+
+      - name: Run Specific PHPUnit Test
+        run: |
+          moodle-plugin-ci phpunit --filter convert_varstime_format_test
