@@ -223,8 +223,12 @@ class pulse_email_vars {
         if (empty($var)) {
             return;
         }
+        // Work on an array copy to avoid array/object conflicts and preserve original values
+        $vararray = (array) $var;
+        // Preserve original values to allow creation of "withtime" variants.
+        $orig = $vararray;
         // Update the timestamp to user readable time.
-        array_walk($var, function (&$value, $key) {
+        array_walk($vararray, function (&$value, $key) {
 
             if (
                 is_numeric($value) && in_array(strtolower($key), [
@@ -232,7 +236,12 @@ class pulse_email_vars {
                     'lastaccess', 'lastlogin', 'currentlogin', 'timecreated', 'starttime', 'endtime',
                 ])
             ) {
-                $value = $value ? userdate($value) : '';
+                // Use date-only format for startdate and enddate placeholders.
+                    if ($value && in_array(strtolower($key), ['startdate', 'enddate'])) {
+                    $value = userdate($value, get_string('strftimedate', 'core_langconfig'));
+                } else {
+                    $value = $value ? userdate($value) : '';
+                }
             }
             // Update the status to user readable strings.
             if (in_array(strtolower($key), ['visible', 'groupmode', 'groupmodeforce', 'defaultgroupingid'])) {
@@ -246,7 +255,24 @@ class pulse_email_vars {
             }
         });
 
-        $var = (object) $var;
+        // Add explicit withtime variants for startdate and enddate using original timestamps.
+        foreach (['startdate', 'enddate'] as $dkey) {
+            $withtime = '';
+            if (isset($orig[$dkey]) && $orig[$dkey]) {
+                // Prefer numeric timestamp, fall back to parsing string timestamps.
+                if (is_numeric($orig[$dkey])) {
+                    $ts = (int)$orig[$dkey];
+                } else {
+                    $ts = strtotime((string)$orig[$dkey]);
+                }
+                if (!empty($ts)) {
+                    $withtime = userdate($ts, get_string('strftimedatetime', 'core_langconfig'));
+                }
+            }
+            $vararray[$dkey . '_withtime'] = $withtime;
+        }
+
+        $var = (object) $vararray;
     }
 
     /**
@@ -302,7 +328,9 @@ class pulse_email_vars {
                 return $this->$name;
             }
 
-            preg_match('/^(.*)_(.*)$/', $name, $matches);
+            // Split only on the first underscore so placeholders like
+            // Course_Startdate_Withtime map to object `course` and property `startdate_withtime`.
+            preg_match('/^([^_]+)_(.+)$/', $name, $matches);
 
             if (isset($matches[1])) {
                 $object = strtolower($matches[1]);
@@ -527,9 +555,9 @@ class pulse_email_vars {
                 'courseduedate' => $courseduedate,
                 'status' => ($firstinstance->status == 1) ? get_string('suspended', 'mod_pulse') : get_string('active'),
                 'startdate' => $firstinstance->timestart
-                    ? userdate($firstinstance->timestart, get_string('strftimedatetimeshort', 'langconfig')) : $emptystartdate,
+                    ? userdate($firstinstance->timestart, get_string('strftimedate', 'core_langconfig')) : $emptystartdate,
                 'enddate' => $firstinstance->timeend
-                    ? userdate($firstinstance->timeend, get_string('strftimedatetimeshort', 'langconfig')) : $emptyenddate,
+                    ? userdate($firstinstance->timeend, get_string('strftimedate', 'core_langconfig')) : $emptyenddate,
             ];
         }
         return (object) ['startdate' => $emptystartdate, 'enddate' => $emptyenddate];
@@ -599,7 +627,7 @@ class pulse_email_vars {
             $coursefields = [
                 'fullname', 'shortname', 'summary', 'summaryplain', 'courseurl',
                 'fullname_linked', 'shortname_linked', 'startdate',
-                'enddate', 'id', 'category', 'idnumber', 'format', 'visible',
+                'enddate', 'startdate_withtime', 'enddate_withtime', 'id', 'category', 'idnumber', 'format', 'visible',
                 'groupmode', 'groupmodeforce', 'defaultgroupingid', 'lang', 'calendartype', 'theme', 'timecreated',
                 'timemodified', 'enablecompletion',
             ];
@@ -616,7 +644,7 @@ class pulse_email_vars {
             $fields = array_merge($coursefields, array_values($customfields));
 
             array_walk($fields, function (&$value) {
-                $value = 'Course_' . ucwords($value);
+                $value = 'Course_' . str_replace(' ', '_', ucwords(str_replace('_', ' ', $value)));
             });
 
             $fields = array_values($fields);
