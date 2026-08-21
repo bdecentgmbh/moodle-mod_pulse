@@ -1,7 +1,7 @@
 name: Run Single PHPUnit Test
 
 on:
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   phpunit:
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: moodle/moodle
-          ref: MOODLE_401_STABLE # Adjust Moodle version if needed
+          ref: MOODLE_401_STABLE
 
       - name: Checkout Plugin
         uses: actions/checkout@v4
@@ -45,12 +45,17 @@ jobs:
 
       - name: Configure Moodle PHPUnit
         run: |
+          mkdir -p /tmp/moodledata
+          mkdir -p /tmp/phpunitdata
+          chmod -R 777 /tmp/moodledata
+          chmod -R 777 /tmp/phpunitdata
           cp config-dist.php config.php
           sed -i "s/\$CFG->dbtype    = 'pgsql';/\$CFG->dbtype    = 'pgsql';/" config.php
           sed -i "s/\$CFG->dbname    = 'moodle';/\$CFG->dbname    = 'moodle';/" config.php
           sed -i "s/\$CFG->dbuser    = 'username';/\$CFG->dbuser    = 'moodle';/" config.php
           sed -i "s/\$CFG->dbpass    = 'password';/\$CFG->dbpass    = 'moodlepassword';/" config.php
           sed -i "s/\$CFG->dbhost    = 'localhost';/\$CFG->dbhost    = '127.0.0.1';/" config.php
+          sed -i "s|\$CFG->dataroot  = '/home/example/moodledata';|\$CFG->dataroot  = '/tmp/moodledata';|" config.php
           echo "\$CFG->phpunit_prefix = 'phpu_';" >> config.php
           echo "\$CFG->phpunit_dataroot = '/tmp/phpunitdata';" >> config.php
 
