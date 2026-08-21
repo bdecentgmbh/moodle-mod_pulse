@@ -55,6 +55,7 @@ jobs:
           sed -i "s/\$CFG->dbuser    = 'username';/\$CFG->dbuser    = 'moodle';/" config.php
           sed -i "s/\$CFG->dbpass    = 'password';/\$CFG->dbpass    = 'moodlepassword';/" config.php
           sed -i "s/\$CFG->dbhost    = 'localhost';/\$CFG->dbhost    = '127.0.0.1';/" config.php
+          sed -i "s|\$CFG->wwwroot   = 'http://example.com/moodle';|\$CFG->wwwroot   = 'http://localhost';|" config.php
           sed -i "s|\$CFG->dataroot  = '/home/example/moodledata';|\$CFG->dataroot  = '/tmp/moodledata';|" config.php
           echo "\$CFG->phpunit_prefix = 'phpu_';" >> config.php
           echo "\$CFG->phpunit_dataroot = '/tmp/phpunitdata';" >> config.php
