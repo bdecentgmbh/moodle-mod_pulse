@@ -1,0 +1,53 @@
+name: Run Single PHPUnit Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: moodle
+          POSTGRES_PASSWORD: moodlepassword
+          POSTGRES_DB: moodle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Plugin
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, pgsql, intl, xml, gd, zip
+
+      - name: Setup Locales
+        run: |
+          sudo locale-gen en_AU.UTF-8
+          sudo update-locale
+
+      - name: Install moodle-plugin-ci
+        run: |
+          composer global require moodlehq/moodle-plugin-ci
+          echo "$HOME/.composer/vendor/bin" >> $GITHUB_PATH
+
+      - name: Install Moodle and Plugin
+        run: |
+          moodle-plugin-ci install --plugin ./plugin --db-type pgsql --db-host 127.0.0.1 --db-user moodle --db-pass moodlepassword --moodle MOODLE_401_STABLE
+
+      - name: Run Specific PHPUnit Test
+        run: |
+          moodle-plugin-ci phpunit --filter convert_varstime_format_test
